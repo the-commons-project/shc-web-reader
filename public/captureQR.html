@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>SHC Reader Capture Window</title>
+    <script src='qr-scanner.umd.min.js'></script>
+
+  </head>
+  <body>
+
+	<video id='video' style='width: 400px; height: 225px;'></video>
+  
+    <script>
+
+	  const handleQR = (result) => {
+		window.opener.openCameraResult(result.data);
+		window.close();
+	  }
+	  
+	  const qrScanner = new QrScanner(
+		document.getElementById('video'),
+		handleQR,
+		{
+		  preferredCamera: 'user',
+		  highlightScanRegion: true,
+		  highlightCodeOutline: true,
+		  returnDetailedScanResult: true
+		});
+
+	  qrScanner.start();
+	  
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,17 @@
+
+.container {
+	display: grid;
+	grid-template-rows: 40px 1fr;
+	gap: 12px;
+	margin: 16px;
+}
+
+.nav {
+	grid-row: 1;
+}
+
+.content {
+	grid-row: 2;
+	padding: 12px;
+}
+

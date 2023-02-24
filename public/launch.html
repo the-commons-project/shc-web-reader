@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>SHC Reader Provider Launch</title>
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.min.js"></script>
+
+  </head>
+  <body>
+    <script>
+
+	  const params = new URLSearchParams(document.location.search);
+	  const client = params.get('client');
+
+	  const url = window.location.href;
+	  const redirect = url.substring(0, url.lastIndexOf('/'));
+
+      FHIR.oauth2.authorize({
+        'clientId': client,
+		'redirectUri': redirect,
+		'scope': 'launch openid fhirUser patient/*.read'
+	  });
+
+    </script>
+  </body>
+</html>
