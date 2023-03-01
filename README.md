@@ -27,12 +27,12 @@ expects to be connected to an R4 FHIR interface.
 
 Navigate with the tabs at the top of the interface:
 
-## ABOUT {#tab-about}
+## ABOUT 
 
 This is just a landing homepage that ultimately will include legal/privacy
 information and perhaps some getting-started text. TBD.
 
-## SCAN CARD {#tab-scancard}
+## SCAN CARD
 
 This tab sets default focus to the input box. A barcode scanner can be used to
 acquire an shc:/ string from a QR code, or it can just be pasted in which is
@@ -42,13 +42,13 @@ automatically. Alternatively, click the "Read Code" button to initiate a
 parse. Some very simple/naive rules are used to enable/disable the button
 (basically the input text starts with shc:/).
 
-## TAKE PHOTO {#tab-takephoto}
+## TAKE PHOTO
 
 In standalone mode, the browser will ask for camera access and display a preview
 window directly in frame. Because this is disallowed by browser policy when
 embedded in an EHR iframe, in that mode an "Open Camera" button is shown that
 opens a small popup with for the camera. When a QR code is detected, it is sent
-automatically to the [Card Details](#tab-carddetails) tab.
+automatically to the [Card Details](#about) tab.
 
 NOTE: At least when I was last doing this stuff, Epic hosted apps inside an IE
 Control for which window.open didn't work normally. Instead they provided a
@@ -56,7 +56,7 @@ snippet of javascrpit that could do this --- it might or might not work well for
 our purposes. This is tracked in [github issue
 #7](https://github.com/the-commons-project/shc-web-reader/issues/7).
 
-## SEARCH RECORD {#tab-searchrecord}
+## SEARCH RECORD
 
 This tab appears only if the app is embedded in an EHR. When selected it
 initiates a search in the in-context patient record for
@@ -70,10 +70,10 @@ it looks for PDF or image files, using metadata if available to prioritize or
 exclude some documents, ordering descending by upload date.
 
 As soon as an shc:/ QR code is found it is sent to [Card
-Details](#tab-carddetails). If the search files, a "Search Again" button is
+Details](#card-details). If the search files, a "Search Again" button is
 displayed.
 
-## CARD DETAILS {#tab-carddetails}
+## CARD DETAILS
 
 This tab appears only once an shc:/ string has been captured by one of the other
 tabs. It decodes and verifies the string using
@@ -88,7 +88,7 @@ The [OptionalFhir](https://github.com/the-commons-project/shc-web-reader/blob/ma
 
 Controls and styling (such as it is) uses [Google Material UI](https://mui.com/material-ui/getting-started/overview/). 
 
-[App.js](https://github.com/the-commons-project/shc-web-reader/blob/main/src/App.js) handles navigation and routes discovered shc:/ strings from capture tabs to [Card Details](#tab-carddetails). 
+[App.js](https://github.com/the-commons-project/shc-web-reader/blob/main/src/App.js) handles navigation and routes discovered shc:/ strings from capture tabs to [Card Details](#card-details). 
 
 I've tried to keep as much of the FHIR-y and SHC-y stuff as possible under the [src/lib](https://github.com/the-commons-project/shc-web-reader/tree/main/src/lib) directory. It's not a perfect abstraction but it helps keep the component files a bit cleaner.
 
