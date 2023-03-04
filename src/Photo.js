@@ -4,21 +4,6 @@ import QrScanner from 'qr-scanner';
 
 export default function Photo({ viewData }) {
 
-  // PROBLEM: camera access is denied by policy inside
-  // iframes, and only the outer page can set the "allow"
-  // attribute to permit it.
-  //
-  // IDEA? Use a popup to get the code; somehow return
-  // to iframe (with window.opener?) ... have to open popup
-  // with explicit action though which sucks.
-  //
-  // Try to figure this out.
-  // Try to figure this out.
-  // Try to figure this out.
-  // Try to figure this out.
-  // Try to figure this out.
-  // Try to figure this out.
-
   const [haveCamera, setHaveCamera] = useState(true);
 
   const openCameraClick = () => {
@@ -28,8 +13,8 @@ export default function Photo({ viewData }) {
 
   // called from our popup
   // eslint-disable-next-line
-  const openCameraResult = (shc) => {
-	viewData(shc);
+  const openCameraResult = (shx) => {
+	viewData(shx);
   }
 
   useEffect(() => {

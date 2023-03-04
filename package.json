@@ -8,6 +8,7 @@
     "@fontsource/roboto": "^4.5.8",
     "@mui/material": "^5.11.7",
     "fhirclient": "^2.5.2",
+    "jose": "^4.13.1",
     "pdfjs-dist": "^3.3.122",
     "qr-scanner": "^1.4.2",
     "react": "^18.2.0",

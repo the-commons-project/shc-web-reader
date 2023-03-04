@@ -7,8 +7,10 @@
 import QrScanner from 'qr-scanner';
 import * as PdfjsLib from 'pdfjs-dist/build/pdf';
 import PdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
+import { b64_to_arr } from './b64.js';
+import { looksLikeSHX } from './SHX.js';
 
-export default async function getDocShc(fhir, doc) {
+export default async function getDocSHX(fhir, doc) {
 
   console.log(`Scanning ${doc.id} ${doc.title}`);
   
@@ -18,16 +20,16 @@ export default async function getDocShc(fhir, doc) {
 
   const base64 = await getBase64(fhir, fhirContent.attachment);
 
-  let shc = undefined;
+  let shx = undefined;
 
   if (doc.contentType === 'application/pdf') {
-	shc = await scanPdf(doc, base64);
+	shx = await scanPdf(doc, base64);
   }
   else {
-	shc = await scanImageUri(doc, `data:${doc.contentType};Base64,${base64}`);
+	shx = await scanImageUri(doc, `data:${doc.contentType};Base64,${base64}`);
   }
 
-  return(shc);
+  return(shx);
 }
 
 async function scanPdf(doc, base64) {
@@ -36,7 +38,7 @@ async function scanPdf(doc, base64) {
   const ctx = canvas.getContext('2d');
 
   PdfjsLib.GlobalWorkerOptions.workerSrc = PdfjsWorker;
-  const pdf = await PdfjsLib.getDocument(uint8ArrayFromBase64(base64)).promise;
+  const pdf = await PdfjsLib.getDocument(b64_to_arr(base64)).promise;
 
   // only check first 2 pages of PDF (front or back of card)
   const pageCountMax = 2;
@@ -54,8 +56,8 @@ async function scanPdf(doc, base64) {
 	document.getElementById('body'); // forces render
 
 	const dataUri = canvas.toDataURL();
-	const shc = await scanImageUri(doc, dataUri);
-	if (shc !== undefined) return(shc);
+	const shx = await scanImageUri(doc, dataUri);
+	if (shx !== undefined) return(shx);
   }
 
   return(undefined);
@@ -63,17 +65,22 @@ async function scanPdf(doc, base64) {
 
 async function scanImageUri(doc, dataUri) {
 
-  let shc = undefined;
+  let shx = undefined;
 
   try {
 	const result = await QrScanner.scanImage(dataUri, { returnDetailedScanResult: true });
-	shc = result.data;
+	if (looksLikeSHX(result.data)) {
+	  shx = result.data;
+	}
+	else {
+	  console.warn('scanned QR but not SHX: ' + result.data);
+	}
   }
   catch (err) {
 	console.error(`ERR Scanning ${doc.id}: ${err.toString()}`);
   }
 
-  return(shc);
+  return(shx);
 }
 
 async function getBase64(fhir, fhirAttachment) {
@@ -82,20 +89,21 @@ async function getBase64(fhir, fhirAttachment) {
 
   if (!base64) {
 
-	if (!fhirAttachment.url || !fhirAttachment.url.startsWith("Binary")) {
+	if (!fhirAttachment.url || fhirAttachment.url.indexOf('Binary/') === -1) {
+	  
+	  console.warn(JSON.stringify(fhirAttachment, null, 2));
 	  throw(new Error("Attachment needs data or Binary resource url"));
 	}
 
-	base64 = await fhir.req(fhirAttachment.url).data;
+	const fhirBinary = await fhir.request({
+	  url: fhirAttachment.url,
+	  headers: { Accept: 'application/fhir+json' }
+	});
+
+	base64 = fhirBinary.data;
   }
 
   return(base64);
 }
 
-function uint8ArrayFromBase64(base64) {
-  const raw = window.atob(base64);
-  const arr = new Uint8Array(new ArrayBuffer(raw.length));
-  for (let i = 0; i < raw.length; ++i) arr[i] = raw.charCodeAt(i);
-  return(arr);
-}
 

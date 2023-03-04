@@ -8,15 +8,18 @@ const imageTypes = [
   'application/pdf'
 ];
 
+// our biased view of the document world
+const DocClass = {
+  Unknown: 0,
+  NotPayment: 1,
+  Payment: 2
+}
+
 export default async function listDocs(fhir) {
 
   // request ... sadly not much up-front filtering
-  const req =
-		'DocumentReference/' +
-		'?subject=' + encodeURIComponent(fhir.patient.id) +
-		'&_summary=true';
-		
-  const fhirDocs = await fhir.request(req);
+  const req = 'DocumentReference?_summary=true';
+  const fhirDocs = await fhir.patient.request(req);
 			  
   // secondary filtering and shaping
   const docs = [];
@@ -24,15 +27,16 @@ export default async function listDocs(fhir) {
   for (const i in fhirDocs.entry) {
 
 	const fhirDoc = fhirDocs.entry[i].resource;
-	//console.log(JSON.stringify(fhirDoc, null, 2));
 
 	// check stuff at the global level
 	if (!statusOK(fhirDoc)) continue;
-	if (!categoryOK(fhirDoc)) continue;
 
-	const tstat = typeStatus(fhirDoc);
-	if (tstat === TypeStatus.Clinical) continue;
+	const dcT = docClassFromType(fhirDoc);
+	const dcC = docClassFromCategory(fhirDoc);
+	const dc = Math.max(dcT, dcC);
 
+	if (dc === DocClass.NotPayment) continue;
+	
 	// if ok so far, see if there's a content node we can use.
 	// really, this had to be an array? come on now.
 	for (const j in fhirDoc.content) {
@@ -41,7 +45,7 @@ export default async function listDocs(fhir) {
 	  
 	  if (contentTypeOK(fhirContent) && contentFormatOK(fhirContent)) {
 		
-		addDoc(docs, fhirDoc, fhirContent, j, tstat === TypeStatus.Payment);
+		addDoc(docs, fhirDoc, fhirContent, j, dc === DocClass.Payment);
 		break;
 	  }
 	}
@@ -55,6 +59,8 @@ export default async function listDocs(fhir) {
 
 function addDoc(docs, fhirDoc, fhirContent, icontent, highPriority) {
 
+  // console.log('>>> PASSED SEARCH:\n' + JSON.stringify(fhirDoc, null, 2));
+  
   const title = (fhirDoc.description ? fhirDoc.description :
 				 (fhirContent.attachment.title ? fhirContent.attachment.title :
 				  (getDocAutoTitle(fhirDoc, fhirContent))));
@@ -95,16 +101,10 @@ function statusOK(fhirDoc) {
 // payment source document! All values in http://hl7.org/fhir/ValueSet/c80-doc-typecodes
 // except 48768-6 (Payment sources Document) are clinical.
 
-const TypeStatus = {
-  Payment: 0,
-  Clinical: 1,
-  Unknown: 2
-}
+function docClassFromType(fhirDoc) {
 
-function typeStatus(fhirDoc) {
+  if (!fhirDoc.type) return(DocClass.Unknown);
 
-  if (!fhirDoc.type) return(TypeStatus.Unknown);
-  
   for (const i in fhirDoc.type.coding) {
 
 	const coding = fhirDoc.type.coding[i];
@@ -113,34 +113,61 @@ function typeStatus(fhirDoc) {
 		coding.system === 'http://hl7.org/fhir/ValueSet/c80-doc-typecodes' &&
 		coding.code) {
 
-	  return(coding.code === '48768-6' ? TypeStatus.Payment : TypeStatus.Clinical);
+	  return(coding.code === '48768-6' ? DocClass.Payment : DocClass.NotPayment);
 	}
   }
   
-  return(TypeStatus.Unknown);
+  return(DocClass.Unknown);
 }
 
 // http://hl7.org/fhir/documentreference-definitions.html#DocumentReference.category
 //
-// filter out if we have any codes in http://hl7.org/fhir/ValueSet/document-classcodes
-// because they're all clinical
+// * http://loinc.org 48768-6, 64290-0, 64291-8 all are potential payment cards
+// * http://hl7.org/fhir/ValueSet/document-classcodes are all clinical
+// * http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category
+//   'clinical-note' is obviously clinical
+// 
 
-function categoryOK(fhirDoc) {
+function docClassFromCategory(fhirDoc) {
 
-  if (!fhirDoc.category) return(true);
-  
-  for (const i in fhirDoc.category.coding) {
+  if (!fhirDoc.category) return(DocClass.Unknown);
 
-	const coding = fhirDoc.category.coding[i];
+  let docClass = DocClass.Unknown;
 
-	if (coding.system &&
-		coding.system === 'http://hl7.org/fhir/ValueSet/document-classcodes') {
+  for (const icat in fhirDoc.category) {
+	
+	if (!fhirDoc.category[icat].coding) continue;
+	
+	for (const icode in fhirDoc.category[icat].coding) {
 
-	  return(false);
+	  const coding = fhirDoc.category[icat].coding[icode];
+
+	  if (!coding.system) continue;
+
+	  if (coding.system === 'http://loinc.org') {
+
+		if (coding.code === '48768-6' ||
+			coding.code === '64290-0' ||
+			coding.code === '64291-8') {
+		  
+		  return(DocClass.Payment);
+		}
+		else {
+		  return(DocClass.NotPayment);
+		}
+	  }
+	  
+	  if (coding.system === 'http://hl7.org/fhir/ValueSet/document-classcodes') {
+		docClass = DocClass.NotPayment;
+	  }
+	  
+	  if (coding.system === 'http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category' && coding.code === 'clinical-note') {
+		docClass = DocClass.NotPayment;
+	  }
 	}
   }
   
-  return(true);
+  return(docClass);
 }
 
 // http://hl7.org/fhir/documentreference-definitions.html#DocumentReference.content.format

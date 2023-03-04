@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import verifySHC from './lib/verifySHC.js';
+import { verifySHX } from './lib/SHX.js';
 
-export default function Data({ shc }) {
+export default function Data({ shx }) {
 
   const [fhirBundle, setFhirBundle] = useState(undefined);
   const [validationErrors, setValidationErrors]= useState(undefined);
 
   useEffect(() => {
 
-	verifySHC(shc)
+	verifySHX(shx)
 	  .then(fhirBundle => {
 		setFhirBundle(fhirBundle);
 		setValidationErrors(undefined);
@@ -17,7 +17,7 @@ export default function Data({ shc }) {
 		setFhirBundle(undefined);
 		setValidationErrors(errs.join('; '));
 	  });
-  }, [shc]);
+  }, [shx]);
   
   return (
 	<div>

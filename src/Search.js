@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import { useOptionalFhir } from './OptionalFhir';
 import listDocs from './lib/listDocs.js';
-import getDocShc from './lib/getDocShc.js';
+import getDocSHX from './lib/getDocSHX.js';
 
 export default function Search({ viewData }) {
 
@@ -42,16 +42,15 @@ export default function Search({ viewData }) {
 	if (idocCurrent !== undefined && idocCurrent < docs.length) {
 	  const processDoc = async () => {
 
-		getDocShc(fhir, docs[idocCurrent])
-		  .then((shc) => {
-			if (shc === undefined) {
+		getDocSHX(fhir, docs[idocCurrent])
+		  .then((shx) => {
+			if (shx === undefined) {
 			  // no love but no error
 			  setIDocCurrent(idocCurrent + 1);
 			}
 			else {
-			  // console.log(shc);
 			  setIDocCurrent(docs.length);
-			  viewData(shc);
+			  viewData(shx);
 			}
 		  })
 		  .catch((err) => {

@@ -15,10 +15,17 @@
 	  const url = window.location.href;
 	  const redirect = url.substring(0, url.lastIndexOf('/'));
 
+	  const scope =
+			'launch openid fhirUser ' +
+			'patient/Binary.read ' +
+			'patient/DocumentReference.read ' +
+			'user/DocumentReference.read ' +
+			'patient/Coverage.write';
+	  
       FHIR.oauth2.authorize({
         'clientId': client,
 		'redirectUri': redirect,
-		'scope': 'launch openid fhirUser patient/*.read'
+		'scope': scope
 	  });
 
     </script>

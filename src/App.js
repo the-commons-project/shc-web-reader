@@ -20,15 +20,15 @@ const TabValue = {
 export default function App() {
 
   const [tabValue, setTabValue] = useState(TabValue.About);
-  const [scannedSHC, setScannedSHC] = useState(undefined);
+  const [scannedSHX, setScannedSHX] = useState(undefined);
   const fhir = useOptionalFhir();
 
   const handleTabChange = (evt, newValue) => {
 	setTabValue(newValue);
   };
 
-  function viewData(shc) {
-	setScannedSHC(shc);
+  function viewData(shx) {
+	setScannedSHX(shx);
 	setTabValue(TabValue.Data);
   }
   
@@ -43,7 +43,7 @@ export default function App() {
 		  <Tab label='Scan Card' value={TabValue.Scan} />
 		  <Tab label='Take Photo'  value={TabValue.Photo} />
 		  { fhir && <Tab label='Search Record' value={TabValue.Search} /> }
-		  { scannedSHC && <Tab label='Card Details' value={TabValue.Data} /> }
+		  { scannedSHX && <Tab label='Card Details' value={TabValue.Data} /> }
 		</Tabs>
 
 	  </div>
@@ -53,7 +53,7 @@ export default function App() {
 		{ tabValue === TabValue.Scan   && <Scan viewData={viewData} /> }
 		{ tabValue === TabValue.Photo  && <Photo viewData={viewData} /> }
 		{ tabValue === TabValue.Search && <Search viewData={viewData} /> }
-		{ tabValue === TabValue.Data   && <Data shc={scannedSHC} /> }
+		{ tabValue === TabValue.Data   && <Data shx={scannedSHX} /> }
 	  </div>
 
 	</div>

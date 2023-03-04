@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, TextField } from '@mui/material';
+import { looksLikeSHX } from './lib/SHX.js';
 
 export default function Scan({ viewData }) {
 
   const [qrCode, setQRCode] = useState('');
 
-  const looksLikeSHC = useCallback(() => {
-	return(qrCode.startsWith('shc:/'));
+  const maybeSHX = useCallback(() => {
+	return(looksLikeSHX(qrCode));
   }, [qrCode]);
   
   const handleQRCodeChange = async (evt) => {
@@ -14,8 +15,8 @@ export default function Scan({ viewData }) {
   };
 
   useEffect(() => {
-	if (looksLikeSHC() && qrCode.endsWith('\n')) viewData(qrCode);
-  }, [qrCode,looksLikeSHC,viewData]);
+	if (maybeSHX() && qrCode.endsWith('\n')) viewData(qrCode);
+  }, [qrCode,maybeSHX,viewData]);
 
   return (
 	<div>
@@ -32,7 +33,7 @@ export default function Scan({ viewData }) {
 	  />
 
 	  <Button variant='contained'
-			  disabled={ !looksLikeSHC() }
+			  disabled={ !maybeSHX() }
 			  onClick={ async () => viewData(qrCode) } >
 		Read Code
 	  </Button>
