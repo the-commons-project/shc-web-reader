@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tab, Tabs } from '@mui/material';
 import About from './About.js';
 import Scan from './Scan.js';
@@ -31,6 +31,15 @@ export default function App() {
 	setScannedSHX(shx);
 	setTabValue(TabValue.Data);
   }
+  
+  useEffect(() => {
+
+	const params = new URLSearchParams(document.location.search);
+	const shx = params.get('shx');
+	if (shx) viewData(shx);
+	
+  }, []); // empty array as second param ensures we'll only run once
+  
   
   return (
 

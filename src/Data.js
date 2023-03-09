@@ -15,7 +15,7 @@ export default function Data({ shx }) {
 	  })
 	  .catch(errs => {
 		setFhirBundle(undefined);
-		setValidationErrors(errs.join('; '));
+		setValidationErrors(errs.join ? errs.join('; ') : errs);
 	  });
   }, [shx]);
   

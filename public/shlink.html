@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>SHC Viewer</title>
+
+  </head>
+  <body>
+    <script>
+
+	  const ich = document.URL.indexOf("#shlink:/");
+	  
+	  const param = (ich === -1 ? ''
+		 : '?shx=' + encodeURIComponent(document.URL.substring(ich + 1)));
+	  
+	  window.location = '/' + param;
+
+    </script>
+  </body>
+</html>

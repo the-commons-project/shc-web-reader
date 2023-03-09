@@ -14,6 +14,11 @@ const SHL_RECIPIENT = 'SMART Health Card Web Reader';
 
 const SHC_CONTENTTYPE = 'application/smart-health-card';
 
+const DIRECTORY_PATHS = [
+  'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json',
+  'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
+];
+
 // +--------------+
 // | looksLikeSH* |
 // +--------------+
@@ -34,24 +39,39 @@ function looksLikeSHL(input) {
 // | verifySHX |
 // +-----------+
 
-var _verifyDir = undefined;
-
 export async function verifySHX(shx) {
 
-  if (!_verifyDir) _verifyDir = await Directory.create('vci');
+  let target = shx;
+  if (looksLikeSHL(shx)) target = await resolveSHL(shx);
 
-  const result = await verify(shx.trim(), _verifyDir);
+  const dir = await getDirectory();
+  const result = await verify(target.trim(), dir);
 
   if (!result.verified) throw result.reason.split('|');
   
   return(result.data.fhirBundle);
 }
 
-// +-----------+
-// | verifySHL |
-// +-----------+
+var _verifyDir = undefined;
 
-export async function verifySHL(shl) {
+async function getDirectory() {
+  
+  if (_verifyDir) return(_verifyDir);
+
+  const dirs = [];
+  for (const i in DIRECTORY_PATHS) {
+	dirs.push(await Directory.create(DIRECTORY_PATHS[i]));
+  }
+
+  _verifyDir = Directory.create(dirs);
+  return(_verifyDir);
+}
+
+// +------------+
+// | resolveSHL |
+// +------------+
+
+export async function resolveSHL(shl) {
 
   // 1. Decode the link body
   const shlPayload = decodeSHL(shl);
@@ -62,7 +82,8 @@ export async function verifySHL(shl) {
   }
 
   // 2. Fetch the manifest
-  const shlFiles = await fetchSHLManifest(shlPayload);
+  const shlManifest = await fetchSHLManifest(shlPayload);
+  const shlFiles = shlManifest.files;
 
   let i;
   for (i = 0; i < shlFiles.length; ++i) {
@@ -76,21 +97,25 @@ export async function verifySHL(shl) {
 
   // 3. Fetch and decode the encrypted content
   const shlEncrypted = await fetchSHLContent(shlFiles[i]);
-
+  
   const key = b64_to_arr(shlPayload.key);
   const decrypted = await compactDecrypt(shlEncrypted, key);
   const shlJson = JSON.parse(arr_to_str(decrypted.plaintext));
 
-  // 4. DO SOMETHING WITH IT!
-  // 4. DO SOMETHING WITH IT!
-  // 4. DO SOMETHING WITH IT!
-  // 4. DO SOMETHING WITH IT!
-  // 4. DO SOMETHING WITH IT!
-  // 4. DO SOMETHING WITH IT!
-  // 4. DO SOMETHING WITH IT!
+  if (!shlJson.verifiableCredential ||
+	  shlJson.verifiableCredential.length === 0) {
+	
+	console.error('No VC found in resolved SHL: ' +
+				  JSON.stringify(shlJson, null, 2));
 
-  console.log(JSON.stringify(shlJson, null, 2));
-  return(undefined);
+	return(undefined);
+  }
+
+  if (shlJson.verifiableCredential.length > 1) {
+	console.warn('Multiple VCs in SHL; only using [0]');
+  }
+
+  return(shlJson.verifiableCredential[0]);
 }
 
 async function fetchSHLContent(file) {
@@ -103,8 +128,12 @@ async function fetchSHLContent(file) {
 
 async function fetchSHLManifest(shlPayload) {
 
-  const body = { recipient: SHL_RECIPIENT };
+  if (shlPayload.flag && shlPayload.flag.indexOf("U") !== -1) {
+	return(singleFileManifest(shlPayload));
+  }
   
+  const body = { recipient: SHL_RECIPIENT };
+
   const response = await fetch(shlPayload.url, {
 	method: 'POST',
 	headers: { 'Content-Type': 'application/json' },
@@ -112,6 +141,25 @@ async function fetchSHLManifest(shlPayload) {
   });
 
   return(response.json());
+}
+
+function singleFileManifest(shlPayload) {
+
+  const location = shlPayload.url +
+		(shlPayload.url.indexOf("?") === -1 ? "?" : "&") +
+		"recipient=" +
+		encodeURIComponent(SHL_RECIPIENT);
+
+  // note we assume we're getting an SHC --- we will look
+  // for verifiableCredential in the downloaded package later
+  // so that seems totally fine
+  
+  const manifest = { files: [ {
+	"contentType": SHC_CONTENTTYPE,
+	"location": location
+  } ] };
+
+  return(manifest);
 }
 
 function decodeSHL(shl) {
