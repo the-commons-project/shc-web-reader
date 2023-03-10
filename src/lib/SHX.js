@@ -47,7 +47,19 @@ export async function verifySHX(shx) {
   const dir = await getDirectory();
   const result = await verify(target.trim(), dir);
 
-  if (!result.verified) throw result.reason.split('|');
+  if (!result.verified) {
+	if (result.data.errors) {
+	  for (const i in result.data.errors) {
+		console.error(result.data.errors[i].message);
+	  }
+	}
+	if (result.data.warnings) {
+	  for (const i in result.data.warnings) {
+		console.warn(result.data.warnings[i].message);
+	  }
+	}
+	throw result.reason.split('|');
+  }
   
   return(result.data.fhirBundle);
 }
