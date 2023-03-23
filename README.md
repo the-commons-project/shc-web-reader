@@ -70,7 +70,7 @@ it looks for PDF or image files, using metadata if available to prioritize or
 exclude some documents, ordering descending by upload date.
 
 As soon as an shc:/ QR code is found it is sent to [Card
-Details](#card-details). If the search files, a "Search Again" button is
+Details](#card-details). If the search fails, a "Search Again" button is
 displayed.
 
 ## CARD DETAILS
