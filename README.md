@@ -35,12 +35,12 @@ information and perhaps some getting-started text. TBD.
 ## SCAN CARD
 
 This tab sets default focus to the input box. A barcode scanner can be used to
-acquire an shc:/ string from a QR code, or it can just be pasted in which is
+acquire an shc:/ or shlink:/ string from a QR code, or it can just be pasted in which is
 handy for testing purposes. Most scanners can be configured to send a newline
 character at the end of a scan; if this is seen the form will be submitted
 automatically. Alternatively, click the "Read Code" button to initiate a
 parse. Some very simple/naive rules are used to enable/disable the button
-(basically the input text starts with shc:/).
+(basically the input text starts with shc:/ or contains shlink:/).
 
 ## TAKE PHOTO
 
@@ -69,13 +69,13 @@ is authoritative for the rules used to filter and prioritize documents. In short
 it looks for PDF or image files, using metadata if available to prioritize or
 exclude some documents, ordering descending by upload date.
 
-As soon as an shc:/ QR code is found it is sent to [Card
+As soon as an shc:/ or shlink:/ QR code is found it is sent to [Card
 Details](#card-details). If the search fails, a "Search Again" button is
 displayed.
 
 ## CARD DETAILS
 
-This tab appears only once an shc:/ string has been captured by one of the other
+This tab appears only once an shc:/ or shlink:/ string has been captured by one of the other
 tabs. It decodes and verifies the string using
 [smart-health-card-decoder](https://github.com/smart-on-fhir/smart-health-card-decoder)
 and displays the resulting data (or an error).
@@ -88,7 +88,7 @@ The [OptionalFhir](https://github.com/the-commons-project/shc-web-reader/blob/ma
 
 Controls and styling (such as it is) uses [Google Material UI](https://mui.com/material-ui/getting-started/overview/). 
 
-[App.js](https://github.com/the-commons-project/shc-web-reader/blob/main/src/App.js) handles navigation and routes discovered shc:/ strings from capture tabs to [Card Details](#card-details). 
+[App.js](https://github.com/the-commons-project/shc-web-reader/blob/main/src/App.js) handles navigation and routes discovered shc:/ and shlink:/ strings from capture tabs to [Card Details](#card-details). 
 
 I've tried to keep as much of the FHIR-y and SHC-y stuff as possible under the [src/lib](https://github.com/the-commons-project/shc-web-reader/tree/main/src/lib) directory. It's not a perfect abstraction but it helps keep the component files a bit cleaner.
 
