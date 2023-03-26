@@ -40,6 +40,18 @@ function looksLikeSHL(input) {
 // +-----------+
 
 export async function verifySHX(shx) {
+  try {
+	return(await _verifySHX(shx));
+  }
+  catch (err) {
+	return({
+	  "valid": false,
+	  "reasons": [ err ? err.toString() : "unexpected" ]
+	});
+  }
+}
+
+async function _verifySHX(shx) {
 
   let target = shx;
   if (looksLikeSHL(shx)) target = await resolveSHL(shx);
