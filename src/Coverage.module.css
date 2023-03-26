@@ -1,0 +1,18 @@
+
+.container {
+	margin-top: 12px;
+}
+
+.covText {
+	font-size: larger;
+}
+
+.green {
+	font-weight: bold;
+	color: green;
+}
+
+.red {
+	font-weight: bold;
+	color: red;
+}

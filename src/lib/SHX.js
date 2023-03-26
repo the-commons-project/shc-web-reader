@@ -48,20 +48,42 @@ export async function verifySHX(shx) {
   const result = await verify(target.trim(), dir);
 
   if (!result.verified) {
-	if (result.data.errors) {
-	  for (const i in result.data.errors) {
-		console.error(result.data.errors[i].message);
-	  }
-	}
+
 	if (result.data.warnings) {
 	  for (const i in result.data.warnings) {
 		console.warn(result.data.warnings[i].message);
 	  }
 	}
-	throw result.reason.split('|');
+
+	return({
+	  "valid": false,
+	  "reasons": result.reason.split('|'),
+	  "errors": result.data.errors,
+	  "warnings": result.data.warnings
+	});
   }
+
+  const issuerISS = (result.data.signature.issuer.iss ?
+					 result.data.signature.issuer.iss :
+					 result.data.jws.payload.iss);
+					 
+  const issuerName = (result.data.signature.issuer.name ?
+					  result.data.signature.issuer.name :
+					  issuerISS);
+
+  const supportsRevocation =
+		(("crlVersion" in result.data.signature.key) ||
+		 ("rid" in result.data.jws.payload.vc));
   
-  return(result.data.fhirBundle);
+  return({
+	"valid": true,
+	"issuerISS": issuerISS,
+	"issuerName": issuerName,
+	"issuerURL": result.data.signature.issuer.website,
+	"issueDate": new Date(result.data.jws.payload.nbf * 1000),
+	"supportsRevocation": supportsRevocation,
+	"fhirBundle": result.data.fhirBundle
+  });
 }
 
 var _verifyDir = undefined;
