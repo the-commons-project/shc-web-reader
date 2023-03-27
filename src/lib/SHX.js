@@ -53,11 +53,11 @@ export async function verifySHX(shx) {
 
 async function _verifySHX(shx) {
 
-  let target = shx;
-  if (looksLikeSHL(shx)) target = await resolveSHL(shx);
+  let target = shx.trim();
+  if (looksLikeSHL(target)) target = await resolveSHL(target);
 
   const dir = await getDirectory();
-  const result = await verify(target.trim(), dir);
+  const result = await verify(target, dir);
 
   if (!result.verified) {
 
