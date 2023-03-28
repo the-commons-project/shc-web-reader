@@ -1,7 +1,7 @@
 
 import { verify, Directory } from 'smart-health-card-decoder'
 import { compactDecrypt } from 'jose';
-import { b64u_to_str, b64_to_arr, arr_to_str } from './b64.js';
+import { b64u_to_str, b64u_to_arr, arr_to_str } from './b64.js';
 
 // +-----------+
 // | Constants |
@@ -144,7 +144,7 @@ export async function resolveSHL(shl) {
   // 3. Fetch and decode the encrypted content
   const shlEncrypted = await fetchSHLContent(shlFiles[i]);
   
-  const key = b64_to_arr(shlPayload.key);
+  const key = b64u_to_arr(shlPayload.key);
   const decrypted = await compactDecrypt(shlEncrypted, key);
   const shlJson = JSON.parse(arr_to_str(decrypted.plaintext));
 
@@ -186,7 +186,7 @@ async function fetchSHLManifest(shlPayload) {
 	body: JSON.stringify(body)
   });
 
-  return(response.json());
+  return(await response.json());
 }
 
 function singleFileManifest(shlPayload) {
