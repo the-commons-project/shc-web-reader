@@ -16,3 +16,37 @@
 	font-weight: bold;
 	color: red;
 }
+
+.dataTable {
+	margin-top: 24px;
+	margin-bottom: 24px;
+	border-collapse: collapse;
+}
+
+.dataTable th, .dataTable td {
+	min-width: 100px;
+	text-align: left;
+	vertical-align: top;
+	border: 1px solid grey;
+	padding: 8px 8px 8px 8px;
+	font-size: smaller;
+}
+
+.innerTable td, .innerTable th {
+	text-align: left;
+	vertical-align: top;
+	padding: 2px 2px 2px 2px;
+	border: none;
+	font-size: 100%;
+}
+
+.innerTable th {
+	text-align: right;
+}
+
+.logoImg {
+	float: left;
+	margin-right: 8px;
+	margin-bottom: 8px;
+}
+

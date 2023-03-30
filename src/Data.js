@@ -27,7 +27,7 @@ export default function Data({ shx }) {
 
 	  switch (resource.resourceType) {
 	    case "Coverage":
-	      result.push(<Coverage cardData={cardData} cov={resource} />);
+	      result.push(<Coverage key={key} cardData={cardData} cov={resource} resources={resources} />);
 	      break;
 		
 	    default:
