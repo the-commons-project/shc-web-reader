@@ -9,6 +9,7 @@ const LOGO_EXTENSION = "http://hl7.org/fhir/us/insurance-card/StructureDefinitio
 export default function Coverage({ cardData, cov, resources }) {
 
   const [showPayorContacts, setShowPayorContacts] = useState(false);
+  const [showBundle, setShowBundle] = useState(false);
 
   const isActive = () => {
 
@@ -249,8 +250,11 @@ export default function Coverage({ cardData, cov, resources }) {
 	    {renderPayor()}
 	    {renderCosts()}
 	  </tbody></table>
-	  
-	  <pre><code>{JSON.stringify(cardData.fhirBundle, null, 2)}</code></pre>
+
+	  <div>
+	    <Button onClick={ () => setShowBundle(!showBundle) }>source</Button>
+	    { showBundle && <pre><code>{JSON.stringify(cardData.fhirBundle, null, 2)}</code></pre>}
+	  </div>
 
   </div>
   );
