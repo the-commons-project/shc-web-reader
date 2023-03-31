@@ -1,4 +1,6 @@
 
+import { fhirCodes } from "./fhirCodes.js";
+
 const NA = "Unknown";
 
 // +--------------------+
@@ -23,13 +25,16 @@ export function renderPerson(person, resources) {
 }
 
 function renderPersonResource(person) {
-  // TODO - NOT COMPLETE - dob, telecoms, etc.
-  return(renderPersonName(person));
-}
+  // TODO - NOT COMPLETE - telecoms, etc.
 
-function renderPersonName(person) {
-  // TODO - NOT COMPLETE - find best name rather than [0]
-  return(<div>{getPersonDisplayName(person.name[0])}</div>);
+  const dob = (person.birthDate ? "DOB " + renderDate(person.birthDate) : "");
+  
+  return(
+    <div>
+	  {getPersonDisplayName(person.name[0])}<br/>
+	  {dob}
+	</div>
+  );
 }
 
 function getPersonDisplayName(name) {
@@ -40,10 +45,28 @@ function getPersonDisplayName(name) {
 
   d = spaceAppend(d, name.prefix);
   d = spaceAppendArray(d, name.given);
-  d = spaceAppend(name.family);
-  d = spaceAppend(name.suffix);
+  d = spaceAppend(d, name.family);
+  d = spaceAppend(d, name.suffix);
 
   return(d);
+}
+
+// +-------------+
+// | renderMoney |
+// +-------------+
+
+export function renderMoney(m) {
+
+  if (m.value) {
+	const currency = m.currency ? m.currency : "USD";
+	const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: currency });
+	return(fmt.format(m.value));
+  }
+  else if (m.extension && m.extension.length && m.extension.length >= 1 && m.extension[0].valueString) {
+	return(m.extension[0].valueString);
+  }
+
+  return(NA);
 }
 
 // +-------------+
@@ -63,6 +86,62 @@ export function renderImage(img) {
 		";base64," + imageExt.valueAttachment.data;
   
   return(<img src={dataUri} alt={alt} title={alt} />);
+}
+
+// +------------+
+// | renderDate |
+// +------------+
+
+export function renderDate(d) {
+
+  return(new Date(d).toLocaleString('en-US', {
+	month: 'numeric', day: 'numeric', year: 'numeric' }));
+}
+
+// +---------------+
+// | renderAddress |
+// +---------------+
+
+export function renderAddress(a) {
+
+  if (a.text) return(a.text);
+
+  let d = "";
+
+  if (a.line) {
+	for (const i in a.line) d = delimiterAppend(d, a.line[i], ", ");
+  }
+
+  d = delimiterAppend(d, a.city, ", ");
+  d = delimiterAppend(d, a.state, ", ");
+  d = delimiterAppend(d, a.postalCode, ", ");
+  d = delimiterAppend(d, a.country, ", ");
+
+  return(d);
+}
+
+// +--------------+
+// | renderCoding |
+// +--------------+
+
+export function renderCodable(c) {
+
+  let disp = c.text;
+
+  if (!disp && c.coding && c.coding.length >= 1) {
+
+	disp = c.coding[0].display;
+
+	if (!disp && c.coding[0].system in fhirCodes) {
+	  disp = fhirCodes[c.coding[0].system][c.coding[0].code];
+	}
+
+	if (!disp) disp = c.coding[0].code;
+  }
+
+  if (!disp) disp = NA;
+
+  return(disp);
 }
 
 // +---------------+
@@ -87,6 +166,15 @@ export function renderReference(o, resources, refRenderFunc) {
 }
 
 export function renderReferenceMap(o, resources, refRenderFuncMap) {
+  try {
+	return(renderReferenceMapThrow(o, resources, refRenderFuncMap));
+  }
+  catch (err) {
+	return(<div>{o.display ? o.display : NA}</div>);
+  }
+}
+
+export function renderReferenceMapThrow(o, resources, refRenderFuncMap) {
 
   let r = undefined;
 
@@ -104,7 +192,7 @@ export function renderReferenceMap(o, resources, refRenderFuncMap) {
 	if ("any" in refRenderFuncMap) return(refRenderFuncMap["any"](r));
   }
 
-  return(o.display ? o.display : NA);
+  throw new Error("no resource or resource function in map");
 }
 
 // +-------------+

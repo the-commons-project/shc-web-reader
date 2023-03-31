@@ -32,16 +32,19 @@
 	font-size: smaller;
 }
 
+.innerTable {
+	border-collapse: collapse;
+}
+
 .innerTable td, .innerTable th {
 	text-align: left;
 	vertical-align: top;
-	padding: 2px 2px 2px 2px;
-	border: none;
+	padding: 2px 8px 2px 2px;
 	font-size: 100%;
-}
-
-.innerTable th {
-	text-align: right;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+	border-bottom: 1px solid lightgray;
 }
 
 .logoImg {
@@ -50,3 +53,7 @@
 	margin-bottom: 8px;
 }
 
+.payorContacts {
+	float: right;
+	font-size: smaller;
+}
