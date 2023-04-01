@@ -27,7 +27,7 @@ export default function Copyable({ txt, jsx }) {
   return(
     <>
 	  <IconButton size="small" onClick={() => copyText(txt)}>
-	    <ContentCopyIcon fontSize="small" />
+	  <ContentCopyIcon sx={{ fontSize: 14 }} />
 	  </IconButton>
 	  <Snackbar
 	    open={copied}

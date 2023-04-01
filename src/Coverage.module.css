@@ -38,7 +38,7 @@
 
 .innerTable td, .innerTable th {
 	text-align: left;
-	vertical-align: top;
+	vertical-align: middle;
 	padding: 2px 8px 2px 2px;
 	font-size: 100%;
 	border-top: none;

@@ -193,7 +193,7 @@ export default function Coverage({ cardData, cov, resources }) {
 	  const name = c.name;
 	  const disp = val + (name ? " (" + name + ")" : "");
 	  
-	  return(<tr key={hdr}><th>{hdr}:</th><td>{disp}</td></tr>);
+	  return(<tr key={hdr}><th>{hdr}:</th><td><Copyable txt={val} jsx={disp} /></td></tr>);
 	});
 	
 	return(
