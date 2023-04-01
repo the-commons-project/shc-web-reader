@@ -19,7 +19,7 @@ const TabValue = {
 
 export default function App() {
 
-  const [tabValue, setTabValue] = useState(TabValue.About);
+  const [tabValue, setTabValue] = useState(getInitialTab());
   const [scannedSHX, setScannedSHX] = useState(undefined);
   const fhir = useOptionalFhir();
 
@@ -30,6 +30,12 @@ export default function App() {
   function viewData(shx) {
 	setScannedSHX(shx);
 	setTabValue(TabValue.Data);
+  }
+
+  function getInitialTab() {
+	const params = new URLSearchParams(document.location.search);
+	const initialTab = params.get("tab");
+	return(initialTab ? initialTab : TabValue.About);
   }
   
   useEffect(() => {
