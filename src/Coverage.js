@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@mui/material';
 import * as rf from  './lib/renderFhir.js';
+import Copyable from './Copyable.js';
 
 import styles from './Coverage.module.css';
 
@@ -49,10 +50,12 @@ export default function Coverage({ cardData, cov, resources }) {
 	if (cov.relationship && cov.relationship.coding[0].code === "self") {
 	  return(<></>);
 	}
+
+	const idTxt = (cov.identifier ? cov.identifier[0].value : "");
+	const id = (idTxt ? <><Copyable txt={idTxt} jsx=<b>{idTxt}</b> /><br/></> : "");
 	
 	const rel = (cov.relationship ? "Relationship: " + rf.renderCodable(cov.relationship) : "");
-	const id = (cov.identifier ? <><b>{cov.identifier[0].value}</b><br/></> : "");
-	
+
 	return(
 	  <tr>
 		<th>Member</th>
@@ -70,7 +73,7 @@ export default function Coverage({ cardData, cov, resources }) {
 	  <tr>
 		<th>Subscriber</th>
 		<td>
-		  <b>{cov.subscriberId}</b><br/>
+		  <Copyable txt={cov.subscriberId} jsx=<b>{cov.subscriberId}</b> /><br/>
 		  {rf.renderPerson(cov.subscriber, resources)}
 	    </td>
 	  </tr>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Copy Text</title>
+  </head>
+  <body>
+    <script>
+	  
+	  const txt = window.location.search.substring(1);
+	  document.write("Copying \"" + txt + "\" ...");
+	  
+	  navigator.clipboard.writeText(txt).then(() => {
+		
+		setTimeout(() => { window.close(); }, 500);
+		
+	  }, (err) => {
+		
+		alert(err);
+		
+	  });
+    </script>
+  </body>
+</html>
