@@ -6,6 +6,7 @@ import Photo from './Photo.js';
 import Search from './Search.js';
 import Data from './Data.js';
 import { useOptionalFhir } from './OptionalFhir';
+import config from './lib/config.js';
 
 import styles from './App.module.css';
 
@@ -19,7 +20,7 @@ const TabValue = {
 
 export default function App() {
 
-  const [tabValue, setTabValue] = useState(getInitialTab());
+  const [tabValue, setTabValue] = useState(config("initialTab"));
   const [scannedSHX, setScannedSHX] = useState(undefined);
   const fhir = useOptionalFhir();
 
@@ -32,20 +33,12 @@ export default function App() {
 	setTabValue(TabValue.Data);
   }
 
-  function getInitialTab() {
-	const params = new URLSearchParams(document.location.search);
-	const initialTab = params.get("tab");
-	return(initialTab ? initialTab : TabValue.About);
-  }
-  
   useEffect(() => {
 
-	const params = new URLSearchParams(document.location.search);
-	const shx = params.get('shx');
+	const shx = config("shx");
 	if (shx) viewData(shx);
-	
+
   }, []); // empty array as second param ensures we'll only run once
-  
   
   return (
 

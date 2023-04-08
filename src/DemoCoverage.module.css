@@ -1,0 +1,17 @@
+
+.section {
+	width: 100%;
+}
+
+.valid {
+	background-color: #1C8E15;
+	color: #ffffff;
+	font-weight: bold;
+}
+
+.invalid {
+	background-color: red;
+	color: #ffffff;
+	font-weight: bold;
+}
+

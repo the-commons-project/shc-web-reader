@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { verifySHX } from './lib/SHX.js';
 import ValidationInfo from './ValidationInfo.js';
 import Coverage from './Coverage.js';
+import DemoCoverage from './DemoCoverage.js';
+import config from './lib/config.js';
 
 export default function Data({ shx }) {
 
   const [cardData, setCardData] = useState(undefined);
 
+  const mayDemo = config("mayDemo");
+  
   useEffect(() => {
 	verifySHX(shx).then(result => setCardData(result));
   }, [shx]);
@@ -27,7 +31,9 @@ export default function Data({ shx }) {
 
 	  switch (resource.resourceType) {
 	    case "Coverage":
-	      result.push(<Coverage key={key} cardData={cardData} cov={resource} resources={resources} />);
+	      result.push(mayDemo ?
+		    <DemoCoverage key={key} cardData={cardData} cov={resource} resources={resources} /> :
+			<Coverage key={key} cardData={cardData} cov={resource} resources={resources} />);
 	      break;
 		
 	    default:
@@ -45,10 +51,10 @@ export default function Data({ shx }) {
   }
 
   if (!cardData) return(<></>);
-  
+
   return(
 	<div>
-	  <ValidationInfo cardData={cardData} />
+	  {!mayDemo && <ValidationInfo cardData={cardData} />}
 	  {cardData.valid && renderCard(cardData)}
 	</div>
 	);
