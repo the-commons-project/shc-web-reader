@@ -176,14 +176,7 @@ export function renderReferenceMap(o, resources, refRenderFuncMap) {
 
 export function renderReferenceMapThrow(o, resources, refRenderFuncMap) {
 
-  let r = undefined;
-
-  if (o.resourceType) {
-	r = o;
-  }
-  else if (o.reference && (o.reference in resources)) {
-	r = resources[o.reference];
-  }
+  const r = resolveReference(o, resources);
 
   if (r) {
 	const t = r.resourceType;
@@ -193,6 +186,17 @@ export function renderReferenceMapThrow(o, resources, refRenderFuncMap) {
   }
 
   throw new Error("no resource or resource function in map");
+}
+
+// +------------------+
+// | resolveReference |
+// +------------------+
+
+export function resolveReference(o, resources) {
+  
+  if (o.resourceType) return(o);
+  if (o.reference && o.reference in resources) return(resources[o.reference]);
+  return(undefined);
 }
 
 // +-------------+
@@ -209,21 +213,21 @@ export function searchArray(arr, searchFunc) {
 // | utilities |
 // +-----------+
 
-function spaceAppend(cur, str) {
+export function spaceAppend(cur, str) {
   return(delimiterAppend(cur, str, " "));
 }
 
-function delimiterAppend(cur, str, delim) {
+export function delimiterAppend(cur, str, delim) {
   if (!cur || cur.length === 0) return(str);
   if (str && str.length !== 0) return(cur + delim + str);
   return(cur);
 }
 
-function spaceAppendArray(cur, arr) {
+export function spaceAppendArray(cur, arr) {
   return(delimiterAppendArray(cur, arr, " "));
 }
 
-function delimiterAppendArray(cur, arr, delim) {
+export function delimiterAppendArray(cur, arr, delim) {
   if (!arr) return(cur);
   for (const i in arr) cur = delimiterAppend(cur, arr[i], delim);
   return(cur);

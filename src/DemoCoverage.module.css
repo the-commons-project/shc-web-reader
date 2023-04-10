@@ -1,17 +1,154 @@
 
-.section {
-	width: 100%;
+.outermost {
+	background-color: #F3F7FF;
+	padding: 10px;
+}
+
+/* +------------------+
+   | verification bar |
+   +------------------+ */
+
+.topBar {
+	padding: 6px;
+	margin-bottom: 10px;
+	font-weight: bold;
+	color: #ffffff;
 }
 
 .valid {
 	background-color: #1C8E15;
-	color: #ffffff;
-	font-weight: bold;
 }
 
 .invalid {
 	background-color: red;
-	color: #ffffff;
+}
+
+.mark {
+	margin-left: 4px;
+	margin-right: 8px;
+}
+
+/* +-----------+
+   | main grid | 
+   +-----------+ */
+
+.gridContainer {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: auto 16px auto;
+	background-color: white;
+}
+
+.banner, .demos, .benefits, .other {
+	padding-top: 0px;
+	padding-right: 12px;
+	padding-left: 12px;
+	padding-bottom: 14px;
+	/*border: 1px dashed black;  */
+}
+
+.greyBar {
+	width: 100%;
+	height: 16px;
+	margin-top: 12px;
+	padding: 0px;
+	background-color: lightgrey;
+}
+
+.doubleGrey {
+	grid-column: 2 / span 2;
+	grid-row: 2;
+	padding: 0px;
+	margin-left: 12px;
+	margin-right: 12px;
+	background-color: lightgrey;
+}
+
+.blueHeader {
+	color: blue;
+	font-size: 12px;
 	font-weight: bold;
+	display: flex;
+	padding-top: 12px;
+}
+
+.blueHeader:after {
+	content: '';
+	background-color: lightgrey;
+	flex: 1;
+	height: 1px;
+	margin-top: 7px;
+	margin-left: 6px;
+}
+
+/* +--------+
+   | banner |
+   +--------+ */
+
+.banner {
+	grid-column: 1 / span 3;
+	grid-row: 1;
+	padding-top: 8px;
+}
+
+.banner img {
+	width: 40px;
+	height: 40px;
+	margin-right: 20px;
+	vertical-align: middle;
+}
+
+.banner .headerStatic {
+	font-size: 24px;
+	font-weight: 700;
+}
+
+.banner .covEffective {
+	float: right;
+	padding: 2px;
+}
+
+.banner .covDate {
+	font-size: 20px;
+	font-weight: bold;
+	margin-left: 12px;
+}
+
+/* +--------------+
+   | demographics |
+   +--------------+ */
+
+.demos {
+	grid-column: 1;
+	grid-row: 2 / span 2;
+	padding-top: 0px;
+}
+
+.demos .tinyHeader {
+	font-size: 10px;
+}
+
+.demos .biggerText {
+	font-size: 20px;
+	font-weight: 700;
+	margin-bottom: 10px;
+}
+
+/* +----------+
+   | benefits |
+   +----------+ */
+
+.benefits {
+	grid-column: 2;
+	grid-row: 3;
+}
+
+/* +-------+
+   | other |
+   +-------+ */
+
+.other {
+	grid-column: 3;
+	grid-row: 3;
 }
 
