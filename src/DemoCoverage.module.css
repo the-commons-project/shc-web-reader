@@ -2,6 +2,7 @@
 .outermost {
 	background-color: #F3F7FF;
 	padding: 10px;
+	max-width: 1000px;
 }
 
 /* +------------------+
@@ -81,6 +82,38 @@
 	margin-left: 6px;
 }
 
+.columnTable {
+	padding: 0px;
+	border: none;
+	width: 100%;
+}
+
+.columnTable th {
+	font-size: 14px;
+	font-weight: normal;
+	text-align: left;
+	white-space: nowrap;
+	vertical-align: top;
+	padding-bottom: 6px;
+}
+
+.columnTable td {
+	font-size: 14px;
+	font-weight: bold;
+	text-align: right;
+	vertical-align: top;
+	padding-left: 8px;
+	padding-bottom: 6px;
+}
+
+.columnTable .fw {
+	text-align: left;
+	column-span: 2;
+	font-size: 20px;
+	padding-left: 0px;
+	padding-top: 0px;
+}
+
 /* +--------+
    | banner |
    +--------+ */
@@ -112,6 +145,10 @@
 	font-size: 20px;
 	font-weight: bold;
 	margin-left: 12px;
+}
+
+.banner .eyeButton {
+	padding-left: 30px;
 }
 
 /* +--------------+
@@ -152,3 +189,19 @@
 	grid-row: 3;
 }
 
+.other .issuer {
+	padding-top: 6px;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.other .smartLogo {
+	width: 46px;
+	height: 46px;
+	float: right;
+}
+
+.other .ctnLogo {
+	width: 150px;
+	float: right;
+}

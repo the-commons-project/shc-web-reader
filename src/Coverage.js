@@ -77,7 +77,7 @@ export default function Coverage({ cardData, cov, resources }) {
 
 	  const purpose = (c.purpose ? futil.renderCodable(c.purpose) : "Contact");
 
-	  const addr = (c.address ? <>{futil.renderAddress(c.address)}<br/></> : "");
+	  const addr = (c.address ? <>{futil.renderAddressSingleLine(c.address)}<br/></> : "");
 	  
 	  const telecom = (!c.telecom ? "" : c.telecom.map((t) => {
 		switch (t.system) {

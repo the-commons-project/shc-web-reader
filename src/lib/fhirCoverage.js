@@ -1,6 +1,10 @@
 
-const COVERAGE_CLASS_SYSTEM = "http://terminology.hl7.org/CodeSystem/coverage-class";
-const COVERAGE_CLASS_GROUP = "group";
+import * as futil from "./fhirUtil.js";
+import { fhirCodes, fhirKey } from "./fhirCodes.js";
+
+// +----------------+
+// | Coverage Dates |
+// +----------------+
 
 export function isActive(cov) {
   
@@ -28,23 +32,62 @@ export function endDate(cov) {
   return(cov.period ? cov.period.end : undefined);
 }
 
-export function groupNumber(cov) {
+// +-------------------------+
+// | Coverage Class Elements |
+// +-------------------------+
 
-  if (cov.class) {
-	for (const i in cov.class) {
-	  const item = cov.class[i];
-	  if (item.type && item.type.coding) {
-		for (const j in item.type.coding) {
-		  if (item.type.coding[j].system === COVERAGE_CLASS_SYSTEM &&
-			  item.type.coding[j].code === COVERAGE_CLASS_GROUP) {
-			return(item.value);
-		  }
-		}
-	  }
-	}
+export function coverageClassValue(cov, code) {
+  // eslint-disable-next-line no-unused-vars
+  const [val, name] = coverageClass(cov, code);
+  return(val);
+}
+
+export function coverageClassName(cov, code) {
+  const [val, name] = coverageClass(cov, code);
+  return(name ? name : val);
+}
+
+export function coverageClass(cov, code) {
+
+  const checkedCode = fhirKey(fhirCodes.systems.class, code);
+
+  if (checkedCode) {
+	const item = futil.findCodedItem(cov.class, fhirCodes.systems.class, checkedCode);
+	if (item) return [ item.value, item.name ];
+  }
+
+  return [undefined, undefined];
+}
+
+// +------------------------------+
+// | Cost to Beneficiary Elements |
+// +------------------------------+
+
+export function costToBeneficiaryValue(cov, code) {
+
+  let system = fhirCodes.systems.copay;
+  let checkedCode = fhirKey(system, code);
+  
+  if (!checkedCode) {
+	system = fhirCodes.systems.copayExt;
+	checkedCode = fhirKey(system, code);
+  }
+
+  // TEMP - look in demo codeset too
+  if (!checkedCode) {
+	system = fhirCodes.systems.demo;
+	checkedCode = fhirKey(system, code);
+  }
+
+  if (checkedCode) {
+	const item = futil.findCodedItem(cov.costToBeneficiary, system, checkedCode);
+	if (item) return(futil.renderMoney(item.valueMoney));
   }
 
   return(undefined);
 }
+
+
+
 
 

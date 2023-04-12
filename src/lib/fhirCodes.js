@@ -1,6 +1,35 @@
 
+// +-----------+
+// | fhirCodes |
+// +-----------+
+
 export const fhirCodes = {
+
+  "systems": {
+	
+	"class": "http://terminology.hl7.org/CodeSystem/coverage-class",
+	"copay": "http://terminology.hl7.org/CodeSystem/coverage-copay-type",
+	"copayExt": "http://hl7.org/fhir/us/insurance-card/CodeSystem/C4DICExtendedCopayTypeCS",
+	"contact": "http://terminology.hl7.org/CodeSystem/contactentity-type", 
+	"contactExt": "http://hl7.org/fhir/us/insurance-card/CodeSystem/C4DICExtendedContactTypeCS",
+	"demo": "http://example.com/demoTerms"
+  },
   
+  "http://terminology.hl7.org/CodeSystem/coverage-class": {
+	
+	"group": "An employee group",
+	"subgroup": "A sub-group of an employee group",
+	"plan": "A specific suite of benefits",
+	"subplan": "A subset of a specific suite of benefits",
+	"class": "A class of benefits",
+	"subclass": "A subset of a class of benefits",
+	"sequence": "A sequence number associated with a short-term continuance of the coverage",
+	"rxbin": "Pharmacy benefit manager's Business Identification Number",
+	"rxpcn": "A Pharmacy Benefit Manager specified Processor Control Number",
+	"rxid": "A Pharmacy Benefit Manager specified Member ID",
+	"rxgroup": "A Pharmacy Benefit Manager specified Group number"
+  },
+
   "http://terminology.hl7.org/CodeSystem/coverage-copay-type": {
 	
     "gpvisit": "GP Office Visit Copay",
@@ -36,6 +65,15 @@ export const fhirCodes = {
     "rx": "Prescription"
   },
 
+  "http://terminology.hl7.org/CodeSystem/contactentity-type": {
+	"BILL": "Billing Contact",
+	"ADMIN": "Administrative",
+	"HR": "Human Resource",
+	"PAYOR": "Payor",
+	"PATINF": "Patient",
+	"PRESS": "Press"
+  },
+
   "http://hl7.org/fhir/us/insurance-card/CodeSystem/C4DICExtendedContactTypeCS": {
 
 	"pharma": "Pharmacists",
@@ -44,15 +82,35 @@ export const fhirCodes = {
 	"virtual": "Virtual Care Services"
   },
 
-  "http://terminology.hl7.org/CodeSystem/contactentity-type": {
-	"BILL": "Billing Contact",
-	"ADMIN": "Administrative",
-	"HR": "Human Resource",
-	"PAYOR": "Payor",
-	"PATINF": "Patient",
-	"PRESS": "Press"
+  "http://example.com/demoTerms": {
+	"coinsIn": "In-Network CoInsurance",
+	"coinsOut": "Out-of-Network CoInsurance",
   }
-
 };
 
+// +---------+
+// | fhirKey |
+// +---------+
 
+// this is just to provide a measure of safety when referencing
+// codes with a string value ... feels pretty overengineered actually.
+
+const _fhirKeys = {};
+
+export function fhirKey(system, key) {
+
+  const sys = (fhirCodes.systems[system] ? fhirCodes.systems[system] : system);
+  
+  if (!_fhirKeys[sys]) {
+	
+	if (!fhirCodes[sys]) throw new Error(`System ${system} not found`);
+
+	_fhirKeys[sys] = new Set();
+	const keys = Object.keys(fhirCodes[sys]);
+	for (const i in keys) {
+	  _fhirKeys[sys].add(keys[i]);
+	}
+  }
+
+  return(_fhirKeys[sys].has(key) ? key : undefined);
+}

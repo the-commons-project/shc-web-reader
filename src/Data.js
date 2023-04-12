@@ -9,6 +9,7 @@ export default function Data({ shx }) {
 
   const [cardData, setCardData] = useState(undefined);
   const [showBundle, setShowBundle] = useState(false);
+  const [demoView, setDemoView] = useState(config("mayDemo"));
 
   useEffect(() => {
 	verifySHX(shx).then(result => setCardData(result));
@@ -26,7 +27,7 @@ export default function Data({ shx }) {
 	}
   }
 
-  const renderer = (config("mayDemo")
+  const renderer = (demoView
 					? <DemoCoverage cardData={cardData} resources={resources} />
 					: <MultiResource cardData={cardData} resources={resources} />);
 
@@ -34,6 +35,7 @@ export default function Data({ shx }) {
 	<>
 	  {renderer}
 	  <div>
+	    <Button onClick={ () => setDemoView(!demoView) }>toggle view</Button> |
 	    <Button onClick={ () => setShowBundle(!showBundle) }>source</Button>
 	    { showBundle && <pre><code>{JSON.stringify(cardData.fhirBundle, null, 2)}</code></pre>}
 	  </div>

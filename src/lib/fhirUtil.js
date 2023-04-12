@@ -16,6 +16,18 @@ function renderOrganizationResource(org) {
   return(<div>{org.name}</div>);
 }
 
+// +---------------+
+// | renderContact |
+// +---------------+
+
+export function renderContact(c, withLinks) {
+
+  const addr = renderAddressJSX(c.address);
+  const telecom = renderTelecomJSX(c.telecom, withLinks);
+  
+  return(<>{addr}{telecom}</>);
+}
+
 // +--------------+
 // | renderPerson |
 // +--------------+
@@ -98,26 +110,76 @@ export function renderDate(d) {
 	month: 'numeric', day: 'numeric', year: 'numeric' }));
 }
 
-// +---------------+
-// | renderAddress |
-// +---------------+
+// +-------------------------+
+// | renderAddressJSX        |
+// | renderAddressSingleLine |
+// | renderAddressLines      |
+// +-------------------------+
 
-export function renderAddress(a) {
+export function renderAddressJSX(a) {
+  
+  const lines = getAddressLines(a);
+  
+  let key = 0;
+  return(lines.map((line) => <span key={key++}>{line}<br/></span>));
+}
 
-  if (a.text) return(a.text);
+export function renderAddressSingleLine(a) {
+  return(getAddressLines(a).join(", "));
+}
 
-  let d = "";
+function getAddressLines(a) {
 
-  if (a.line) {
-	for (const i in a.line) d = delimiterAppend(d, a.line[i], ", ");
+  if (!a) return([]);
+  //if (a.text) return(a.text.split("\n"));
+
+  let lines = [];
+  if (a.line) lines = lines.concat(a.line);
+
+  let cityState = "";
+  cityState = delimiterAppend(cityState, a.city, ", ");
+  cityState = delimiterAppend(cityState, a.state, ", ");
+  if (cityState.length) lines.push(cityState);
+
+  if (a.postalCode) lines.push(a.postalCode);
+  if (a.country && a.country !== "US") lines.push(a.country);
+
+  return(lines);
+}
+
+// +----------------------+
+// | renderTelecomJSX     |
+// | renderTelecomItemJSX |
+// +----------------------+
+
+export function renderTelecomItemJSX(t, withLinks) {
+
+  if (!withLinks) return(t.value);
+
+  switch (t.system) {
+    case "phone":
+	  return(<a href={"tel" + t.value}>{t.value}</a>);
+
+    case "email":
+	  return(<a href={"mailto:" + t.value}>{t.value}</a>);
+
+    case "url":
+	  return(<a target="blank" rel="noreferrer" href={t.value}>{t.value}</a>);
+
+    default:
+	  return(<>{t.system}>{t.system}: {t.value}</>);
   }
+  
+}
 
-  d = delimiterAppend(d, a.city, ", ");
-  d = delimiterAppend(d, a.state, ", ");
-  d = delimiterAppend(d, a.postalCode, ", ");
-  d = delimiterAppend(d, a.country, ", ");
+export function renderTelecomJSX(t, withLinks) {
 
-  return(d);
+  if (!t || t.length == 0) return(undefined);
+
+  let key = 0;
+  
+  return(t.map((item) =>
+	<span key={key++}>{renderTelecomItemJSX(item, withLinks)}<br/></span>));
 }
 
 // +--------------+
@@ -193,7 +255,6 @@ export function renderReferenceMapThrow(o, resources, refRenderFuncMap) {
 // +------------------+
 
 export function resolveReference(o, resources) {
-  
   if (o.resourceType) return(o);
   if (o.reference && o.reference in resources) return(resources[o.reference]);
   return(undefined);
@@ -207,6 +268,38 @@ export function searchArray(arr, searchFunc) {
   if (!arr) return(undefined);
   for (const i in arr) if (searchFunc(arr[i])) return(arr[i]);
   return(undefined);
+}
+
+// +----------------------+
+// | findCodedItem        |
+// | findCodedItemInChild |
+// +----------------------+
+
+export function findCodedItemInChild(arr, child, system, code) {
+
+  if (!arr) return(undefined);
+  
+  for (const i in arr) {
+	  
+	const item = arr[i];
+	if (item[child] && item[child].coding) {
+
+	  for (const j in item[child].coding) {
+
+		if (item[child].coding[j].system === system &&
+			item[child].coding[j].code === code) {
+
+		  return(item);
+		}
+	  }
+	}
+  }
+
+  return(undefined);
+}
+
+export function findCodedItem(arr, system, code) {
+  return(findCodedItemInChild(arr, "type", system, code));
 }
 
 // +-----------+

@@ -1,13 +1,15 @@
 
+import { useState } from 'react';
+import { IconButton } from '@mui/material';
+import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import * as futil from  './lib/fhirUtil.js';
 import * as fcov from  './lib/fhirCoverage.js';
+import { fhirCodes, fhirKey } from "./lib/fhirCodes.js";
 import styles from './DemoCoverage.module.css';
 
 export default function DemoCoverage({ cardData, resources }) {
 
-  // +--------------------+
-  // | Main Render & Grid |
-  // +--------------------+
+  const [showDOB, setShowDOB] = useState(false);
 
   let cov = undefined;
   for (const i in resources) {
@@ -54,24 +56,81 @@ export default function DemoCoverage({ cardData, resources }) {
   // | renderDemographics |
   // +--------------------+
 
+  const renderContact = (payor, purpose) => {
+
+	let system = fhirCodes.systems.contact;
+	let checkedPurpose = fhirKey(system, purpose);
+  
+	if (!checkedPurpose) {
+	  system = fhirCodes.systems.contactExt;
+	  checkedPurpose = fhirKey(system, purpose);
+	}
+
+	if (checkedPurpose) {
+	  const c = futil.findCodedItemInChild(payor.contact, "purpose", system, checkedPurpose);
+	  if (c) return(futil.renderContact(c, false));
+	}
+
+	return(undefined);
+  }
+
+  const renderContactInfo = () => {
+
+	const payor = futil.resolveReference(cov.payor[0], resources);
+	if (!payor) return(<></>);
+
+	const patients = renderContact(payor, "PATINF");
+	const providers = renderContact(payor, "provider");
+	const claims = renderContact(payor, "PAYOR");
+								 
+	return (
+	  <>
+		<div className={styles.blueHeader}>Contact Information</div>
+		<table className={styles.columnTable}>
+		  <tbody>
+			{ patients && <tr><th>Patients</th><td>{patients}</td></tr> }
+			{ providers && <tr><th>Providers</th><td>{providers}</td></tr> }
+			{ claims && <tr><th>Send claims to</th><td>{claims}</td></tr> }
+		  </tbody>
+		</table>
+	  </>
+	);
+  }
+
   const renderDemographics = () => {
 
 	let memberID = undefined;
-	let person = undefined;
+	let personRef = undefined;
 	
 	if (cov.relationship && cov.relationship.coding[0].code === "self") {
 	  memberID = cov.subscriberId;
-	  person = futil.resolveReference(cov.subscriber, resources);
+	  personRef = cov.subscriber;
 	}
 	else {
 	  memberID = cov.identifier[0].value;
-	  person = futil.resolveReference(cov.beneficiary, resources);
+	  personRef = cov.beneficiary;
 	}
 
-	const name = person.name[0].family + " / " + futil.spaceAppendArray("", person.name[0].given);
-	const dob = (person.birthDate ? futil.renderDate(person.birthDate) : undefined);
+	const person = futil.resolveReference(personRef, resources);
+	let name = undefined;
+	let dob = undefined;
+	
+	try {
+	  name = person.name[0].family + " / " + futil.spaceAppendArray("", person.name[0].given);
+	  dob = (person.birthDate ? futil.renderDate(person.birthDate) : undefined);
+	}
+	catch (err) {
+	  name = (personRef.display ? personRef.display : "NA / NA");
+	  dob = undefined;
+	}
 
-	const group = fcov.groupNumber(cov);
+	const dobButton = 
+	  <IconButton size="small" sx={{ marginLeft: "15px" }}
+				  onClick={() => setShowDOB(!showDOB) }>
+		<RemoveRedEyeOutlinedIcon />
+	  </IconButton>;
+
+	const group = fcov.coverageClassValue(cov, "group");
 	
 	return(
 	  <div className={styles.demos}>
@@ -81,7 +140,9 @@ export default function DemoCoverage({ cardData, resources }) {
 
 		{ dob && <>
 				   <div className={styles.tinyHeader}>Date of Birth</div>
-				   <div className={styles.biggerText}>{dob}</div> 
+				   <div className={styles.biggerText}>
+					 {showDOB ? dob : "**/**/****"}{dobButton}
+				   </div>
 				 </> }
 
 		<div className={styles.tinyHeader}>ID</div>
@@ -97,8 +158,8 @@ export default function DemoCoverage({ cardData, resources }) {
 		</div>
 
 		<div className={styles.greyBar}></div>
+		{ renderContactInfo() }
 
-		<div className={styles.blueHeader}>Contact Information</div>
 	  </div>
 	);
   }
@@ -108,10 +169,67 @@ export default function DemoCoverage({ cardData, resources }) {
   // +----------------+
 
   const renderBenefits = () => {
+
+	const plan = fcov.coverageClassName(cov, "plan");
+
+	const gpvisit = fcov.costToBeneficiaryValue(cov, "gpvisit");
+	const spvisit = fcov.costToBeneficiaryValue(cov, "spvisit");
+	const emergency = fcov.costToBeneficiaryValue(cov, "emergency");
+	const urgent = fcov.costToBeneficiaryValue(cov, "urgentcare");
+	const rx = fcov.costToBeneficiaryValue(cov, "rx");
+
+	const coinsIn = fcov.costToBeneficiaryValue(cov, "coinsIn");
+	const coinsOut = fcov.costToBeneficiaryValue(cov, "coinsOut");
+	
+	let dedIn = fcov.costToBeneficiaryValue(cov, "IndInDed");
+	if (!dedIn) dedIn = fcov.costToBeneficiaryValue(cov, "FamInDed");
+
+	let dedOut = fcov.costToBeneficiaryValue(cov, "IndOutDed");
+	if (!dedOut) dedOut = fcov.costToBeneficiaryValue(cov, "FamOutDed");
+
+	let maxIn = fcov.costToBeneficiaryValue(cov, "IndInMax");
+	if (!maxIn) maxIn = fcov.costToBeneficiaryValue(cov, "FamInMax");
+	
+	let maxOut = fcov.costToBeneficiaryValue(cov, "IndOutMax");
+	if (!maxOut) maxOut = fcov.costToBeneficiaryValue(cov, "FamOutMax");
+	
+	const dedGen = (dedIn || dedOut ? undefined : fcov.costToBeneficiaryValue(cov, "deductible"));
+	const maxGen = (maxIn || maxOut ? undefined : fcov.costToBeneficiaryValue(cov, "maxoutofpocket"));
+
 	return(
 	  <div className={styles.benefits}>
 		<div className={styles.blueHeader}>Benefits</div>
-		nyi
+		<table className={styles.columnTable}>
+		  <tbody>
+
+			{ plan &&
+			  <>
+				<tr><th>Plan Name</th><td></td></tr>
+				<tr><td colSpan="2" className={styles.fw}>{plan}</td></tr>
+			  </> }
+			
+			{ gpvisit && <tr><th>PCP Visit</th><td>{gpvisit}</td></tr> }
+			{ spvisit && <tr><th>Specialist</th><td>{spvisit}</td></tr> }
+			{ emergency && <tr><th>Hospital ER</th><td>{emergency}</td></tr> }
+			{ urgent && <tr><th>Urgent Care</th><td>{urgent}</td></tr> }
+			{ rx && <tr><th>Rx</th><td>{rx}</td></tr> }
+
+			{ (coinsIn || coinsOut) &&
+			  <>
+				<tr><th>Network Coinsurance:</th><td></td></tr>
+				{ coinsIn && <tr><th>In-Network</th><td>{coinsIn}</td></tr> }
+				{ coinsOut && <tr><th>Out-of-Network</th><td>{coinsOut}</td></tr> }
+			  </> }
+			
+			{ dedIn && <tr><th>In-Network Deductible</th><td>{dedIn}</td></tr> }
+			{ dedOut && <tr><th>Out-of-Network Deductible</th><td>{dedOut}</td></tr> }
+			{ dedGen && <tr><th>Deductible</th><td>{dedGen}</td></tr> }
+			{ maxIn && <tr><th>In-Network Out-of-Pocket</th><td>{maxIn}</td></tr> }
+			{ maxOut && <tr><th>Out-of-Network Out-of-Pocket</th><td>{maxOut}</td></tr> }
+			{ maxGen && <tr><th>Max Out-of-Pocket</th><td>{maxGen}</td></tr> }
+			
+		  </tbody>
+		</table>
 	  </div>
 	);
   }
@@ -121,10 +239,42 @@ export default function DemoCoverage({ cardData, resources }) {
   // +-------------+
 
   const renderOther = () => {
+
+	const rxbin = fcov.coverageClassValue(cov, "rxbin");
+	const rxpcn = fcov.coverageClassValue(cov, "rxpcn");
+	const rxgrp = fcov.coverageClassValue(cov, "rxgroup");
+
+	let rx = <></>;
+	if (rxbin || rxpcn || rxgrp) {
+	  rx = <>
+			 <div className={styles.blueHeader}>Rx</div>
+			 <table className={styles.columnTable}><tbody>
+			   {rxbin && <tr><th>RxBIN</th><td>{rxbin}</td></tr>}
+			   {rxpcn && <tr><th>RxPCN</th><td>{rxpcn}</td></tr>}
+			   {rxgrp && <tr><th>RxGroup</th><td>{rxgrp}</td></tr>}
+			 </tbody></table>
+		   </>;
+	}
+
+	let issuer = <></>;
+
+	if (cardData.issuerName) {
+	  issuer = <>
+				 <div className={styles.blueHeader}>Issuer</div>
+				 <img src="https://smarthealthit.org/wp-content/themes/SMART/images/logo.svg"
+					  alt="SMART logo" className={styles.smartLogo} />
+				 <div className={styles.issuer}>{cardData.issuerName}</div>
+				 <br clear="all" />
+				 <img src="https://images.squarespace-cdn.com/content/v1/6055264fa5940469575508a4/1617891600462-LY5SKLL1XUNP7PCDPRFO/CTN_Logo_Horizontal.png"
+					  alt="CommonTrust Network logo" className={styles.ctnLogo} />
+			   </>;
+	}
+	
+	
 	return(
 	  <div className={styles.other}>
-		<div className={styles.blueHeader}>Rx</div>
-		nyi
+		{rx}
+		{issuer}
 	  </div>
 	);
   }

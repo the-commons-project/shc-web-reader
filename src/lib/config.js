@@ -1,7 +1,7 @@
 
 const DEFAULT_CONFIG = {
   "initialTab": "about",
-  "mayDemo": false
+  "mayDemo": true
 };
 
 let _cfg = undefined;
