@@ -174,7 +174,7 @@ export function renderTelecomItemJSX(t, withLinks) {
 
 export function renderTelecomJSX(t, withLinks) {
 
-  if (!t || t.length == 0) return(undefined);
+  if (!t || t.length === 0) return(undefined);
 
   let key = 0;
   
