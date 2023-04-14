@@ -164,7 +164,7 @@ export function renderTelecomItemJSX(t, withLinks) {
 	  return(<a href={"mailto:" + t.value}>{t.value}</a>);
 
     case "url":
-	  return(<a target="blank" rel="noreferrer" href={t.value}>{t.value}</a>);
+	  return(<a target="_blank" rel="noreferrer" href={t.value}>{t.value}</a>);
 
     default:
 	  return(<>{t.system}>{t.system}: {t.value}</>);
