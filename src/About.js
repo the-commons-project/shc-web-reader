@@ -35,8 +35,8 @@ export default function About() {
 	  <p>
 		SMART Health Insurance Card QR codes contain links back to an
 		individual's coverage data maintained by the insurer. The data
-		is cryptographically signed by the insurer following the
-		{shcLink}. The data elements available through the
+		is cryptographically signed by the insurer following
+		the {shcLink}. The data elements available through the
 		link are based on the {carinLink}.
 	  </p>
 	  <p>
