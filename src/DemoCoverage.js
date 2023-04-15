@@ -56,22 +56,37 @@ export default function DemoCoverage({ cardData, resources }) {
   // | renderDemographics |
   // +--------------------+
 
-  const renderContact = (payor, purpose) => {
+  const renderContacts = (payor) => {
 
-	let system = fhirCodes.systems.contact;
-	let checkedPurpose = fhirKey(system, purpose);
-  
-	if (!checkedPurpose) {
-	  system = fhirCodes.systems.contactExt;
-	  checkedPurpose = fhirKey(system, purpose);
+	if (!payor.contact) return(<></>);
+
+	const rows = [];
+	
+	for (const i in payor.contact) {
+	  
+	  const c = payor.contact[i];
+	  
+	  if (c.purpose && c.purpose.coding) {
+		
+		for (const j in c.purpose.coding) {
+		  
+		  // using a looser version of code matching here to account
+		  // for cigna usage in demo ... probably actually fine forever.
+		  
+		  if (c.purpose.coding[j].code === "PATINF" ||
+			  c.purpose.coding[j].code === "provider" ||
+			  c.purpose.coding[j].code === "PAYOR") {
+
+			const purpose = (c.purpose ? futil.renderCodable(c.purpose) : "Contact");
+			const txt = futil.renderContact(c, false);
+			
+			rows.push(<tr><th>{purpose}</th><td>{txt}</td></tr>);
+		  }
+		}
+	  }
 	}
-
-	if (checkedPurpose) {
-	  const c = futil.findCodedItemInChild(payor.contact, "purpose", system, checkedPurpose);
-	  if (c) return(futil.renderContact(c, false));
-	}
-
-	return(undefined);
+	
+	return(rows);
   }
 
   const renderContactInfo = () => {
@@ -79,18 +94,12 @@ export default function DemoCoverage({ cardData, resources }) {
 	const payor = futil.resolveReference(cov.payor[0], resources);
 	if (!payor) return(<></>);
 
-	const patients = renderContact(payor, "PATINF");
-	const providers = renderContact(payor, "provider");
-	const claims = renderContact(payor, "PAYOR");
-								 
 	return (
 	  <>
 		<div className={styles.blueHeader}>Contact Information</div>
 		<table className={styles.columnTable}>
 		  <tbody>
-			{ patients && <tr><th>Patients</th><td>{patients}</td></tr> }
-			{ providers && <tr><th>Providers</th><td>{providers}</td></tr> }
-			{ claims && <tr><th>Send claims to</th><td>{claims}</td></tr> }
+			{ renderContacts(payor) } 
 		  </tbody>
 		</table>
 	  </>
@@ -256,6 +265,16 @@ export default function DemoCoverage({ cardData, resources }) {
 		   </>;
 	}
 
+	const payorImg = fcov.renderLogoImage(cov, styles.payorLogo);
+	const payorName = fcov.renderPayorDisplayName(cov, resources);
+
+	const payor =  <>
+					 <div className={styles.blueHeader}>Payor</div>
+					 {payorImg}
+					 <div className={styles.org}>{payorName}</div>
+					 <br clear="all" />
+				   </>;
+
 	let issuer = <></>;
 
 	if (cardData.issuerName) {
@@ -263,8 +282,7 @@ export default function DemoCoverage({ cardData, resources }) {
 				 <div className={styles.blueHeader}>Issuer</div>
 				 <img src="https://smarthealthit.org/wp-content/themes/SMART/images/logo.svg"
 					  alt="SMART logo" className={styles.smartLogo} />
-				 <div className={styles.issuer}>{cardData.issuerName}</div>
-				 <br clear="all" />
+				 <div className={styles.org}>{cardData.issuerName}</div>
 				 <img src="https://images.squarespace-cdn.com/content/v1/6055264fa5940469575508a4/1617891600462-LY5SKLL1XUNP7PCDPRFO/CTN_Logo_Horizontal.png"
 					  alt="CommonTrust Network logo" className={styles.ctnLogo} />
 			   </>;
@@ -274,6 +292,7 @@ export default function DemoCoverage({ cardData, resources }) {
 	return(
 	  <div className={styles.other}>
 		{rx}
+		{payor}
 		{issuer}
 	  </div>
 	);

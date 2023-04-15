@@ -87,7 +87,35 @@ export function costToBeneficiaryValue(cov, code) {
   return(undefined);
 }
 
+// +-----------------+
+// | renderLogoImage |
+// +-----------------+
 
+const LOGO_EXTENSION =
+	  "http://hl7.org/fhir/us/insurance-card/StructureDefinition/C4DIC-Logo-extension";
+
+export function renderLogoImage(cov, className) {
+  
+  const logoExt = futil.searchArray(cov.extension, (o) => {
+	return(o.url && o.url === LOGO_EXTENSION);
+  });
+
+  return(logoExt ? futil.renderImage(logoExt, className) : undefined);
+}
+
+// +------------------------+
+// | renderPayorDisplayName |
+// +------------------------+
+
+export function renderPayorDisplayName(cov, resources) {
+
+  const renderMap = {
+	"Organization": futil.renderOrganization,
+	"any": futil.renderPerson
+  };
+
+  return(futil.renderReferenceMap(cov.payor[0], resources, renderMap));
+}
 
 
 

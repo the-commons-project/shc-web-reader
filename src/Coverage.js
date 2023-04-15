@@ -6,8 +6,6 @@ import Copyable from './Copyable.js';
 
 import styles from './Coverage.module.css';
 
-const LOGO_EXTENSION = "http://hl7.org/fhir/us/insurance-card/StructureDefinition/C4DIC-Logo-extension";
-
 export default function Coverage({ cardData, cov, resources }) {
 
   const [showPayorContacts, setShowPayorContacts] = useState(false);
@@ -137,14 +135,8 @@ export default function Coverage({ cardData, cov, resources }) {
   
   const renderPayor = () => {
 
-	let logo = <></>;
-	const logoExt = futil.searchArray(cov.extension, (o) => (o.url && o.url === LOGO_EXTENSION));
-	if (logoExt) logo = <div className={styles.logoImg}>{futil.renderImage(logoExt)}</div>;
-
-	const renderMap = {
-	  "Organization": futil.renderOrganization,
-	  "any": futil.renderPerson
-	};
+	const img = fcov.renderLogoImage(cov);
+	const logo = (img ? <div className={styles.logoImg}>{img}</div> : undefined);
 
 	return(
 	  <tr>
@@ -156,7 +148,7 @@ export default function Coverage({ cardData, cov, resources }) {
 		    </Button>
 	      </div>
 		  {logo}
-	      {futil.renderReferenceMap(cov.payor[0], resources, renderMap)}
+		  {fcov.renderPayorDisplayName(cov, resources)}
 	      { showPayorContacts && renderPayorContacts() }
 	  </td>
 	  </tr>

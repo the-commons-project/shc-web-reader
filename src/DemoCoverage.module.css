@@ -189,19 +189,24 @@
 	grid-row: 3;
 }
 
-.other .issuer {
+.other .org {
 	padding-top: 6px;
 	font-size: 14px;
 	font-weight: bold;
 }
 
+.other .payorLogo {
+	max-width: 60px;
+	float: right;
+}
+
 .other .smartLogo {
-	width: 46px;
-	height: 46px;
+	width: 60px;
 	float: right;
 }
 
 .other .ctnLogo {
 	width: 150px;
-	float: right;
+	padding-top: 6px;
+	float: left;
 }

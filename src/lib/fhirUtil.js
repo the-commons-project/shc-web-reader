@@ -12,7 +12,6 @@ export function renderOrganization(org, resources) {
 }
 
 function renderOrganizationResource(org) {
-  // TODO - NOT COMPLETE - contacts
   return(<div>{org.name}</div>);
 }
 
@@ -85,7 +84,7 @@ export function renderMoney(m) {
 // | renderImage |
 // +-------------+
 
-export function renderImage(img) {
+export function renderImage(img, className) {
 
   const imageExt = searchArray(img.extension, (o) => (o.url && o.url === "image"));
   const labelExt = searchArray(img.extension, (o) => (o.url && o.url === "label"));
@@ -97,7 +96,8 @@ export function renderImage(img) {
   const dataUri = "data:" + imageExt.valueAttachment.contentType +
 		";base64," + imageExt.valueAttachment.data;
   
-  return(<img src={dataUri} alt={alt} title={alt} />);
+  return(<img src={dataUri} alt={alt} title={alt}
+			  className={className ? className : "fhirImg"} />);
 }
 
 // +------------+
@@ -270,15 +270,18 @@ export function searchArray(arr, searchFunc) {
   return(undefined);
 }
 
-// +----------------------+
-// | findCodedItem        |
-// | findCodedItemInChild |
-// +----------------------+
+// +-----------------------+
+// | findCodedItem         |
+// | findCodedItemInChild  |
+// | findCodedItemsInChild |
+// +-----------------------+
 
-export function findCodedItemInChild(arr, child, system, code) {
+export function findCodedItemsInChild(arr, child, system, code) {
 
-  if (!arr) return(undefined);
-  
+  if (!arr) return([]);
+
+  const items = [];
+
   for (const i in arr) {
 	  
 	const item = arr[i];
@@ -289,13 +292,18 @@ export function findCodedItemInChild(arr, child, system, code) {
 		if (item[child].coding[j].system === system &&
 			item[child].coding[j].code === code) {
 
-		  return(item);
+		  items.push(item);
 		}
 	  }
 	}
   }
 
-  return(undefined);
+  return(items);
+}
+
+export function findCodedItemInChild(arr, child, system, code) {
+  const items = findCodedItemsInChild(arr, child, system, code);
+  return(items && items.length > 0 ? items[0] : undefined);
 }
 
 export function findCodedItem(arr, system, code) {
