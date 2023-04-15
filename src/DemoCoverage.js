@@ -4,7 +4,6 @@ import { IconButton } from '@mui/material';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import * as futil from  './lib/fhirUtil.js';
 import * as fcov from  './lib/fhirCoverage.js';
-import { fhirCodes, fhirKey } from "./lib/fhirCodes.js";
 import styles from './DemoCoverage.module.css';
 
 export default function DemoCoverage({ cardData, resources }) {
