@@ -1,7 +1,8 @@
 
 const DEFAULT_CONFIG = {
   "initialTab": "about",
-  "mayDemo": true
+  "mayDemo": true,
+  "cameraPauseTimeoutMillis": 20000
 };
 
 let _cfg = undefined;

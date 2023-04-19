@@ -78,8 +78,8 @@ export default function DemoCoverage({ cardData, resources }) {
 
 			const purpose = (c.purpose ? futil.renderCodable(c.purpose) : "Contact");
 			const txt = futil.renderContact(c, false);
-			
-			rows.push(<tr><th>{purpose}</th><td>{txt}</td></tr>);
+
+			rows.push(<tr key={`${i}_${j}`}><th>{purpose}</th><td>{txt}</td></tr>);
 		  }
 		}
 	  }
