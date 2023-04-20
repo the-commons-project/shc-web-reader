@@ -106,7 +106,24 @@ export function renderImage(img, className) {
 
 export function renderDate(d) {
 
-  return(new Date(d).toLocaleString('en-US', {
+  const dateOnlyRegex = /^\d{4}(-\d{2}(-\d{2})?)?$/;
+
+  let dateParsed;
+  
+  if (d.match(dateOnlyRegex)) {
+	// create in local timezone so displays as expected
+	const fields = d.split("-");
+	if (fields.length === 1) dateParsed = new Date(fields[0]);
+	else if (fields.length === 2) dateParsed = new Date(fields[0], fields[1] - 1);
+	else dateParsed = new Date(fields[0], fields[1] - 1, fields[2]);
+  }
+  else {
+	// fully specified instant (or bogus); spec requires tz
+	// so just let the parser figure it out
+	dateParsed = new Date(d);
+  }
+  
+  return(dateParsed.toLocaleString('en-US', {
 	month: 'numeric', day: 'numeric', year: 'numeric' }));
 }
 
