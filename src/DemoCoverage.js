@@ -18,7 +18,7 @@ export default function DemoCoverage({ cardData, resources }) {
 	}
   }
 
-  if (cardData.valid && !cov) return(<div>Unexpected</div>);
+  if (cardData.certValid() && !cov) return(<div>Unexpected</div>);
 
   // +--------------+
   // | renderBanner |
@@ -317,9 +317,9 @@ export default function DemoCoverage({ cardData, resources }) {
   // | Main Render |
   // +-------------+
 
-  const active = (cardData.valid ? fcov.isActive(cov) : false);
+  const active = (cardData.certValid() ? fcov.isActive(cov) : false);
   const verifiedClass = (active ? styles.valid : styles.invalid);
-  const verifiedText = (active ? "Verified" : (cardData.valid ? "Coverage Inactive" : "Not Verifiable"));
+  const verifiedText = (active ? "Verified" : (cardData.certValid() ? "Coverage Inactive" : "Not Verifiable"));
   const mark = String.fromCharCode(active ? 10003 : 10006);
 
   return(

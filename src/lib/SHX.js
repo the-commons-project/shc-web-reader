@@ -1,11 +1,65 @@
 
+//
+// Primary method is verifySHX which takes an incoming SHC or SHL string
+// and teases it all apart. Return value is a JSON object with the
+// following structure.
+//
+// "status" is the only element guaranteed to be present. A status of "ok"
+// means that there is a valid "bundles" array in which at least one
+// element has a certStatus of "valid" or "none". With a status of
+// "error", there MAY still be an element with a non-empty "fhir" element.
+// Up to the caller to decide what to do in this situation.
+//
+// {
+//   "status": "ok" | "error" | "need_passcode",
+//   "reasons": [ error strings for humans ],
+//
+//   "bundles": [
+//
+//     "fhir": (JSON bundle),
+//     "certStatus": "valid" | "invalid" | "none",
+//
+//     (Messages if relevant:)
+//	   "reasons": [ error strings for humans ],
+//	   "errors": [ error objects (not for humans) ],
+//	   "warnings": [ warning objects (not for humans) ],
+//
+//     (Cert details if relevant:)
+//     "issuerISS": (issuer base url string),
+//     "issuerName": (issuer name string),
+//     "issuerURL": (issuer human-visitable url),
+//     "issueDate": (issued Date),
+//     "supportsRevocation": (true iff cert CAN BE, not IS, revoked)
+//    ]
+// }
+//
+// The result object also supports a few convenience methods to 
+// consolidate some common logic and keep things cleaner:
+//
+//    * On each element in the "bundles" array:
+//        - certValid (certStatus === CERT_STATUS_VALID)
+//        - isVerifiable (certStatus !== CERT_STATUS_NONE)
+//
+
 import { verify, Directory } from 'smart-health-card-decoder'
 import { compactDecrypt } from 'jose';
 import { b64u_to_str, b64u_to_arr, arr_to_str } from './b64.js';
 
-// +-----------+
-// | Constants |
-// +-----------+
+// +------------------+
+// | Public Constants |
+// +------------------+
+
+export const STATUS_OK = "ok";
+export const STATUS_ERROR = "error";
+export const STATUS_NEED_PASSCODE = "need_passcode";
+
+export const CERT_STATUS_VALID = "valid";
+export const CERT_STATUS_INVALID = "invalid";
+export const CERT_STATUS_NONE = "none";
+
+// +-------------------+
+// | Private Constants |
+// +-------------------+
 
 const SHC_HEADER = 'shc:/';
 const SHL_HEADER = 'shlink:/';
@@ -39,63 +93,33 @@ function looksLikeSHL(input) {
 // | verifySHX |
 // +-----------+
 
-export async function verifySHX(shx) {
+export async function verifySHX(shx, passcode = undefined) {
   try {
-	return(await _verifySHX(shx));
+	return(await _verifySHX(shx, passcode));
   }
   catch (err) {
-	return({
-	  "valid": false,
-	  "reasons": [ err ? err.toString() : "unexpected" ]
-	});
+	const reasons = (err ? err.toString() : "unexpected");
+	return(status(STATUS_ERROR, reasons));
   }
 }
 
-async function _verifySHX(shx) {
+async function _verifySHX(shx, passcode) {
 
   let target = shx.trim();
-  if (looksLikeSHL(target)) target = await resolveSHL(target);
+  if (looksLikeSHL(target)) {
+	
+	target = await resolveSHL(target, passcode);
+
+	if (target === STATUS_NEED_PASSCODE) {
+	  const reasons = (passcode ? "passcode required" : "passcode incorrect");
+	  return(status(STATUS_NEED_PASSCODE,reasons));
+	}
+  }
 
   const dir = await getDirectory();
   const result = await verify(target, dir);
 
-  if (!result.verified) {
-
-	if (result.data.warnings) {
-	  for (const i in result.data.warnings) {
-		console.warn(result.data.warnings[i].message);
-	  }
-	}
-
-	return({
-	  "valid": false,
-	  "reasons": result.reason.split('|'),
-	  "errors": result.data.errors,
-	  "warnings": result.data.warnings
-	});
-  }
-
-  const issuerISS = (result.data.signature.issuer.iss ?
-					 result.data.signature.issuer.iss :
-					 result.data.jws.payload.iss);
-					 
-  const issuerName = (result.data.signature.issuer.name ?
-					  result.data.signature.issuer.name :
-					  issuerISS);
-
-  const supportsRevocation =
-		(("crlVersion" in result.data.signature.key) ||
-		 ("rid" in result.data.jws.payload.vc));
-  
-  return({
-	"valid": true,
-	"issuerISS": issuerISS,
-	"issuerName": issuerName,
-	"issuerURL": result.data.signature.issuer.website,
-	"issueDate": new Date(result.data.jws.payload.nbf * 1000),
-	"supportsRevocation": supportsRevocation,
-	"fhirBundle": result.data.fhirBundle
-  });
+  return(addVerifiableBundle(status(), result));
 }
 
 var _verifyDir = undefined;
@@ -117,14 +141,13 @@ async function getDirectory() {
 // | resolveSHL |
 // +------------+
 
-export async function resolveSHL(shl) {
+export async function resolveSHL(shl, passcode) {
 
   // 1. Decode the link body
   const shlPayload = decodeSHL(shl);
 
-  if (shlPayload.flag && shlPayload.flag.indexOf('P') !== -1) {
-	console.error('No support for passcode-protected SHLINKS');
-	return(undefined);
+  if (shlPayload.flag && shlPayload.flag.indexOf('P') !== -1 && !passcode) {
+	return(STATUS_NEED_PASSCODE);
   }
 
   // 2. Fetch the manifest
@@ -221,3 +244,97 @@ function decodeSHL(shl) {
 
   return(JSON.parse(b64u_to_str(body)));
 }
+
+// +---------+
+// | Helpesr |
+// +---------+
+
+function status(code, reasons) {
+
+  const obj = {
+	"status": (code ? code : STATUS_ERROR),
+	"bundles": []
+  };
+
+  if (reasons) {
+	obj.reasons = (Array.isArray(reasons) ? reasons : [ reasons ]);
+  }
+
+  return(obj);
+}
+
+function addVerifiableBundle(statusObj, vres) {
+
+  if (!statusObj) statusObj = status();
+
+  // 1. create the bundle object and set status 
+  
+  const obj = { };
+  obj.certValid = function() { return(this.certStatus === CERT_STATUS_VALID); }
+  obj.isVerifiable = function() { return(true); }
+  
+  statusObj.bundles.push(obj);
+  
+  if (vres.verified) {
+	obj.certStatus = CERT_STATUS_VALID;
+	statusObj.status = STATUS_OK; // at least one bundle is valid
+  }
+  else {
+	obj.certStatus = CERT_STATUS_INVALID;
+  }
+
+  // 2. add reasons / warnings / errors
+  
+  if (vres.reason) {
+	obj.reasons = vres.reason.split('|');
+  }
+  
+  if (vres.data) {
+	
+	if (vres.verified && vres.data.fhirBundle) {
+	  obj.fhir = vres.data.fhirBundle;
+	}
+	
+	if (vres.data.errors) {
+
+	  for (const i in vres.data.errors) {
+		console.error(vres.data.errors[i].message);
+	  }
+
+	  obj.errors = vres.data.errors;
+	}
+  
+	if (vres.data.warnings) {
+
+	  for (const i in vres.data.warnings) {
+		console.warn(vres.data.warnings[i].message);
+	  }
+
+	  obj.warnings = vres.data.warnings;
+	}
+
+  }
+
+  // 3. add issuer-related details
+  
+  if (vres.verified) {
+	
+	obj.issuerISS = (vres.data.signature.issuer.iss ?
+					 vres.data.signature.issuer.iss :
+					 vres.data.jws.payload.iss);
+					 
+	obj.issuerName = (vres.data.signature.issuer.name ?
+					  vres.data.signature.issuer.name :
+					  obj.issuerISS);
+
+	obj.supportsRevocation =
+	  (("crlVersion" in vres.data.signature.key) ||
+	   ("rid" in vres.data.jws.payload.vc));
+  
+	obj.issuerURL = vres.data.signature.issuer.website;
+	obj.issueDate = new Date(vres.data.jws.payload.nbf * 1000);
+  }
+
+  return(statusObj);
+}
+

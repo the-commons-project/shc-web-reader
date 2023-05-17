@@ -6,7 +6,7 @@ export default function MultiResource({ cardData, resources }) {
 
   const elts = Object.keys(resources).reduce((result, key) => {
 	  
-	const resource = resources[key];
+    const resource = resources[key];
 
 	switch (resource.resourceType) {
 	  case "Coverage":
@@ -22,11 +22,11 @@ export default function MultiResource({ cardData, resources }) {
   }, [])
 
   const fallback = (elts.length !== 0 ? '' :
-	<pre><code>{JSON.stringify(cardData.fhirBundle, null, 2)}</code></pre>);
+	<pre><code>{JSON.stringify(cardData.fhir, null, 2)}</code></pre>);
 
   return(
 	<div>
-	  <ValidationInfo cardData={cardData} /> 
+	  <ValidationInfo cardData={cardData} />
 	  { elts } { fallback }
 	</div>
 	);

@@ -74,7 +74,7 @@ export default function ValidationInfo({ cardData }) {
 
   return(
 	<div className={styles.container}>
-	  {cardData.valid ? renderValid(cardData) : renderInvalid(cardData)}
+	  {cardData.certValid() ? renderValid(cardData) : renderInvalid(cardData)}
 	  {details}
 	</div>
   );

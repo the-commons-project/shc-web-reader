@@ -7,22 +7,24 @@ import config from './lib/config.js';
 
 export default function Data({ shx }) {
 
-  const [cardData, setCardData] = useState(undefined);
+  const [shxResult, setShxResult] = useState(undefined);
   const [showBundle, setShowBundle] = useState(false);
   const [demoView, setDemoView] = useState(config("mayDemo"));
 
   useEffect(() => {
-	verifySHX(shx).then(result => setCardData(result));
+	verifySHX(shx).then(result => setShxResult(result));
   }, [shx]);
 
+  const cardData = ((shxResult && shxResult.bundles.length > 0) ?
+					shxResult.bundles[0] : undefined);
+  
   if (!cardData) return(<></>);
 
   // build up a dictionary so we can resolve references
-  
   let resources = {};
-  if (cardData.fhirBundle && cardData.fhirBundle.entry) {
-	for (const i in cardData.fhirBundle.entry) {
-	  let entry = cardData.fhirBundle.entry[i];
+  if (cardData.fhir && cardData.fhir.entry) {
+	for (const i in cardData.fhir.entry) {
+	  let entry = cardData.fhir.entry[i];
 	  resources[entry.fullUrl] = entry.resource;
 	}
   }
@@ -37,7 +39,7 @@ export default function Data({ shx }) {
 	  <div>
 	    <Button onClick={ () => setDemoView(!demoView) }>toggle view</Button> |
 	    <Button onClick={ () => setShowBundle(!showBundle) }>source</Button>
-	    { showBundle && <pre><code>{JSON.stringify(cardData.fhirBundle, null, 2)}</code></pre>}
+	    { showBundle && <pre><code>{JSON.stringify(cardData.fhir, null, 2)}</code></pre>}
 	  </div>
 	</>
   );
