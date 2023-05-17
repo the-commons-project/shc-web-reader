@@ -4,20 +4,20 @@
 // and teases it all apart. Return value is a JSON object with the
 // following structure.
 //
-// "status" is the only element guaranteed to be present. A status of "ok"
-// means that there is a valid "bundles" array in which at least one
-// element has a certStatus of "valid" or "none". With a status of
-// "error", there MAY still be an element with a non-empty "fhir" element.
-// Up to the caller to decide what to do in this situation.
+// "shxStatus" is the only element guaranteed to be present. A status of "ok"
+// means that we were able to process the outer SHC/SHL to get to the bundles
+// inside (i.e., there is at least one element in the "bundles" array). It does
+// NOT mean that certificates are valid or that the bundles are readable --- the
+// caller has to look at the "certStatus" and "fhir" fields in each bundle for that
 //
 // {
-//   "status": "ok" | "error" | "need_passcode",
+//   "shxStatus": "ok" | "error" | "need_passcode",
 //   "reasons": [ error strings for humans ],
 //
 //   "bundles": [
 //
 //     "fhir": (JSON bundle),
-//     "certStatus": "valid" | "invalid" | "none",
+//     "certStatus": "cert_valid" | "invalid" | "none",
 //
 //     (Messages if relevant:)
 //	   "reasons": [ error strings for humans ],
@@ -37,6 +37,7 @@
 // consolidate some common logic and keep things cleaner:
 //
 //    * On each element in the "bundles" array:
+//        - contentOK (fhir && certStatus !== CERT_STATUS_INVALID)
 //        - certValid (certStatus === CERT_STATUS_VALID)
 //        - isVerifiable (certStatus !== CERT_STATUS_NONE)
 //
@@ -49,9 +50,9 @@ import { b64u_to_str, b64u_to_arr, arr_to_str } from './b64.js';
 // | Public Constants |
 // +------------------+
 
-export const STATUS_OK = "ok";
-export const STATUS_ERROR = "error";
-export const STATUS_NEED_PASSCODE = "need_passcode";
+export const SHX_STATUS_OK = "ok";
+export const SHX_STATUS_ERROR = "error";
+export const SHX_STATUS_NEED_PASSCODE = "need_passcode";
 
 export const CERT_STATUS_VALID = "valid";
 export const CERT_STATUS_INVALID = "invalid";
@@ -99,7 +100,7 @@ export async function verifySHX(shx, passcode = undefined) {
   }
   catch (err) {
 	const reasons = (err ? err.toString() : "unexpected");
-	return(status(STATUS_ERROR, reasons));
+	return(status(SHX_STATUS_ERROR, reasons));
   }
 }
 
@@ -110,9 +111,9 @@ async function _verifySHX(shx, passcode) {
 	
 	target = await resolveSHL(target, passcode);
 
-	if (target === STATUS_NEED_PASSCODE) {
+	if (target === SHX_STATUS_NEED_PASSCODE) {
 	  const reasons = (passcode ? "passcode required" : "passcode incorrect");
-	  return(status(STATUS_NEED_PASSCODE,reasons));
+	  return(status(SHX_STATUS_NEED_PASSCODE, reasons));
 	}
   }
 
@@ -147,7 +148,7 @@ export async function resolveSHL(shl, passcode) {
   const shlPayload = decodeSHL(shl);
 
   if (shlPayload.flag && shlPayload.flag.indexOf('P') !== -1 && !passcode) {
-	return(STATUS_NEED_PASSCODE);
+	return(SHX_STATUS_NEED_PASSCODE);
   }
 
   // 2. Fetch the manifest
@@ -252,7 +253,7 @@ function decodeSHL(shl) {
 function status(code, reasons) {
 
   const obj = {
-	"status": (code ? code : STATUS_ERROR),
+	"shxStatus": (code ? code : SHX_STATUS_ERROR),
 	"bundles": []
   };
 
@@ -270,19 +271,15 @@ function addVerifiableBundle(statusObj, vres) {
   // 1. create the bundle object and set status 
   
   const obj = { };
+  obj.contentOK = function() { return(this.fhir && this.certStatus !== CERT_STATUS_INVALID); }
   obj.certValid = function() { return(this.certStatus === CERT_STATUS_VALID); }
   obj.isVerifiable = function() { return(true); }
   
   statusObj.bundles.push(obj);
-  
-  if (vres.verified) {
-	obj.certStatus = CERT_STATUS_VALID;
-	statusObj.status = STATUS_OK; // at least one bundle is valid
-  }
-  else {
-	obj.certStatus = CERT_STATUS_INVALID;
-  }
+  obj.certStatus = (vres.verified ? CERT_STATUS_VALID : CERT_STATUS_INVALID);
 
+  statusObj.shxStatus = SHX_STATUS_OK; // at least one bundle in package
+  
   // 2. add reasons / warnings / errors
   
   if (vres.reason) {
@@ -291,7 +288,7 @@ function addVerifiableBundle(statusObj, vres) {
   
   if (vres.data) {
 	
-	if (vres.verified && vres.data.fhirBundle) {
+	if (vres.data.fhirBundle) {
 	  obj.fhir = vres.data.fhirBundle;
 	}
 	

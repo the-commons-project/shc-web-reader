@@ -7,6 +7,7 @@ import config from './lib/config.js';
 
 export default function Data({ shx }) {
 
+  // const [passcode, setPasscode] = useState(undefined);
   const [shxResult, setShxResult] = useState(undefined);
   const [showBundle, setShowBundle] = useState(false);
   const [demoView, setDemoView] = useState(config("mayDemo"));
@@ -20,6 +21,12 @@ export default function Data({ shx }) {
   
   if (!cardData) return(<></>);
 
+  // at least for now, we don't want to show contents if the cert
+  // is invalid ... the simplest way to make that happen now is
+  // to make the fhir element go away. REVISIT THIS when doing
+  // multi-bundles better.
+  if (!cardData.contentOK()) cardData.fhir = undefined;
+  
   // build up a dictionary so we can resolve references
   let resources = {};
   if (cardData.fhir && cardData.fhir.entry) {
