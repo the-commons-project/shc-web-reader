@@ -1,21 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@mui/material';
-import { verifySHX } from './lib/SHX.js';
+import React, { useState, useEffect, useRef } from 'react';
+import { Button, TextField } from '@mui/material';
+import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
 import MultiResource from './MultiResource.js';
 import DemoCoverage from './DemoCoverage.js';
 import config from './lib/config.js';
 
 export default function Data({ shx }) {
 
-  // const [passcode, setPasscode] = useState(undefined);
+  const [passcode, setPasscode] = useState(undefined);
   const [shxResult, setShxResult] = useState(undefined);
   const [showBundle, setShowBundle] = useState(false);
   const [demoView, setDemoView] = useState(config("mayDemo"));
 
-  useEffect(() => {
-	verifySHX(shx).then(result => setShxResult(result));
-  }, [shx]);
+  // +--------------------+
+  // | renderNeedPasscode |
+  // +--------------------+
 
+  const passcodeRef = useRef(null);
+
+  const passcodeClick = async () => {
+	setPasscode(passcodeRef.current.value);
+	setShxResult(undefined);
+  }
+
+  const passcodeKeyDown = (evt) => {
+	if (evt.key === 'Enter') passcodeClick(); 
+  }
+  
+  const renderNeedPasscode = () => {
+
+	const msg = (passcode
+				 ? "Given passcode not valid for this SMART Health Link."
+				 : "This SMART Health Link requires a passcode.");
+	
+	return(
+	  <>
+		<div>{msg}</div>
+
+		<div>
+		  <TextField variant='outlined'
+					 margin='normal'
+					 type='password'
+					 autoComplete='off'
+					 autoFocus
+					 inputRef={passcodeRef}
+					 onKeyDown={passcodeKeyDown}
+		  />
+		</div>
+		
+		<div>
+		  <Button variant='contained'
+				  onClick={ passcodeClick } >
+			Submit
+		  </Button>
+		</div>
+		
+	  </>
+	);
+  }
+
+  // +-------------+
+  // | renderError |
+  // +-------------+
+
+  const renderError = (reasons) => {
+	return(<div>{Array.isArray(reasons) ? reasons.join('; ') : reasons}</div>);
+  }
+
+  // +-------------+
+  // | Main Render |
+  // +-------------+
+  
+  useEffect(() => {
+	verifySHX(shx, passcode).then(result => setShxResult(result));
+  }, [shx,passcode]);
+
+  if (shxResult && shxResult.shxStatus === SHX_STATUS_NEED_PASSCODE) {
+	return(renderNeedPasscode());
+  }
+
+  if (shxResult && shxResult.shxStatus !== SHX_STATUS_OK) {
+	return(renderError(shxResult.reasons));
+  }
+  
   const cardData = ((shxResult && shxResult.bundles.length > 0) ?
 					shxResult.bundles[0] : undefined);
   
@@ -50,4 +117,5 @@ export default function Data({ shx }) {
 	  </div>
 	</>
   );
+
 }

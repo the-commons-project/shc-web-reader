@@ -11,7 +11,7 @@
 // caller has to look at the "certStatus" and "fhir" fields in each bundle for that
 //
 // {
-//   "shxStatus": "ok" | "error" | "need_passcode",
+//   "shxStatus": "ok" | "error" | "need_passcode" | "expired",
 //   "reasons": [ error strings for humans ],
 //
 //   "bundles": [
@@ -53,6 +53,7 @@ import { b64u_to_str, b64u_to_arr, arr_to_str } from './b64.js';
 export const SHX_STATUS_OK = "ok";
 export const SHX_STATUS_ERROR = "error";
 export const SHX_STATUS_NEED_PASSCODE = "need_passcode";
+export const SHX_STATUS_EXPIRED = "expired";
 
 export const CERT_STATUS_VALID = "valid";
 export const CERT_STATUS_INVALID = "invalid";
@@ -99,6 +100,12 @@ export async function verifySHX(shx, passcode = undefined) {
 	return(await _verifySHX(shx, passcode));
   }
   catch (err) {
+
+	if (err.message === "Manifest: 401") {
+	  const reasons = (passcode ? "passcode required" : "passcode incorrect");
+	  return(status(SHX_STATUS_NEED_PASSCODE, reasons));
+	}
+
 	const reasons = (err ? err.toString() : "unexpected");
 	return(status(SHX_STATUS_ERROR, reasons));
   }
@@ -114,6 +121,10 @@ async function _verifySHX(shx, passcode) {
 	if (target === SHX_STATUS_NEED_PASSCODE) {
 	  const reasons = (passcode ? "passcode required" : "passcode incorrect");
 	  return(status(SHX_STATUS_NEED_PASSCODE, reasons));
+	}
+
+	if (target === SHX_STATUS_EXPIRED) {
+	  return(status(SHX_STATUS_EXPIRED, "expired"));
 	}
   }
 
@@ -147,12 +158,20 @@ export async function resolveSHL(shl, passcode) {
   // 1. Decode the link body
   const shlPayload = decodeSHL(shl);
 
+  // 1.5 Check expiration and passcode
+  
   if (shlPayload.flag && shlPayload.flag.indexOf('P') !== -1 && !passcode) {
 	return(SHX_STATUS_NEED_PASSCODE);
   }
 
+  if (shlPayload.exp) {
+	const expires = new Date(shlPayload.exp * 1000);
+	const now = new Date();
+	if (expires < now) return(SHX_STATUS_EXPIRED);
+  }
+
   // 2. Fetch the manifest
-  const shlManifest = await fetchSHLManifest(shlPayload);
+  const shlManifest = await fetchSHLManifest(shlPayload, passcode);
   const shlFiles = shlManifest.files;
 
   let i;
@@ -196,13 +215,14 @@ async function fetchSHLContent(file) {
   return(response.text());
 }
 
-async function fetchSHLManifest(shlPayload) {
+async function fetchSHLManifest(shlPayload, passcode) {
 
   if (shlPayload.flag && shlPayload.flag.indexOf("U") !== -1) {
 	return(singleFileManifest(shlPayload));
   }
   
   const body = { recipient: SHL_RECIPIENT };
+  if (passcode) body.passcode = passcode;
 
   const response = await fetch(shlPayload.url, {
 	method: 'POST',
@@ -210,6 +230,10 @@ async function fetchSHLManifest(shlPayload) {
 	body: JSON.stringify(body)
   });
 
+  if (response.status !== 200) {
+	throw new Error(`Manifest: ${response.status}`);
+  }
+	
   return(await response.json());
 }
 
