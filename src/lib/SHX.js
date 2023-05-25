@@ -69,11 +69,25 @@ const SHL_HEADER = 'shlink:/';
 const SHL_RECIPIENT = 'SMART Health Card Web Reader';
 
 const SHC_CONTENTTYPE = 'application/smart-health-card';
+const FHIR_CONTENTTYPE = 'application/fhir+json';
+const INFER_CONTENTTYPE = '___INFER___';
 
 const DIRECTORY_PATHS = [
   'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json',
   'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
 ];
+
+// +---------------+
+// | Custom Errors |
+// +---------------+
+
+class PasscodeError extends Error {
+  constructor(msg) { super(msg); this.name = "PasscodeError"; }
+}
+
+class ExpiredError extends Error {
+  constructor(msg) { super(msg); this.name = "ExpiredError"; }
+}
 
 // +--------------+
 // | looksLikeSH* |
@@ -101,11 +115,16 @@ export async function verifySHX(shx, passcode = undefined) {
   }
   catch (err) {
 
-	if (err.message === "Manifest: 401") {
-	  const reasons = (passcode ? "passcode required" : "passcode incorrect");
-	  return(status(SHX_STATUS_NEED_PASSCODE, reasons));
+	// console.error(err.stack);
+	
+	if (err instanceof PasscodeError) {
+	  return(status(SHX_STATUS_NEED_PASSCODE, err.message));
 	}
 
+	if (err instanceof ExpiredError) {
+	  return(status(SHX_STATUS_EXPIRED, err.message));
+	}
+	
 	const reasons = (err ? err.toString() : "unexpected");
 	return(status(SHX_STATUS_ERROR, reasons));
   }
@@ -113,25 +132,25 @@ export async function verifySHX(shx, passcode = undefined) {
 
 async function _verifySHX(shx, passcode) {
 
-  let target = shx.trim();
-  if (looksLikeSHL(target)) {
-	
-	target = await resolveSHL(target, passcode);
+  const resolved = await resolveSHX(shx, passcode);
 
-	if (target === SHX_STATUS_NEED_PASSCODE) {
-	  const reasons = (passcode ? "passcode required" : "passcode incorrect");
-	  return(status(SHX_STATUS_NEED_PASSCODE, reasons));
-	}
+  const statusObj = status();
 
-	if (target === SHX_STATUS_EXPIRED) {
-	  return(status(SHX_STATUS_EXPIRED, "expired"));
+  if (resolved.verifiableCredentials.length > 0) {
+  
+    const dir = await getDirectory();
+
+	for (const i in resolved.verifiableCredentials) {
+	  const vres = await verify(resolved.verifiableCredentials[i], dir);
+	  addVerifiableBundle(statusObj, vres);
 	}
   }
 
-  const dir = await getDirectory();
-  const result = await verify(target, dir);
+  for (const i in resolved.rawBundles) {
+	addRawBundle(statusObj, resolved.rawBundles[i]);
+  }
 
-  return(addVerifiableBundle(status(), result));
+  return(statusObj);
 }
 
 var _verifyDir = undefined;
@@ -150,10 +169,41 @@ async function getDirectory() {
 }
 
 // +------------+
+// | resolveSHX |
+// +------------+
+
+// grovels around in the given SHC or SHL and ultimately comes
+// back with an object with two arrays:
+//
+//   - "verifiableCredentials" contains all shc:/ or jws strings
+//   - "rawBundles" contains a list of unsigned fhir bundle resources
+
+async function resolveSHX(shx, passcode) {
+
+  const resolved = {
+	"verifiableCredentials": [],
+	"rawBundles": []
+  };
+
+  let target = shx.trim();
+  
+  if (looksLikeSHL(target)) {
+	// yeah this is going to take some work
+	await resolveSHL(target, passcode, resolved);
+  }
+  else {
+	// assume it's an SHC... we'll error on verification if not
+	resolved.verifiableCredentials.push(target);
+  }
+
+  return(resolved);
+}
+
+// +------------+
 // | resolveSHL |
 // +------------+
 
-export async function resolveSHL(shl, passcode) {
+export async function resolveSHL(shl, passcode, resolved) {
 
   // 1. Decode the link body
   const shlPayload = decodeSHL(shl);
@@ -161,50 +211,64 @@ export async function resolveSHL(shl, passcode) {
   // 1.5 Check expiration and passcode
   
   if (shlPayload.flag && shlPayload.flag.indexOf('P') !== -1 && !passcode) {
-	return(SHX_STATUS_NEED_PASSCODE);
+	throw new PasscodeError("This SHL requires a passcode.");
   }
 
   if (shlPayload.exp) {
 	const expires = new Date(shlPayload.exp * 1000);
 	const now = new Date();
-	if (expires < now) return(SHX_STATUS_EXPIRED);
+	if (expires < now) throw new ExpiredError("This SHL is expired.");
   }
 
   // 2. Fetch the manifest
   const shlManifest = await fetchSHLManifest(shlPayload, passcode);
   const shlFiles = shlManifest.files;
 
-  let i;
-  for (i = 0; i < shlFiles.length; ++i) {
-	if (shlFiles[i].contentType === SHC_CONTENTTYPE) break;
-  }
+  // 3. Fetch and decode encrypted content
 
-  if (i === shlFiles.length) {
-	console.error('No file found with content type ' + SHC_CONTENTTYPE);
-	return(undefined);
-  }
-
-  // 3. Fetch and decode the encrypted content
-  const shlEncrypted = await fetchSHLContent(shlFiles[i]);
-  
   const key = b64u_to_arr(shlPayload.key);
-  const decrypted = await compactDecrypt(shlEncrypted, key);
-  const shlJson = JSON.parse(arr_to_str(decrypted.plaintext));
 
-  if (!shlJson.verifiableCredential ||
-	  shlJson.verifiableCredential.length === 0) {
-	
-	console.error('No VC found in resolved SHL: ' +
-				  JSON.stringify(shlJson, null, 2));
+  for (const i in shlFiles) {
 
-	return(undefined);
+	const contentType = shlFiles[i].contentType;
+
+	if (contentType !== SHC_CONTENTTYPE &&
+		contentType !== FHIR_CONTENTTYPE &&
+		contentType !== INFER_CONTENTTYPE) {
+	  // don't bother downloading things we KNOW we can't use
+	  continue;
+	}
+
+	const shlEncrypted = await fetchSHLContent(shlFiles[i]);
+	const decrypted = await compactDecrypt(shlEncrypted, key);
+	const shlJson = JSON.parse(arr_to_str(decrypted.plaintext));
+
+	if (shlJson.verifiableCredential) {
+	  // looks like an shc to me
+	  for (const j in shlJson.verifiableCredential) {
+		resolved.verifiableCredentials.push(shlJson.verifiableCredential[j]);
+	  }
+	}
+	else if (shlJson.resourceType) {
+	  // feels like fhir!
+
+	  if (shlJson.resourceType === "Bundle") {
+		// already a bundle
+		resolved.rawBundles.push = shlJson;
+	  }
+	  else {
+		// put it into a bundle
+		resolved.rawBundles.push({
+		  "resourceType": "Bundle",
+		  "type": "collection",
+		  "entry": [ {
+			"fullUrl": "resource:0",
+			"resource": shlJson
+		  } ]
+		});
+	  }
+	}
   }
-
-  if (shlJson.verifiableCredential.length > 1) {
-	console.warn('Multiple VCs in SHL; only using [0]');
-  }
-
-  return(shlJson.verifiableCredential[0]);
 }
 
 async function fetchSHLContent(file) {
@@ -244,12 +308,8 @@ function singleFileManifest(shlPayload) {
 		"recipient=" +
 		encodeURIComponent(SHL_RECIPIENT);
 
-  // note we assume we're getting an SHC --- we will look
-  // for verifiableCredential in the downloaded package later
-  // so that seems totally fine
-  
   const manifest = { files: [ {
-	"contentType": SHC_CONTENTTYPE,
+	"contentType": INFER_CONTENTTYPE,
 	"location": location
   } ] };
 
@@ -271,7 +331,7 @@ function decodeSHL(shl) {
 }
 
 // +---------+
-// | Helpesr |
+// | Helpers |
 // +---------+
 
 function status(code, reasons) {
@@ -288,22 +348,41 @@ function status(code, reasons) {
   return(obj);
 }
 
+function addBaseBundle(statusObj) {
+
+  const obj = { };
+
+  obj.contentOK = function() { return(this.fhir && this.certStatus !== CERT_STATUS_INVALID); }
+  obj.certValid = function() { return(this.certStatus === CERT_STATUS_VALID); }
+  obj.isVerifiable = function() { return(this.certStauts !== CERT_STATUS_NONE); }
+
+  statusObj.bundles.push(obj);
+  statusObj.shxStatus = SHX_STATUS_OK; // at least one bundle in package
+  
+  return(obj);
+}
+
+function addRawBundle(statusObj, fhirBundle) {
+
+  if (!statusObj) statusObj = status();
+
+  const obj = addBaseBundle(statusObj);
+
+  obj.certStatus = CERT_STATUS_NONE;
+  obj.fhir = fhirBundle;
+
+  return(statusObj);
+}
+
 function addVerifiableBundle(statusObj, vres) {
 
   if (!statusObj) statusObj = status();
 
   // 1. create the bundle object and set status 
-  
-  const obj = { };
-  obj.contentOK = function() { return(this.fhir && this.certStatus !== CERT_STATUS_INVALID); }
-  obj.certValid = function() { return(this.certStatus === CERT_STATUS_VALID); }
-  obj.isVerifiable = function() { return(true); }
-  
-  statusObj.bundles.push(obj);
+
+  const obj = addBaseBundle(statusObj);
   obj.certStatus = (vres.verified ? CERT_STATUS_VALID : CERT_STATUS_INVALID);
 
-  statusObj.shxStatus = SHX_STATUS_OK; // at least one bundle in package
-  
   // 2. add reasons / warnings / errors
   
   if (vres.reason) {

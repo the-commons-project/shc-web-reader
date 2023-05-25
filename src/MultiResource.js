@@ -1,4 +1,5 @@
 
+import { CERT_STATUS_NONE } from './lib/SHX.js';
 import ValidationInfo from './ValidationInfo.js';
 import Coverage from './Coverage.js';
 
@@ -26,7 +27,8 @@ export default function MultiResource({ cardData, resources }) {
 
   return(
 	<div>
-	  <ValidationInfo cardData={cardData} />
+	  { (cardData.certStatus !== CERT_STATUS_NONE) &&
+		<ValidationInfo cardData={cardData} /> }
 	  { elts } { fallback }
 	</div>
 	);
