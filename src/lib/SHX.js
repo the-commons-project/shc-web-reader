@@ -16,8 +16,10 @@
 //
 //   "bundles": [
 //
+//     "label": "for use in ux to choose between bundles",
+//
 //     "fhir": (JSON bundle),
-//     "certStatus": "cert_valid" | "invalid" | "none",
+//     "certStatus": "valid" | "invalid" | "none",
 //
 //     (Messages if relevant:)
 //	   "reasons": [ error strings for humans ],
@@ -135,6 +137,7 @@ async function _verifySHX(shx, passcode) {
   const resolved = await resolveSHX(shx, passcode);
 
   const statusObj = status();
+  const typeCounters = { };
 
   if (resolved.verifiableCredentials.length > 0) {
   
@@ -142,12 +145,17 @@ async function _verifySHX(shx, passcode) {
 
 	for (const i in resolved.verifiableCredentials) {
 	  const vres = await verify(resolved.verifiableCredentials[i], dir);
-	  addVerifiableBundle(statusObj, vres);
+	  addVerifiableBundle(statusObj, vres, typeCounters);
 	}
   }
 
   for (const i in resolved.rawBundles) {
-	addRawBundle(statusObj, resolved.rawBundles[i]);
+	addRawBundle(statusObj, resolved.rawBundles[i], typeCounters);
+  }
+
+  // override for special case of a SHL with a label && exactly 1 bundle
+  if (resolved.label && statusObj.bundles.length === 1) {
+	statusObj.bundles[0].label = resolved.label;
   }
 
   return(statusObj);
@@ -177,6 +185,10 @@ async function getDirectory() {
 //
 //   - "verifiableCredentials" contains all shc:/ or jws strings
 //   - "rawBundles" contains a list of unsigned fhir bundle resources
+//
+// and one string value:
+//
+//   - "label" if it's a SHL and has one, else not present
 
 async function resolveSHX(shx, passcode) {
 
@@ -208,6 +220,8 @@ export async function resolveSHL(shl, passcode, resolved) {
   // 1. Decode the link body
   const shlPayload = decodeSHL(shl);
 
+  if (shlPayload.label) resolved.label = shlPayload.label;
+  
   // 1.5 Check expiration and passcode
   
   if (shlPayload.flag && shlPayload.flag.indexOf('P') !== -1 && !passcode) {
@@ -362,7 +376,7 @@ function addBaseBundle(statusObj) {
   return(obj);
 }
 
-function addRawBundle(statusObj, fhirBundle) {
+function addRawBundle(statusObj, fhirBundle, typeCounters) {
 
   if (!statusObj) statusObj = status();
 
@@ -370,11 +384,12 @@ function addRawBundle(statusObj, fhirBundle) {
 
   obj.certStatus = CERT_STATUS_NONE;
   obj.fhir = fhirBundle;
+  obj.label = labelByBundle(obj.fhir, typeCounters);
 
   return(statusObj);
 }
 
-function addVerifiableBundle(statusObj, vres) {
+function addVerifiableBundle(statusObj, vres, typeCounters) {
 
   if (!statusObj) statusObj = status();
 
@@ -382,6 +397,7 @@ function addVerifiableBundle(statusObj, vres) {
 
   const obj = addBaseBundle(statusObj);
   obj.certStatus = (vres.verified ? CERT_STATUS_VALID : CERT_STATUS_INVALID);
+  obj.validationResult = vres;
 
   // 2. add reasons / warnings / errors
   
@@ -390,9 +406,12 @@ function addVerifiableBundle(statusObj, vres) {
   }
   
   if (vres.data) {
-	
+
+	obj.label = labelByCardType(vres, typeCounters);
+
 	if (vres.data.fhirBundle) {
 	  obj.fhir = vres.data.fhirBundle;
+	  if (!obj.label) obj.label = labelByBundle(obj.fhir, typeCounters);
 	}
 	
 	if (vres.data.errors) {
@@ -438,3 +457,58 @@ function addVerifiableBundle(statusObj, vres) {
   return(statusObj);
 }
 
+// +--------+
+// | Labels |
+// +--------+
+
+
+function labelByCardType(vres, typeCounters) {
+
+  let types;
+  try { types = vres.data.jws.payload.vc.type; }
+  catch (err) { return(undefined); }
+
+  let label = undefined;
+  for (const i in types) {
+	switch (types[i]) {
+	  case "https://smarthealth.cards#covid19": label = "COVID-19 Vaccine Record"; break;
+	  case "https://smarthealth.cards#monkeypox": label = "Monkeypox Vaccine Record"; break;
+	  case "https://smarthealth.cards#immunization": label = "Immunization Record"; break;
+	  case "https://smarthealth.cards#laboratory": label = "Laboratory Results"; break;
+	  case "https://smarthealth.cards#coverage": label = "Insurance Coverage"; break;
+	  default: break;
+	}
+  }
+
+  if (label !== undefined) {
+	label = addLabelCounter(label, typeCounters);
+  }
+
+  return(label);
+}
+
+function labelByBundle(fhir, typeCounters) {
+  // nyi
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi
+  const resourceType = fhir.entry[0].resourceType;
+  return(resourceType === "Bundle" ? "Health Information" : resourceType);
+}
+
+function addLabelCounter(label, typeCounters) {
+
+  if (!typeCounters[label]) {
+	typeCounters[label] = 1;
+	return(label);
+  }
+
+  typeCounters[label] += 1;
+
+  return(`${label} (${typeCounters[label]})`);
+}

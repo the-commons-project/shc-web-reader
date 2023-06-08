@@ -6,7 +6,7 @@ import Copyable from './Copyable.js';
 
 import styles from './Coverage.module.css';
 
-export default function Coverage({ cardData, cov, resources }) {
+export default function Coverage({ cov, resources }) {
 
   const [showPayorContacts, setShowPayorContacts] = useState(false);
 
