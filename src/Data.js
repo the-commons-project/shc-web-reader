@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, TextField } from '@mui/material';
+import { Button, TextField, Select, MenuItem } from '@mui/material';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
 import Bundle from './Bundle.js';
 
@@ -7,6 +7,7 @@ export default function Data({ shx }) {
 
   const [passcode, setPasscode] = useState(undefined);
   const [shxResult, setShxResult] = useState(undefined);
+  const [bundleIndex, setBundleIndex] = useState(0);
 
   // +--------------------+
   // | renderNeedPasscode |
@@ -63,6 +64,35 @@ export default function Data({ shx }) {
 	return(<div>{Array.isArray(reasons) ? reasons.join('; ') : reasons}</div>);
   }
 
+  // +---------------------+
+  // | renderBundleChooser |
+  // +---------------------+
+
+  const onBundleChange = (evt) => {
+	setBundleIndex(evt.target.value);
+  }
+  
+  const renderBundleChooser = () => {
+
+	if (shxResult.bundles.length <= 1) return(undefined);
+
+	const elts = [];
+	for (const i in shxResult.bundles) {
+	  elts.push(<MenuItem key={i} value={i}>{shxResult.bundles[i].label}</MenuItem>);
+	}
+	
+	return(
+	  <Select
+		value={bundleIndex}
+		sx={{ mb: 2 }}
+		onChange={ onBundleChange } >
+		
+		{ elts }
+		
+	  </Select>
+	);
+  }
+  
   // +-------------+
   // | Main Render |
   // +-------------+
@@ -85,7 +115,8 @@ export default function Data({ shx }) {
 
   return(
 	<>
-	  <Bundle bundle={shxResult.bundles[0]} />
+	  { renderBundleChooser() }
+	  <Bundle bundle={shxResult.bundles[bundleIndex]} />
 	</>
   );
 

@@ -489,16 +489,16 @@ function labelByCardType(vres, typeCounters) {
 
 function labelByBundle(fhir, typeCounters) {
   // nyi
-  // nyi - implement a basic version of this and then use in in Data.js
-  // nyi - implement a basic version of this and then use in in Data.js
-  // nyi - implement a basic version of this and then use in in Data.js
-  // nyi - implement a basic version of this and then use in in Data.js
-  // nyi - implement a basic version of this and then use in in Data.js
-  // nyi - implement a basic version of this and then use in in Data.js
-  // nyi - implement a basic version of this and then use in in Data.js
+  // nyi - look into bundle and make good choices about what to show here
+  // nyi - look into bundle and make good choices about what to show here
+  // nyi - look into bundle and make good choices about what to show here
+  // nyi - look into bundle and make good choices about what to show here
+  // nyi - look into bundle and make good choices about what to show here
   // nyi
-  const resourceType = fhir.entry[0].resourceType;
-  return(resourceType === "Bundle" ? "Health Information" : resourceType);
+  let label = fhir.resourceType;
+  if (label === "Bundle") label = "Health Information";
+
+  return(addLabelCounter(label, typeCounters));
 }
 
 function addLabelCounter(label, typeCounters) {
