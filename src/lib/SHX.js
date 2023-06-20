@@ -308,6 +308,10 @@ async function fetchSHLManifest(shlPayload, passcode) {
 	body: JSON.stringify(body)
   });
 
+  if (response.status === 401 && passcode) {
+	throw new PasscodeError("Passcode incorrect.");
+  }
+
   if (response.status !== 200) {
 	throw new Error(`Manifest: ${response.status}`);
   }
