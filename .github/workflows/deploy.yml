@@ -1,0 +1,42 @@
+name: 'Deploy'
+on:
+  workflow_call:
+    inputs:
+      s3-bucket-name:
+        required: true
+        type: string
+      aws-region:
+        required: true
+        type: string
+      aws-assume-role:
+        required: true
+        type: string
+
+env:
+  aws-session-name: shc-reader-github-deploy
+
+jobs:
+  deploy:
+    name: 'Deploy webapp to S3'
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+    - name: 'Setup node'
+      uses: actions/setup-node@v2
+    - name: 'Build React app'
+      run: |
+        npm install
+        npm run build
+    - name: 'Configure AWS Role'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: ${{ inputs.aws-assume-role }}
+        role-duration-seconds: 1200
+        role-session-name: ${{ env.aws-session-name }}
+    - name: 'Sync files to S3'
+      run: |
+        cd build; aws s3 sync . 's3://${{ inputs.s3-bucket-name }}/'
