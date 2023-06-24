@@ -9,11 +9,8 @@
     <script>
 
 	  const ich = document.URL.indexOf("#shlink:/");
-	  
-	  const param = (ich === -1 ? ''
-		 : '?shx=' + encodeURIComponent(document.URL.substring(ich + 1)));
-	  
-	  window.location = '/' + param;
+	  const hash = (ich === -1 ? '' : document.URL.substring(ich));
+	  window.location = '/' + hash;
 
     </script>
   </body>

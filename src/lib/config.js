@@ -24,6 +24,11 @@ export function getConfig() {
   const overrides = new URLSearchParams(overrideSource);
   overrides.forEach( (value, key) => { cfg[key] = value; });
 
+  // lastly if we have a hash value, add it as "shx" ... this is
+  // incoming from shlink.htm which is acting as the viewer url for a SHL
+  const hash = document.location.hash;
+  if (hash && hash.startsWith("#")) cfg["shx"] = hash.substring(1);
+
   _cfg = cfg;
   return(_cfg);
 }
