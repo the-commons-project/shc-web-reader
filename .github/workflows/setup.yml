@@ -12,7 +12,8 @@ jobs:
     with:
       aws-region: us-east-1
       s3-bucket-name: ips-viewer-app
-      aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_DEV }}
+    secrets:
+      aws-assume-role: "${{ secrets.GH_AWS_SERVICE_ROLE_DEV }}"
   deploy-prod:
     if: contains(github.ref, 'prod')
     name: 'Call dev deployment workflow'
@@ -20,4 +21,5 @@ jobs:
     with:
       aws-region: us-east-1
       s3-bucket-name: ips-viewer-app
+    secrets:
       aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_PROD }}

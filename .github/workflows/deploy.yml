@@ -8,9 +8,9 @@ on:
       aws-region:
         required: true
         type: string
+    secrets:
       aws-assume-role:
         required: true
-        type: string
 
 env:
   aws-session-name: shc-reader-github-deploy
