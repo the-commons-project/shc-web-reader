@@ -5,25 +5,19 @@ on:
       - v*
 
 jobs:
-  call-workflow:
-    name: 'Call deployment workflow for target environment'
-    runs-on: ubuntu-latest
-    steps:
-    - name: 'Checkout'
-      uses: actions/checkout@v2
-    - name: 'Deploy dev'
-      uses: ./.github/workflows/deploy.yml
-      if: contains(github.ref, 'dev')
-      with:
-        aws-region: us-east-1
-        s3-bucket-name: ips-viewer-app
-        aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_DEV }}
-    - name: 'Deploy prod'
-      # uses: ./.github/workflows/deploy.yml
-      if: contains(github.ref, 'prod')
-      # with:
-      #   aws-region: us-east-1
-      #   s3-bucket-name: ips-viewer-app-prod
-      #   aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_PROD }}
-      run:
-        echo 'Not yet implemented'
+  deploy-dev:
+    if: contains(github.ref, 'dev')
+    name: 'Call dev deployment workflow'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      aws-region: us-east-1
+      s3-bucket-name: ips-viewer-app
+      aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_DEV }}
+  deploy-prod:
+    if: contains(github.ref, 'prod')
+    name: 'Call dev deployment workflow'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      aws-region: us-east-1
+      s3-bucket-name: ips-viewer-app
+      aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_PROD }}
