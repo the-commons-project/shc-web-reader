@@ -14,12 +14,16 @@ jobs:
       s3-bucket-name: ips-viewer-app
     secrets:
       aws-assume-role: "${{ secrets.GH_AWS_SERVICE_ROLE_DEV }}"
+      aws-access-key-id: "${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}"
+      aws-secret-access-key: "${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}"
   deploy-prod:
     if: contains(github.ref, 'prod')
-    name: 'Call dev deployment workflow'
+    name: 'Call prod deployment workflow'
     uses: ./.github/workflows/deploy.yml
     with:
       aws-region: us-east-1
-      s3-bucket-name: ips-viewer-app
+      s3-bucket-name: ips-viewer-app-prod
     secrets:
-      aws-assume-role: ${{ secrets.GH_AWS_SERVICE_ROLE_PROD }}
+      aws-assume-role: "${{ secrets.GH_AWS_SERVICE_ROLE_PROD }}"
+      aws-access-key-id: "${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}"
+      aws-secret-access-key: "${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}"
