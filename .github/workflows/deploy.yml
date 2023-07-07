@@ -8,9 +8,13 @@ on:
       aws-region:
         required: true
         type: string
+    secrets:
       aws-assume-role:
         required: true
-        type: string
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
+        required: true
 
 env:
   aws-session-name: shc-reader-github-deploy
@@ -31,10 +35,10 @@ jobs:
     - name: 'Configure AWS Role'
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.aws-access-key-id }}
+        aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
         aws-region: ${{ inputs.aws-region }}
-        role-to-assume: ${{ inputs.aws-assume-role }}
+        role-to-assume: ${{ secrets.aws-assume-role }}
         role-duration-seconds: 1200
         role-session-name: ${{ env.aws-session-name }}
     - name: 'Sync files to S3'
