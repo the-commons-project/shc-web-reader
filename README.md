@@ -92,3 +92,12 @@ Controls and styling (such as it is) uses [Google Material UI](https://mui.com/m
 
 I've tried to keep as much of the FHIR-y and SHC-y stuff as possible under the [src/lib](https://github.com/the-commons-project/shc-web-reader/tree/main/src/lib) directory. It's not a perfect abstraction but it helps keep the component files a bit cleaner.
 
+# To Deploy
+The Github action creates a release based on the specified tag.
+
+You can accomplish this by using the following commands. Note that this should be executed from the main fork, from the commit that you would like to push.
+
+```
+git tag v0.4.4-dev2
+git push origin v0.4.4-dev2
+```
