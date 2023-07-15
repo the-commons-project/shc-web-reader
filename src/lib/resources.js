@@ -83,7 +83,7 @@ function labelFromType(btype) {
   switch (btype) {
     case BTYPE_COVERAGE: return("Insurance Coverage"); 
     case BTYPE_PS: return("Patient Summary");
-    case BTYPE_EMPTY: return("Empty Bundle");
+    case BTYPE_EMPTY: return("Invalid Content");
     case BTYPE_BUNDLE: return("Health Information");
     default: return(btype);
   }
@@ -109,6 +109,7 @@ function figureOutType(organized) {
 
   if (organized.all.length === 0) return(BTYPE_EMPTY);
   if (isPatientSummary(organized)) return(BTYPE_PS);
+  if (isCoverage(organized)) return(BTYPE_COVERAGE);
 
   if(organized.all.length === 1) return(organized.all[0].resourceType);
   return(BTYPE_BUNDLE);
@@ -116,6 +117,11 @@ function figureOutType(organized) {
 
 function isPatientSummary(organized) {
   return(organized.countOfType("Composition") > 0 &&
-		 hasCode(organized.byType.Composition[0], "http://loinc.org", "60591-5"));
+		 hasCode(organized.byType.Composition[0].type, "http://loinc.org", "60591-5"));
 }
+
+function isCoverage(organized) {
+  return(organized.countOfType("Coverage") > 0);
+}
+
 
