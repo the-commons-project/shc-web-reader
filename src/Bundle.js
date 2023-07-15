@@ -7,25 +7,17 @@ export default function Bundle({ bundle }) {
 
   const [showBundle, setShowBundle] = useState(false);
 
-  // build up a dictionary so we can resolve references
-
-  let resources = {};
-  if (bundle.contentOK() && bundle.fhir.entry) {
-	for (const i in bundle.fhir.entry) {
-	  let entry = bundle.fhir.entry[i];
-	  resources[entry.fullUrl] = entry.resource;
-	}
-  }
-
   // generate rendering elements
   
-  const elts = Object.keys(resources).reduce((result, key) => {
+  const elts = Object.keys(bundle.organized.byId).reduce((result, key) => {
 	  
-    const resource = resources[key];
+    const resource = bundle.organized.byId[key];
 
 	switch (resource.resourceType) {
 	  case "Coverage":
-	    result.push(<Coverage key={key} cov={resource} resources={resources} />);
+	    result.push(<Coverage key={key}
+		  					  cov={resource}
+							  resources={bundle.organized.byId} />);
 	    break;
 		
 	  default:

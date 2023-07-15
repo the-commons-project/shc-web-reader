@@ -287,11 +287,46 @@ export function searchArray(arr, searchFunc) {
   return(undefined);
 }
 
+// +---------------------------+
+// | hasCode (CodeableConcept) |
+// +---------------------------+
+
+// cc must be a CodeableConcept, often a "type" element but whatevs
+
+export function hasCode(cc, system, code) {
+  const ret = searchArray(cc.coding, (o) => (o.system === system && o.code === code));
+  return(ret ? true : false);
+}
+
 // +-----------------------+
-// | findCodedItem         |
-// | findCodedItemInChild  |
 // | findCodedItemsInChild |
+// | findCodedIteInChild   |
+// | findCodedItem         |
 // +-----------------------+
+
+// These are used when there is an array of objects, each one of which
+// is identified by a CodeableConcept. The "child" element of each item
+// is passed to hasCode to determine a match.
+//
+// E.g., the "class" array in a Coverage element is made up of objects
+// that look like this:
+//
+//   {
+//     "type": {
+//       "coding": [
+//         {
+//           "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+//           "code": "group"
+//         }
+//       ]
+//     },
+//     "value": "993355",
+//     "name": "Stars Inc"
+//   }
+//
+// To find this item, the function would be called with the class array as arr,
+// "type" as the child, "http://terminology.hl7.org/CodeSystem/coverage-class"
+// as the system and "group" as the code.
 
 export function findCodedItemsInChild(arr, child, system, code) {
 
@@ -300,19 +335,8 @@ export function findCodedItemsInChild(arr, child, system, code) {
   const items = [];
 
   for (const i in arr) {
-	  
 	const item = arr[i];
-	if (item[child] && item[child].coding) {
-
-	  for (const j in item[child].coding) {
-
-		if (item[child].coding[j].system === system &&
-			item[child].coding[j].code === code) {
-
-		  items.push(item);
-		}
-	  }
-	}
+	if (item[child] && hasCode(item[child], system, code)) items.push(item);
   }
 
   return(items);

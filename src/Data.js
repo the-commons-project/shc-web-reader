@@ -78,7 +78,9 @@ export default function Data({ shx }) {
 
 	const elts = [];
 	for (const i in shxResult.bundles) {
-	  elts.push(<MenuItem key={i} value={i}>{shxResult.bundles[i].label}</MenuItem>);
+	  elts.push(<MenuItem key={i} value={i}>
+				  {shxResult.bundles[i].organized.label}
+				</MenuItem>);
 	}
 	
 	return(
