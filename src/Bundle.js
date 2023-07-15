@@ -9,15 +9,13 @@ export default function Bundle({ bundle }) {
 
   // generate rendering elements
   
-  const elts = Object.keys(bundle.organized.byId).reduce((result, key) => {
+  const elts = Object.keys(bundle.organized.all).reduce((result, key) => {
 	  
-    const resource = bundle.organized.byId[key];
+    const resource = bundle.organized.all[key];
 
 	switch (resource.resourceType) {
 	  case "Coverage":
-	    result.push(<Coverage key={key}
-		  					  cov={resource}
-							  resources={bundle.organized.byId} />);
+	    result.push(<Coverage key={key} cov={resource} resources={bundle.organized.byId} />);
 	    break;
 		
 	  default:
