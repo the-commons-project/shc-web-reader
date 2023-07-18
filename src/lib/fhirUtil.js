@@ -41,7 +41,7 @@ function renderPersonResource(person) {
   const dob = (person.birthDate ? "DOB " + renderDate(person.birthDate) : "");
   
   return(
-    <div>
+    <div key={person.id}>
 	  {getPersonDisplayName(person.name[0])}<br/>
 	  {dob}
 	</div>
@@ -199,26 +199,56 @@ export function renderTelecomJSX(t, withLinks) {
 	<span key={key++}>{renderTelecomItemJSX(item, withLinks)}<br/></span>));
 }
 
-// +--------------+
-// | renderCoding |
-// +--------------+
+// +-----------------+
+// | renderCoding    |
+// | renderOneCoding |
+// +-----------------+
 
 export function renderCodable(c) {
 
-  let disp = c.text;
+  let disp = ((c.text && typeof c.text === "string") ? c.text : undefined);
+  if (!disp && c.coding && c.coding.length >= 1) disp = renderOneCoding(c.coding[0]);
+  if (!disp) disp = NA;
 
-  if (!disp && c.coding && c.coding.length >= 1) {
+  return(disp);
+}
 
-	disp = c.coding[0].display;
+export function renderCodeableJSX(c) {
 
-	if (!disp && c.coding[0].system in fhirCodes) {
-	  disp = fhirCodes[c.coding[0].system][c.coding[0].code];
-	}
+  // first look at text (note in some objs text is an object, screw that)
+  let disp = ((c.text && typeof c.text === "string") ? c.text : undefined);
 
-	if (!disp) disp = c.coding[0].code;
+  // if no text and no code, we've got nothing
+  if (!disp && (!c.coding || c.coding.length === 0)) return("");
+
+  // if we have text and only one code, just use text (code probably == text)
+  if (disp && (!c.coding || c.coding.length <= 1)) return(disp);
+
+  // if no text, use the first code we find as base text
+  let iFirstAlt = 0;
+  if (!disp && c.coding && c.coding.length > 0) {
+	disp = renderOneCoding(c.coding[0]);
+	iFirstAlt = 1;
   }
 
-  if (!disp) disp = NA;
+  // if no more codes, just return what we found
+  if (!c.coding || iFirstAlt === c.coding.length) return(disp);
+
+  // otherwise add other codings as alt
+  let alt = "";
+  for (let i = iFirstAlt; i < c.coding.length; ++i) {
+	if (alt.length > 0) alt += "\n";
+	alt += renderOneCoding(c.coding[i]);
+  }
+
+  return(<span title={alt}>{disp}</span>);
+}
+
+export function renderOneCoding(c) {
+
+  let disp = c.display;
+  if (!disp && c.system in fhirCodes) disp = fhirCodes[c.system][c.code];
+  if (!disp) disp = c.code;
 
   return(disp);
 }

@@ -6,10 +6,13 @@ import Copyable from './Copyable.js';
 
 import styles from './Coverage.module.css';
 
-export default function Coverage({ cov, resources }) {
+export default function Coverage({ organized }) {
 
   const [showPayorContacts, setShowPayorContacts] = useState(false);
 
+  const cov = organized.byType.Coverage[0];
+  const resources = organized.byId;
+  
   const renderActive = () => {
 
 	const active = fcov.isActive(cov);

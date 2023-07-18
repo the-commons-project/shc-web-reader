@@ -1,0 +1,44 @@
+
+.container {
+	margin-top: 12px;
+}
+
+.dataTable {
+	margin-top: 24px;
+	margin-bottom: 24px;
+	border-collapse: collapse;
+}
+
+.dataTable th, .dataTable td {
+	min-width: 100px;
+	text-align: left;
+	vertical-align: top;
+	border: 1px solid black;
+	padding: 8px 8px 8px 8px;
+	font-size: smaller;
+}
+
+.fhirTable {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.fhirTable td, .fhirTable th {
+	text-align: left;
+	vertical-align: middle;
+	padding: 2px 8px 2px 2px;
+	font-size: 100%;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
+}
+
+.fhirTable th {
+	color: gray;
+}
+
+.fhirTable td {
+	border-top: 1px solid lightgray;
+}
+
