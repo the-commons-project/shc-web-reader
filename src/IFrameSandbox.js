@@ -5,7 +5,7 @@ export default function IFrameSandbox({ html }) {
   // It seems like there must be a better way to do this. All to make sure
   // that we can render external bits of HTML in a maybe-sort-of-secure way
   // that also kind of lays out OK in the context of our pages. Nuts.
-  
+
   const [ height, setHeight ] = useState("10px");
   const frameRef = useRef(null);
 
@@ -22,6 +22,7 @@ export default function IFrameSandbox({ html }) {
 		
   return(
 	<iframe
+	  title="sandboxed content"
 	  sandbox="allow-same-origin"
 	  frameBorder="0"
 	  scrolling="no"
