@@ -33,7 +33,7 @@ export default function PatientSummary({ organized }) {
 	}
 	else if (haveStructured) {
 	  const tableState = {};
-	  for (const i in s.entry) ftabs.addResource(rmap[s.entry[i].reference], tableState);
+	  for (const i in s.entry) ftabs.addResource(rmap[s.entry[i].reference], tableState, rmap);
 	  content = ftabs.renderJSX(tableState, styles.fhirTable, rmap);
 	}
 	else {
