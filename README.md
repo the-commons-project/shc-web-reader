@@ -99,7 +99,6 @@ You can accomplish this by using the following commands. Note that this should b
 
 ```
 git tag v0.4.4-dev2
-git push origin v0.4.4-dev2
 ```
 
 # TO DO:
