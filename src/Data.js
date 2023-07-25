@@ -118,7 +118,17 @@ export default function Data({ shx }) {
   }
 
   const onSaveClick = () => {
-	saveDivToFile(document.getElementById("bundle-contents"));
+
+	// defensive because we can show in error cases too
+	const baseName = (shxResult &&
+					  shxResult.bundles &&
+					  shxResult.bundles[bundleIndex] &&
+					  shxResult.bundles[bundleIndex].organized &&
+					  shxResult.bundles[bundleIndex].organized.label
+					  ? shxResult.bundles[bundleIndex].organized.label
+					  : "Shared Information");
+					  
+	saveDivToFile(document.getElementById("bundle-contents"), baseName);
   }
 
   const onBundleChange = (evt) => {
