@@ -1,0 +1,29 @@
+.dataTable {
+	margin-top: 24px;
+	margin-bottom: 24px;
+	border-collapse: collapse;
+}
+
+.dataTable th, .dataTable td {
+	min-width: 100px;
+	text-align: left;
+	vertical-align: top;
+	border: 1px solid grey;
+	padding: 8px 8px 8px 8px;
+	font-size: smaller;
+}
+
+.innerTable {
+	border-collapse: collapse;
+}
+
+.innerTable td, .innerTable th {
+	text-align: left;
+	vertical-align: middle;
+	padding: 2px 8px 2px 2px;
+	font-size: 100%;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+	border-bottom: 1px solid lightgray;
+}
