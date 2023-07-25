@@ -12,9 +12,21 @@ import * as futil from "./fhirUtil.js";
 export function addResource(resource, tableState, rmap) {
   
   const rtype = resource.resourceType;
+
+  // for DRs, just add individual Observations
+  if (rtype === "DiagnosticReport" &&
+	  resource.result &&
+	  resource.result.length) {
+	
+	for (const i in resource.result) addResource(resource.result[i], tableState, rmap);
+	return;
+  }
+
+  // otherwise accumulate the resource in our state
   if (!tableState[rtype]) tableState[rtype] = [];
   tableState[rtype].push(resource);
 
+  // Observation can included a list of referenced Observations
   if (rtype === "Observation" &&
 	  resource.hasMember &&
 	  resource.hasMember.length > 0) {
@@ -41,6 +53,11 @@ const renderConfig = {
 	"hdrFn": medStmtHeader,
 	"rowFn": medStmtRow,
 	"compFn": medStmtCompare
+  },
+  "MedicationRequest": {
+	"hdrFn": medReqHeader,
+	"rowFn": medReqRow,
+	"compFn": medReqCompare
   },
   "AllergyIntolerance": {
 	"hdrFn": allergyHeader,
@@ -71,9 +88,19 @@ export function renderJSX(tableState, className, rmap) {
 
 	const arr = tableState[rtype];
 	if (render.compFn) arr.sort(render.compFn);
-	
-	const rows = arr.map((r) => render.rowFn(r, rmap));
 
+	const seen = {};
+	const rows = arr.reduce((rowsAcc, r) => {
+
+	  if (!r.id || !seen[r.id]) {
+		rowsAcc.push(render.rowFn(r, rmap));
+		if (r.id) seen[r.id] = true;
+	  }
+
+	  return(rowsAcc);
+	  
+	}, []);
+		  
 	acc.push(
 	  <table key={rtype} className={className}>
 		<tbody>
@@ -133,16 +160,6 @@ function medStmtHeader() {
 
 function medStmtRow(r, rmap) {
 
-  let nameJSX = "Unknown";
-  
-  if (r.medicationReference) {
-	const m = rmap[r.medicationReference.reference];
-	nameJSX = futil.renderCodeableJSX(m.code);
-  }
-  else if (r.medicationCodeableConcept) {
-	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept);
-  }
-
   let effective = undefined;
   if (r.effectiveDateTime) {
 	effective = "started " + futil.renderDateTime(r.effectiveDateTime);
@@ -153,7 +170,7 @@ function medStmtRow(r, rmap) {
 
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
-		   <td>{nameJSX}</td>
+		   <td>{renderMedXNameJSX(r, rmap)}</td>
 		   <td>{effective}</td>
 		   <td>{futil.renderDosage(r.dosage)}</td>
 		 </tr>);
@@ -163,6 +180,51 @@ function medStmtCompare(a, b) {
   const effectiveA = futil.parseCrazyDateTimeBestGuess(a, "effective");
   const effectiveB = futil.parseCrazyDateTimeBestGuess(b, "effective");
   return(effectiveB - effectiveA);
+}
+
+// +--------------------+
+// | MedicationRequest  |
+// +--------------------+
+
+function medReqHeader() {
+  return(<tr>
+		   <th>Status</th>
+		   <th>Name</th>
+		   <th>AuthoredOn</th>
+		   <th>Dosage</th>
+		 </tr>);
+}
+
+function medReqRow(r, rmap) {
+
+  // nyi
+  return(<tr key={r.id}>
+		   <td>{r.status}</td>
+		   <td>{renderMedXNameJSX(r, rmap)}</td>
+		   <td>{(r.authoredOn ? futil.renderDateTime(r.authoredOn) : "")}</td>
+		   <td>{futil.renderDosage(r.dosageInstruction)}</td>
+		 </tr>);
+}
+
+function medReqCompare(a, b) {
+  const authoredA = (a.authoredOn ? futil.parseDateTime(a.authoredOn) : new Date());
+  const authoredB = (b.authoredOn ? futil.parseDateTime(b.authoredOn) : new Date());
+  return(authoredB - authoredA);
+}
+
+function renderMedXNameJSX(r, rmap) {
+  
+  let nameJSX = "Unknown";
+  
+  if (r.medicationReference) {
+	const m = rmap[r.medicationReference.reference];
+	nameJSX = futil.renderCodeableJSX(m.code);
+  }
+  else if (r.medicationCodeableConcept) {
+	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept);
+  }
+
+  return(nameJSX);
 }
 
 // +--------------------+
