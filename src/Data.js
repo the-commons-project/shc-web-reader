@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
+import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
-import { saveDivToFile } from './lib/saveDiv.js';
+import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
 
@@ -14,6 +15,8 @@ export default function Data({ shx }) {
   const [shxResult, setShxResult] = useState(undefined);
   const [bundleIndex, setBundleIndex] = useState(0);
   const [showSource, setShowSource] = useState(false);
+
+  const fhir = useOptionalFhir();
 
   // +--------------------+
   // | renderNeedPasscode |
@@ -78,9 +81,9 @@ export default function Data({ shx }) {
   const renderBundle = () => {
 
 	const bundle = shxResult.bundles[bundleIndex];
-	const organized = bundle.organized;
+	const organized = (bundle.contentOK() ? bundle.organized : undefined);
 	
-	let elt = <></>;
+	let elt = undefined;
 
 	if (organized) {
 	  
@@ -104,12 +107,15 @@ export default function Data({ shx }) {
 	
 	return(
 	  <>
-		<ValidationInfo bundle={bundle} />
 		{ renderBundleChooser() }
-		<div id="bundle-contents">{ elt }</div>
+		<div id="bundle-contents">
+		  <ValidationInfo bundle={bundle} />
+		  { elt }
+		</div>
 		<div>
 	      <Button onClick={ () => setShowSource(!showSource) }>source</Button>
-	      <Button onClick={ onSaveClick }>save</Button>
+	      { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
+	      { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
 	      { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
 		</div>
 	  </>
@@ -117,7 +123,7 @@ export default function Data({ shx }) {
 	
   }
 
-  const onSaveClick = () => {
+  const onSaveClick = (toFile) => {
 
 	// defensive because we can show in error cases too
 	const baseName = (shxResult &&
@@ -127,8 +133,15 @@ export default function Data({ shx }) {
 					  shxResult.bundles[bundleIndex].organized.label
 					  ? shxResult.bundles[bundleIndex].organized.label
 					  : "Shared Information");
-					  
-	saveDivToFile(document.getElementById("bundle-contents"), baseName);
+
+	const div = document.getElementById("bundle-contents");
+	
+	if (toFile) {
+	  saveDivToFile(div, baseName);
+	}
+	else {
+	  saveDivToFHIR(fhir, div, baseName);
+	}
   }
 
   const onBundleChange = (evt) => {
