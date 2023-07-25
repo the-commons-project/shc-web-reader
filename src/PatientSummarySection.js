@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as ftabs from './lib/fhirTables.js';
 import { Button } from '@mui/material';
 import IFrameSandbox from './IFrameSandbox.js';
+import DOMPurify from 'dompurify';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 
 import styles from './PatientSummary.module.css';
@@ -58,6 +59,7 @@ export default function PatientSummarySection({ s, rmap }) {
 
 	return(
 	  <Button
+		data-html2canvas-ignore="true"
 		sx={{ float: "right", marginTop: "10px;" }}
 		size="small"
 		onClick={ () => setViewState(viewState === NTOGGLE ? STOGGLE : NTOGGLE) }
@@ -72,6 +74,15 @@ export default function PatientSummarySection({ s, rmap }) {
   // +-----------------+
 
   const renderNarrative = () => {
+	if (DOMPurify.isSupported) {
+	  const safeHtml = DOMPurify.sanitize(s.text.div);
+	  return(<div className={styles.narrative}
+				  dangerouslySetInnerHTML={{ __html: safeHtml }}></div>);
+	}
+
+	// fallback to putting it into an iframe ... this is suboptimal
+	// because html2canvas will lose the content when rendering, but
+	// it is much safer so seems well worth the tradeoff.
 	return(<IFrameSandbox html={s.text.div} />);
   }
 

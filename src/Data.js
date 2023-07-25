@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
+import { saveDivToFile } from './lib/saveDiv.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
 
@@ -105,14 +106,19 @@ export default function Data({ shx }) {
 	  <>
 		<ValidationInfo bundle={bundle} />
 		{ renderBundleChooser() }
-		{ elt }
+		<div id="bundle-contents">{ elt }</div>
 		<div>
 	      <Button onClick={ () => setShowSource(!showSource) }>source</Button>
+	      <Button onClick={ onSaveClick }>save</Button>
 	      { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
 		</div>
 	  </>
 	);
 	
+  }
+
+  const onSaveClick = () => {
+	saveDivToFile(document.getElementById("bundle-contents"));
   }
 
   const onBundleChange = (evt) => {
@@ -123,7 +129,7 @@ export default function Data({ shx }) {
 
 	if (shxResult.bundles.length <= 1) return(undefined);
 
-	const elts = [];
+ 	const elts = [];
 	for (const i in shxResult.bundles) {
 	  elts.push(<MenuItem key={i} value={i}>
 				  {shxResult.bundles[i].organized.label}
