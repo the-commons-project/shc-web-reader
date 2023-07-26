@@ -31,6 +31,7 @@ import { hasCode } from './fhirUtil.js';
 export const BTYPE_COVERAGE = "cov";
 export const BTYPE_PS = "ps";
 export const BTYPE_BUNDLE = "Bundle";
+export const BTYPE_IMMUNIZATION = "imm";
 export const BTYPE_EMPTY = "empty"; // degenerate
 // ... or a resource type
 
@@ -85,6 +86,7 @@ function labelFromType(btype) {
     case BTYPE_PS: return("Patient Summary");
     case BTYPE_EMPTY: return("Invalid Content");
     case BTYPE_BUNDLE: return("Health Information");
+    case BTYPE_IMMUNIZATION: return("Immunization History");
     default: return(btype);
   }
 }
@@ -110,6 +112,7 @@ function figureOutType(organized) {
   if (organized.all.length === 0) return(BTYPE_EMPTY);
   if (isPatientSummary(organized)) return(BTYPE_PS);
   if (isCoverage(organized)) return(BTYPE_COVERAGE);
+  if (isImmunizationHistory(organized)) return(BTYPE_IMMUNIZATION);
 
   if(organized.all.length === 1) return(organized.all[0].resourceType);
   return(BTYPE_BUNDLE);
@@ -124,4 +127,11 @@ function isCoverage(organized) {
   return(organized.countOfType("Coverage") > 0);
 }
 
-
+function isImmunizationHistory(organized) {
+  // Immunization histories are a combination of a patient and some number of immunizations for that patient.
+  return (
+    Object.keys(organized.byType).length === 2 &&
+    organized.countOfType("Immunization") > 0 &&
+    organized.countOfType("Patient") === 1
+  );
+}

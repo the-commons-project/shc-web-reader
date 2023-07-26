@@ -5,6 +5,7 @@ import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
 
 import Coverage from './Coverage.js';
+import ImmunizationHistory from './ImmunizationHistory.js'
 import PatientSummary from './PatientSummary.js';
 
 export default function Data({ shx }) {
@@ -91,6 +92,10 @@ export default function Data({ shx }) {
 
 	    case res.BTYPE_PS:
 		  elt = <PatientSummary organized={ organized } />;
+		  break;
+
+	    case res.BTYPE_IMMUNIZATION:
+		  elt = <ImmunizationHistory organized={ organized } />;
 		  break;
 
 		// >>> ADD MORE RENDERERS HERE <<<
