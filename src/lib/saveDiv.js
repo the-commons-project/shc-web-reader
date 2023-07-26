@@ -39,7 +39,7 @@ export async function saveDivToFHIR(fhir, div, baseName) {
 	"resourceType": "DocumentReference",
 	"status": "current",
 	"docStatus": "final",
-	"type": { "text": "Scanned SMART Health Link or Card" },
+	"type": { "text": "SMART Health (" + baseName + ")" },
 	"subject": {
 	  "type": "Patient",
 	  "reference": patientReference
@@ -62,8 +62,10 @@ export async function saveDivToFHIR(fhir, div, baseName) {
   }
 
   try {
-	const response = await fhir.create(documentReference);
-	if (response.id) alert("View saved to patient record");
+	fhir.create(documentReference).then((response) => {
+	  alert("View saved to patient record");
+	  console.log("DocumentReference ID: " + response.id);
+	});
   }
   catch (e) {
 	alert(e);
