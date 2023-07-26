@@ -51,6 +51,10 @@ export function organizeResources(bundle, labelCounters) {
 
 	countOfType: function(t) {
 	  return(this.byType[t] ? this.byType[t].length : 0);
+	},
+
+	countOfTypes: function() {
+	  return(Object.keys(this.byType).length);
 	}
   };
 
@@ -70,26 +74,163 @@ export function organizeResources(bundle, labelCounters) {
 	}
   }
 
-  organized.btype = figureOutType(organized);
-  organized.label = addLabelCounter(labelFromType(organized.btype), labelCounters);
+  organized.typeInfo = findTypeInfo(organized, labelCounters);
 	
   return(organized);
 }
 
 // +-------+
-// | Label |
+// | Types |
 // +-------+
 
-function labelFromType(btype) {
-  switch (btype) {
-    case BTYPE_COVERAGE: return("Insurance Coverage"); 
-    case BTYPE_PS: return("Patient Summary");
-    case BTYPE_EMPTY: return("Invalid Content");
-    case BTYPE_BUNDLE: return("Health Information");
-    case BTYPE_IMMUNIZATION: return("Immunization History");
-    default: return(btype);
-  }
+function findTypeInfo(organized, labelCounters) {
+
+  let info = undefined;
+  if (!info) info = tryTypeInfoEmpty(organized);
+  if (!info) info = tryTypeInfoPatientSummary(organized);
+  if (!info) info = tryTypeInfoCoverage(organized);
+  if (!info) info = tryTypeInfoImmunization(organized);
+  if (!info) info = tryTypeInfoSingleResource(organized);
+  if (!info) info = tryTypeInfoBundle(organized);
+
+  if (info) info.label = addLabelCounter(info.label, labelCounters);
+
+  return(info);
 }
+
+// +-------------+
+// | BTYPE_EMPTY |
+// +-------------+
+
+function tryTypeInfoEmpty(organized) {
+
+  if (organized.all.length > 0) return(undefined);
+  
+  return({
+	btype: BTYPE_EMPTY,
+	label: "Invalid Content",
+	subjectDemos: []
+  });
+}
+						
+// +----------+
+// | BTYPE_PS |
+// +----------+
+
+const PS_SYS = "http://loinc.org";
+const PS_CODE = "60591-5";
+
+function tryTypeInfoPatientSummary(organized) {
+
+  if (organized.countOfType("Composition") === 0 ||
+	  !hasCode(organized.byType.Composition[0].type, PS_SYS, PS_CODE)) {
+
+	return(undefined);
+  }
+
+  return({
+	btype: BTYPE_PS,
+	label: "Patient Summary",
+	patientDemos: getPatientSummaryDemos(organized)
+  });
+}
+
+function getPatientSummaryDemos(organized) {
+  // nyi
+  return([]);
+}
+			   
+// +----------------+
+// | BTYPE_COVERAGE |
+// +----------------+
+
+function tryTypeInfoCoverage(organized) {
+
+  if (organized.countOfType("Coverage") === 0) return(undefined);
+  
+  return({
+	btype: BTYPE_COVERAGE,
+	label: "Insurance Coverage",
+	patientDemos: getCoverageDemos(organized)
+  });
+}
+
+function getCoverageDemos(organized) {
+  // nyi
+  return([]);
+}
+
+// +--------------------+
+// | BTYPE_IMMUNIZATION |
+// +--------------------+
+
+function tryTypeInfoImmunization(organized) {
+
+  // Immunization histories are a combination of a patient and
+  // some number of immunizations for that patient.
+
+  if (organized.countOfTypes() !== 2 ||
+	  organized.countOfType("Immunization") === 0 ||
+	  organized.countOfType("Patient") !== 1) {
+
+	return(undefined);
+  }
+
+  return({
+	btype: BTYPE_IMMUNIZATION,
+	label: "Immunization History",
+	patientDemos: getImmunizationDemos(organized)
+  });
+}
+
+function getImmunizationDemos(organized) {
+  // nyi
+  return([]);
+}
+
+// +-----------------+
+// | Single Resource |
+// +-----------------+
+
+function tryTypeInfoSingleResource(organized) {
+
+  if (organized.all.length !== 1) return(undefined);
+
+  return({
+	btype: organized.all[0].resourceType,
+	label: organized.all[0].resourceType,
+	patientDemos: getSingleResourceDemos(organized)
+  });
+}
+
+function getSingleResourceDemos(organized) {
+  // nyi
+  return([]);
+}
+
+// +--------------+
+// | BTYPE_BUNDLE |
+// +--------------+
+
+function tryTypeInfoBundle(organized) {
+
+  if (organized.all.length === 0) return(undefined);
+
+  return({
+	btype: BTYPE_BUNDLE,
+	label: "Bundle",
+	patientDemos: getBundleDemos(organized)
+  });
+}
+
+function getBundleDemos(organized) {
+  // nyi
+  return([]);
+}
+
+// +---------+
+// | Helpers |
+// +---------+
 
 function addLabelCounter(label, labelCounters) {
 
@@ -103,35 +244,4 @@ function addLabelCounter(label, labelCounters) {
   return(`${label} (${labelCounters[label]})`);
 }
 
-// +------+
-// | Type |
-// +------+
 
-function figureOutType(organized) {
-
-  if (organized.all.length === 0) return(BTYPE_EMPTY);
-  if (isPatientSummary(organized)) return(BTYPE_PS);
-  if (isCoverage(organized)) return(BTYPE_COVERAGE);
-  if (isImmunizationHistory(organized)) return(BTYPE_IMMUNIZATION);
-
-  if(organized.all.length === 1) return(organized.all[0].resourceType);
-  return(BTYPE_BUNDLE);
-}
-
-function isPatientSummary(organized) {
-  return(organized.countOfType("Composition") > 0 &&
-		 hasCode(organized.byType.Composition[0].type, "http://loinc.org", "60591-5"));
-}
-
-function isCoverage(organized) {
-  return(organized.countOfType("Coverage") > 0);
-}
-
-function isImmunizationHistory(organized) {
-  // Immunization histories are a combination of a patient and some number of immunizations for that patient.
-  return (
-    Object.keys(organized.byType).length === 2 &&
-    organized.countOfType("Immunization") > 0 &&
-    organized.countOfType("Patient") === 1
-  );
-}

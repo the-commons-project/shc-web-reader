@@ -88,7 +88,7 @@ export default function Data({ shx }) {
 
 	if (organized) {
 	  
-	  switch (organized.btype) {
+	  switch (organized.typeInfo.btype) {
 		
 	    case res.BTYPE_COVERAGE:
 		  elt = <Coverage organized={ organized } />;
@@ -135,8 +135,10 @@ export default function Data({ shx }) {
 					  shxResult.bundles &&
 					  shxResult.bundles[bundleIndex] &&
 					  shxResult.bundles[bundleIndex].organized &&
-					  shxResult.bundles[bundleIndex].organized.label
-					  ? shxResult.bundles[bundleIndex].organized.label
+					  shxResult.bundles[bundleIndex].organized.typeInfo &&
+					  shxResult.bundles[bundleIndex].organized.typeInfo.label
+					  
+					  ? shxResult.bundles[bundleIndex].organized.typeInfo.label
 					  : "Shared Information");
 
 	const div = document.getElementById("bundle-contents");
@@ -160,7 +162,7 @@ export default function Data({ shx }) {
  	const elts = [];
 	for (const i in shxResult.bundles) {
 	  elts.push(<MenuItem key={i} value={i}>
-				  {shxResult.bundles[i].organized.label}
+				  {shxResult.bundles[i].organized.typeInfo.label}
 				</MenuItem>);
 	}
 	

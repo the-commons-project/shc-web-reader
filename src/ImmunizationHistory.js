@@ -60,6 +60,9 @@ function renderImmunizationGroup(
     }
   };
   const renderPerformers = (performers) => {
+
+	if (!performers) return(undefined);
+	
     return (
       <ul>
         {performers.map((p, index) => (
