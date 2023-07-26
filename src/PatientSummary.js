@@ -31,12 +31,12 @@ export default function PatientSummary({ organized }) {
   
   return(
     <div className={styles.container}>
-	  <h1>{comp.title}</h1>
+	  <h2>{comp.title}</h2>
 	  <table className={styles.dataTable}>
 		<tbody>
 		  <tr>
 			<th>Patient</th>
-			<td>{ futil.renderPerson(comp.subject, rmap) }</td>
+			<td className={styles.patCell}>{ futil.renderPerson(comp.subject, rmap) }</td>
 		  </tr>
 		  <tr>
 			<th>Summary prepared by</th>
