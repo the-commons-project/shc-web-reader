@@ -57,7 +57,7 @@ export default function WrongPatientWarning({ organized }) {
   return(
 	<div class={styles.warning}>
 	  Warning: It appears that the subject referenced in the information
-	  below may differ from the patient currently selected in the
+	  below may differ from the patient selected in the 
 	  EHR (<span className={styles.deets}>{getPatientDeets()}</span>).
 	  Please ensure a match before proceeding.
 	</div>
