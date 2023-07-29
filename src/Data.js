@@ -5,6 +5,7 @@ import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.j
 import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
+import WrongPatientWarning from './WrongPatientWarning.js';
 
 import Coverage from './Coverage.js';
 import ImmunizationHistory from './ImmunizationHistory.js'
@@ -115,6 +116,7 @@ export default function Data({ shx }) {
 		{ renderBundleChooser() }
 		<div id="bundle-contents">
 		  <ValidationInfo bundle={bundle} />
+		  <WrongPatientWarning organized={organized} />
 		  { elt }
 		</div>
 		<div>

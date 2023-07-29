@@ -27,6 +27,65 @@ export function renderContact(c, withLinks) {
   return(<>{addr}{telecom}</>);
 }
 
+// +----------------------+
+// | seemsLikeSamePatient |
+// +----------------------+
+
+// There are a ton of pitfalls here ... this method works best when
+// trying to avoid "random" mismatches by matching on family name and
+// date of birth. We could reasonably add at least the first "given"
+// name to this as well, but this could easily be foiled by spelling or
+// nickname issues. We don't want to over-warn in our use cases so this
+// seems a good start.
+
+export function seemsLikeSamePatient(p1, p2) {
+
+  if (!p1 && !p2) return(true);
+  if (!p1 || !p2) return(false);
+
+  // family names ... "name" is defined as an array but I've seen cases
+  // where they just add a single element so protecting against that here.
+  // if no data for either one skip the test
+  
+  const names1 = (p1.name ? (Array.isArray(p1.name) ? p1.name : [ p1.name] )
+				  : undefined);
+
+  const names2 = (p2.name ? (Array.isArray(p2.name) ? p2.name : [ p2.name] )
+				  : undefined);
+
+  if (names1 && names1.length && names2 && names2.length) {
+
+	let foundMatch = false;
+	
+	for (const i1 in names1) {
+	  const family1 = names1[i1].family;
+	  if (!family1) continue;
+	  
+	  for (const i2 in names2) {
+		const family2 = names1[i2].family;
+
+		if (family2 && family1 === family2) {
+		  
+		  foundMatch = true;
+		  break;
+		}
+	  }
+	}
+
+	// we had names but never found a match, so call it a miss
+	if (!foundMatch) return(false);
+  }
+
+  // date of birth --- if either is missing, ignore this test
+  const dob1 = p1.dateOfBirth;
+  const dob2 = p2.dateOfBirth;
+
+  if (dob1 && dob2 && (dob1 !== dob2)) return(false);
+
+  // seems legit?
+  return(true);
+}
+
 // +--------------+
 // | renderPerson |
 // +--------------+
@@ -48,7 +107,7 @@ function renderPersonResource(person) {
   );
 }
 
-function getPersonDisplayName(name) {
+export function getPersonDisplayName(name) {
 
   if (name.text) return(name.text);
 

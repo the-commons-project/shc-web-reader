@@ -22,7 +22,7 @@
 // }
 //
 
-import { hasCode } from './fhirUtil.js';
+import * as futil from "./fhirUtil.js";
 
 // +------------------+
 // | Public Constants |
@@ -109,7 +109,7 @@ function tryTypeInfoEmpty(organized) {
   return({
 	btype: BTYPE_EMPTY,
 	label: "Invalid Content",
-	subjectDemos: []
+	subjects: []
   });
 }
 						
@@ -123,41 +123,56 @@ const PS_CODE = "60591-5";
 function tryTypeInfoPatientSummary(organized) {
 
   if (organized.countOfType("Composition") === 0 ||
-	  !hasCode(organized.byType.Composition[0].type, PS_SYS, PS_CODE)) {
+	  !futil.hasCode(organized.byType.Composition[0].type, PS_SYS, PS_CODE)) {
 
 	return(undefined);
   }
 
+  const patientReference = organized.byType.Composition[0].subject.reference;
+  const patient = organized.byId[patientReference];
+
   return({
 	btype: BTYPE_PS,
 	label: "Patient Summary",
-	patientDemos: getPatientSummaryDemos(organized)
+	subjects: [ patient ]
   });
 }
 
-function getPatientSummaryDemos(organized) {
-  // nyi
-  return([]);
-}
-			   
 // +----------------+
 // | BTYPE_COVERAGE |
 // +----------------+
 
+// Trying to deal with the fact that often a family member will provide
+// a card for one of the other family members and that's considered ok.
+//
+// The format requires exactly one Patient record for "beneficiary" and
+// one for "subscriber", so we'll add both of those unless they're the
+// same.
+//
+// There is also an optional collection of "beneficiaries" but that
+// is names only, and I'm not sure that helps us very much so ignoring
+// it for now.
+
 function tryTypeInfoCoverage(organized) {
 
   if (organized.countOfType("Coverage") === 0) return(undefined);
+
+  const benReference = organized.byType.Coverage[0].beneficiary;
+  const subReference = organized.byType.Coverage[0].subscriber;
   
+  const beneficiary = organized.byId[benReference];
+  const subscriber = organized.byId[subReference];
+
+  const subjects = [ beneficiary ];
+  if (!futil.seemsLikeSamePatient(subscriber, beneficiary)) {
+	subjects.push(subscriber);
+  }
+
   return({
 	btype: BTYPE_COVERAGE,
 	label: "Insurance Coverage",
-	patientDemos: getCoverageDemos(organized)
+	subjects: subjects
   });
-}
-
-function getCoverageDemos(organized) {
-  // nyi
-  return([]);
 }
 
 // +--------------------+
@@ -179,13 +194,8 @@ function tryTypeInfoImmunization(organized) {
   return({
 	btype: BTYPE_IMMUNIZATION,
 	label: "Immunization History",
-	patientDemos: getImmunizationDemos(organized)
+	subjects: organized.byType.Patient
   });
-}
-
-function getImmunizationDemos(organized) {
-  // nyi
-  return([]);
 }
 
 // +-----------------+
@@ -199,13 +209,8 @@ function tryTypeInfoSingleResource(organized) {
   return({
 	btype: organized.all[0].resourceType,
 	label: organized.all[0].resourceType,
-	patientDemos: getSingleResourceDemos(organized)
+	subjects: organized.byType.Patient
   });
-}
-
-function getSingleResourceDemos(organized) {
-  // nyi
-  return([]);
 }
 
 // +--------------+
@@ -219,13 +224,8 @@ function tryTypeInfoBundle(organized) {
   return({
 	btype: BTYPE_BUNDLE,
 	label: "Bundle",
-	patientDemos: getBundleDemos(organized)
+	subjects: organized.byType.Patient
   });
-}
-
-function getBundleDemos(organized) {
-  // nyi
-  return([]);
 }
 
 // +---------+
