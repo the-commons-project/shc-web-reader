@@ -5,6 +5,7 @@ import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.j
 import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
+import WrongPatientWarning from './WrongPatientWarning.js';
 
 import Coverage from './Coverage.js';
 import ImmunizationHistory from './ImmunizationHistory.js'
@@ -88,7 +89,7 @@ export default function Data({ shx }) {
 
 	if (organized) {
 	  
-	  switch (organized.btype) {
+	  switch (organized.typeInfo.btype) {
 		
 	    case res.BTYPE_COVERAGE:
 		  elt = <Coverage organized={ organized } />;
@@ -115,6 +116,7 @@ export default function Data({ shx }) {
 		{ renderBundleChooser() }
 		<div id="bundle-contents">
 		  <ValidationInfo bundle={bundle} />
+		  <WrongPatientWarning organized={organized} />
 		  { elt }
 		</div>
 		<div>
@@ -135,8 +137,10 @@ export default function Data({ shx }) {
 					  shxResult.bundles &&
 					  shxResult.bundles[bundleIndex] &&
 					  shxResult.bundles[bundleIndex].organized &&
-					  shxResult.bundles[bundleIndex].organized.label
-					  ? shxResult.bundles[bundleIndex].organized.label
+					  shxResult.bundles[bundleIndex].organized.typeInfo &&
+					  shxResult.bundles[bundleIndex].organized.typeInfo.label
+					  
+					  ? shxResult.bundles[bundleIndex].organized.typeInfo.label
 					  : "Shared Information");
 
 	const div = document.getElementById("bundle-contents");
@@ -160,7 +164,7 @@ export default function Data({ shx }) {
  	const elts = [];
 	for (const i in shxResult.bundles) {
 	  elts.push(<MenuItem key={i} value={i}>
-				  {shxResult.bundles[i].organized.label}
+				  {shxResult.bundles[i].organized.typeInfo.label}
 				</MenuItem>);
 	}
 	

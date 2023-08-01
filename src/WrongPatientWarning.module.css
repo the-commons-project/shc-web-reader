@@ -1,0 +1,15 @@
+
+.warning {
+	margin-top: 8px;
+	border: 1px solid grey;
+	background-color: lightgray;
+	padding: 8px 8px 8px 8px;
+	max-width: 640px;
+	color: red;
+	font-weight: bold;
+	font-style: italic;
+}
+
+.deets {
+	color: black;
+}
