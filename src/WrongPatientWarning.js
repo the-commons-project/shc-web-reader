@@ -18,7 +18,7 @@ export default function WrongPatientWarning({ organized }) {
 	  console.err(err.toString());
 	}
 	
-  });
+  }, [organized,fhir]);
 
   const getPatientDeets = () => {
 

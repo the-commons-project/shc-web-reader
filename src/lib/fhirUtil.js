@@ -62,9 +62,9 @@ export function seemsLikeSamePatient(p1, p2) {
 	  if (!family1) continue;
 	  
 	  for (const i2 in names2) {
-		const family2 = names1[i2].family;
+		const family2 = names2[i2].family;
 
-		if (family2 && family1 === family2) {
+		if (family2 && (family1 === family2)) {
 		  
 		  foundMatch = true;
 		  break;
@@ -77,8 +77,8 @@ export function seemsLikeSamePatient(p1, p2) {
   }
 
   // date of birth --- if either is missing, ignore this test
-  const dob1 = p1.dateOfBirth;
-  const dob2 = p2.dateOfBirth;
+  const dob1 = p1.birthDate;
+  const dob2 = p2.birthDate;
 
   if (dob1 && dob2 && (dob1 !== dob2)) return(false);
 
