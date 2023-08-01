@@ -40,7 +40,7 @@ export default function WrongPatientWarning({ organized }) {
   // | Main Render |
   // +-------------+
   
-  if (!patient) return(undefined);
+  if (!patient || !organized || !organized.typeInfo) return(undefined);
   
   const subjects = organized.typeInfo.subjects;
   let foundMatch = false;

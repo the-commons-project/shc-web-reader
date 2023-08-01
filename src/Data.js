@@ -154,7 +154,7 @@ export default function Data({ shx }) {
   }
 
   const onBundleChange = (evt) => {
-	setBundleIndex(evt.target.value);
+	setBundleIndex(parseInt(evt.target.value));
   }
   
   const renderBundleChooser = () => {
@@ -167,8 +167,12 @@ export default function Data({ shx }) {
 				  {shxResult.bundles[i].organized.typeInfo.label}
 				</MenuItem>);
 	}
-	
+
 	return(
+	  <>
+		<span style={{ padding: "0px 8px 0px 6px" }} >
+		  Section { bundleIndex + 1 } of { shxResult.bundles.length }:
+		</span>
 	  <Select
 		value={bundleIndex}
 		sx={{ mb: 2 }}
@@ -177,6 +181,7 @@ export default function Data({ shx }) {
 		{ elts }
 		
 	  </Select>
+	  </>
 	);
   }
   
