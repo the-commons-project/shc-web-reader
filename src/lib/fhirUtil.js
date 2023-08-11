@@ -1,6 +1,4 @@
 
-import { fhirCodes } from "./fhirCodes.js";
-
 const NA = "Unknown";
 
 // +--------------------+
@@ -367,10 +365,10 @@ export function parseCrazyDateTimeBestGuess(parent, prefix) {
 //       valueAttachment (NOT SUPPORTED)
 //       valueReference(MolecularSequence) (NOT SUPPORTED)
 
-export function renderCrazyValue(parent, prefix) {
+export function renderCrazyValue(parent, prefix, dcr) {
 
   if (parent[prefix + "Quantity"]) return(renderQuantity(parent[prefix + "Quantity"]));
-  if (parent[prefix + "CodeableConcept"]) return(renderCodeableJSX(parent[prefix + "CodeableConcept"]));
+  if (parent[prefix + "CodeableConcept"]) return(renderCodeableJSX(parent[prefix + "CodeableConcept"], dcr));
   if (parent[prefix + "String"]) return(parent[prefix + "String"]);
   if (parent[prefix + "Boolean"]) return(parent[prefix + "Boolean"]);
   if (parent[prefix + "Integer"]) return(parent[prefix + "Integer"]);
@@ -395,7 +393,7 @@ export function renderCrazyValue(parent, prefix) {
 // | renderTiming |
 // +--------------+
 
-export function renderTiming(t) {
+export function renderTiming(t, dcr) {
 
   if (!t) return(undefined);
   
@@ -420,7 +418,7 @@ export function renderTiming(t) {
 
   if (t.code) {
   // code
-	disp = delimiterAppend(disp, renderCodeableJSX(t.code), "; ");
+	disp = delimiterAppend(disp, renderCodeableJSX(t.code, dcr), "; ");
   }
   else if (t.repeat) {
 	// repeat - first figure out the what ...
@@ -491,16 +489,16 @@ export function renderTiming(t) {
 // | renderDoseAndRate |
 // +-------------------+
 
-export function renderDosage(d) {
+export function renderDosage(d, dcr) {
   if (!d) return(undefined);
-  if (!Array.isArray(d)) return(renderOneDosage(d));
+  if (!Array.isArray(d)) return(renderOneDosage(d, dcr));
 
   let disp = "";
-  for (const i in d) disp = delimiterAppend(disp, renderOneDosage(d[i]), "\n");
+  for (const i in d) disp = delimiterAppend(disp, renderOneDosage(d[i], dcr), "\n");
   return(disp);
 }
 
-export function renderOneDosage(d) {
+export function renderOneDosage(d, dcr) {
   
   if (!d) return(undefined);
   if (d.text) return(d.text);
@@ -508,11 +506,11 @@ export function renderOneDosage(d) {
   let disp = "";
   
   if (d.asNeededBoolean) disp = d.asNeededBoolean;
-  else if (d.asNeededCodeableConcept) disp = renderCodeableJSX(d.asNeededCodeableConcept);
+  else if (d.asNeededCodeableConcept) disp = renderCodeableJSX(d.asNeededCodeableConcept, dcr);
 
-  disp = delimiterAppend(disp, renderCodeableJSX(d.route), "; ");
+  disp = delimiterAppend(disp, renderCodeableJSX(d.route, dcr), "; ");
   disp = delimiterAppend(disp, renderDoseAndRate(d.doseAndRate), "; ");
-  disp = delimiterAppend(disp, renderTiming(d.timing), "; ");
+  disp = delimiterAppend(disp, renderTiming(d.timing, dcr), "; ");
 
   return(disp);
 }
@@ -619,21 +617,18 @@ export function renderTelecomJSX(t, withLinks) {
 	<span key={key++}>{renderTelecomItemJSX(item, withLinks)}<br/></span>));
 }
 
-// +-----------------+
-// | renderCoding    |
-// | renderOneCoding |
-// +-----------------+
+// +-------------------+
+// | renderCodeable    |
+// | renderCodeableJSX |
+// +-------------------+
 
-export function renderCodable(c) {
-
-  let disp = ((c.text && typeof c.text === "string") ? c.text : undefined);
-  if (!disp && c.coding && c.coding.length >= 1) disp = renderOneCoding(c.coding[0]);
-  if (!disp) disp = NA;
-
-  return(disp);
+export function renderCodeable(c, dcr) {
+  if (c.text && typeof c.text === "string") return(c.text);
+  if (!c.coding || c.coding.length === 0) return("");
+  return(dcr.safeCodingDisplay(c.coding[0]));
 }
 
-export function renderCodeableJSX(c) {
+export function renderCodeableJSX(c, dcr) {
 
   if (!c) return(undefined);
   
@@ -649,7 +644,7 @@ export function renderCodeableJSX(c) {
   // if no text, use the first code we find as base text
   let iFirstAlt = 0;
   if (!disp && c.coding && c.coding.length > 0) {
-	disp = renderOneCoding(c.coding[0]);
+	disp = dcr.safeCodingDisplay(c.coding[0]);
 	iFirstAlt = 1;
   }
 
@@ -660,19 +655,10 @@ export function renderCodeableJSX(c) {
   let alt = "";
   for (let i = iFirstAlt; i < c.coding.length; ++i) {
 	if (alt.length > 0) alt += "\n";
-	alt += renderOneCoding(c.coding[i]);
+	alt += dcr.safeCodingDisplay(c.coding[i]);
   }
 
   return(<span className="xtrahover" title={alt}>{disp}</span>);
-}
-
-export function renderOneCoding(c) {
-
-  let disp = c.display;
-  if (!disp && c.system in fhirCodes) disp = fhirCodes[c.system][c.code];
-  if (!disp) disp = c.code;
-
-  return(disp);
 }
 
 // +---------------+

@@ -3,7 +3,7 @@ import PatientSummarySection from './PatientSummarySection.js';
 
 import styles from './PatientSummary.module.css';
 
-export default function PatientSummary({ organized }) {
+export default function PatientSummary({ organized, dcr }) {
 
   // +----------------+
   // | renderSections |
@@ -14,7 +14,7 @@ export default function PatientSummary({ organized }) {
 	  return(
 		<tr key={ s.title }>
 		  <th>{ s.title }</th>
-		  <td><PatientSummarySection s={s} rmap={rmap} /></td>
+		  <td><PatientSummarySection s={s} rmap={rmap} dcr={dcr} /></td>
 		</tr>
 	  );
 	}));

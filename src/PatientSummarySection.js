@@ -7,7 +7,7 @@ import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 
 import styles from './PatientSummary.module.css';
 
-export default function PatientSummarySection({ s, rmap }) {
+export default function PatientSummarySection({ s, rmap, dcr }) {
 
   const NONLY = "narrative_only";
   const SONLY = "structured_only";
@@ -93,7 +93,7 @@ export default function PatientSummarySection({ s, rmap }) {
   const renderStructured = () => {
 	const tableState = {};
 	for (const i in s.entry) ftabs.addResource(rmap[s.entry[i].reference], tableState, rmap);
-	return(ftabs.renderJSX(tableState, styles.fhirTable, rmap));
+	return(ftabs.renderJSX(tableState, styles.fhirTable, rmap, dcr));
   }
 
   // +-------------+

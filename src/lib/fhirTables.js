@@ -75,7 +75,7 @@ const renderConfig = {
   }
 }
 
-export function renderJSX(tableState, className, rmap) {
+export function renderJSX(tableState, className, rmap, dcr) {
 
   const tables = Object.keys(tableState).reduce((acc, rtype) => {
 
@@ -93,7 +93,7 @@ export function renderJSX(tableState, className, rmap) {
 	const rows = arr.reduce((rowsAcc, r) => {
 
 	  if (!r.id || !seen[r.id]) {
-		rowsAcc.push(render.rowFn(r, rmap));
+		rowsAcc.push(render.rowFn(r, rmap, dcr));
 		if (r.id) seen[r.id] = true;
 	  }
 
@@ -130,11 +130,11 @@ function conditionsHeader() {
 		 </tr>);
 }
 
-function conditionsRow(r, rmap) {
+function conditionsRow(r, rmap, dcr) {
 
-  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus) : "");
-  const name = (r.code ? futil.renderCodeableJSX(r.code) : "");
-  const sev = (r.severity ? futil.renderCodeableJSX(r.severity) : "");
+  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus, dcr) : "");
+  const name = (r.code ? futil.renderCodeableJSX(r.code, dcr) : "");
+  const sev = (r.severity ? futil.renderCodeableJSX(r.severity, dcr) : "");
 
   return(<tr key={r.id}>
 		   <td>{status}</td>
@@ -158,7 +158,7 @@ function medStmtHeader() {
 		 </tr>);
 }
 
-function medStmtRow(r, rmap) {
+function medStmtRow(r, rmap, dcr) {
 
   let effective = undefined;
   if (r.effectiveDateTime) {
@@ -170,9 +170,9 @@ function medStmtRow(r, rmap) {
 
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
-		   <td>{renderMedXNameJSX(r, rmap)}</td>
+		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
 		   <td>{effective}</td>
-		   <td>{futil.renderDosage(r.dosage)}</td>
+		   <td>{futil.renderDosage(r.dosage, dcr)}</td>
 		 </tr>);
 }
 
@@ -195,14 +195,14 @@ function medReqHeader() {
 		 </tr>);
 }
 
-function medReqRow(r, rmap) {
+function medReqRow(r, rmap, dcr) {
 
   // nyi
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
-		   <td>{renderMedXNameJSX(r, rmap)}</td>
+		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
 		   <td>{(r.authoredOn ? futil.renderDateTime(r.authoredOn) : "")}</td>
-		   <td>{futil.renderDosage(r.dosageInstruction)}</td>
+		   <td>{futil.renderDosage(r.dosageInstruction, dcr)}</td>
 		 </tr>);
 }
 
@@ -212,16 +212,16 @@ function medReqCompare(a, b) {
   return(authoredB - authoredA);
 }
 
-function renderMedXNameJSX(r, rmap) {
+function renderMedXNameJSX(r, rmap, dcr) {
   
   let nameJSX = "Unknown";
   
   if (r.medicationReference) {
 	const m = rmap[r.medicationReference.reference];
-	nameJSX = futil.renderCodeableJSX(m.code);
+	nameJSX = futil.renderCodeableJSX(m.code, dcr);
   }
   else if (r.medicationCodeableConcept) {
-	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept);
+	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept, dcr);
   }
 
   return(nameJSX);
@@ -241,10 +241,10 @@ function allergyHeader() {
 		 </tr>);
 }
 
-function allergyRow(r, rmap) {
+function allergyRow(r, rmap, dcr) {
 
-  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus) : "");
-  const name = (r.code ? futil.renderCodeableJSX(r.code) : "");
+  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus, dcr) : "");
+  const name = (r.code ? futil.renderCodeableJSX(r.code, dcr) : "");
   const category = (r.category ? r.category.join("; ") : "");
   const crit = (r.criticality ? r.criticality : "");
   
@@ -270,16 +270,16 @@ function immunizationHeader() {
 		 </tr>);
 }
 
-function immunizationRow(r, rmap) {
+function immunizationRow(r, rmap, dcr) {
 
-  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason) : "");
-  const name = futil.renderCodeableJSX(r.vaccineCode);
+  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, dcr) : "");
+  const name = futil.renderCodeableJSX(r.vaccineCode, dcr);
   const administered = futil.renderCrazyDateTime(r, "occurrence");
 
   let reaction = undefined;
   if (r.reaction) {
-	if (!Array.isArray(r.reaction)) reaction = renderOneReaction(r.reaction, rmap);
-	else r.reaction.map((reaction) => renderOneReaction(reaction, rmap)).join("\n");
+	if (!Array.isArray(r.reaction)) reaction = renderOneReaction(r.reaction, rmap, dcr);
+	else r.reaction.map((reaction) => renderOneReaction(reaction, rmap, dcr)).join("\n");
   }
   
   return(<tr key={r.id}>
@@ -296,7 +296,7 @@ function immunizationCompare(a, b) {
   return(dateB - dateA);
 }
 
-function renderOneReaction(reaction, rmap) {
+function renderOneReaction(reaction, rmap, dcr) {
   
   let disp = undefined;
   
@@ -304,11 +304,11 @@ function renderOneReaction(reaction, rmap) {
   
   if (reaction.manifestation) {
 	if (reaction.manifestation.concept) {
-	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(reaction.manifestation.concept), "; ");
+	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(reaction.manifestation.concept, dcr), "; ");
 	}
 	else {
 	  const obs = rmap[reaction.manifestation.reference];
-	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(obs.code), "; ");
+	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(obs.code, dcr), "; ");
 	}
   }
   
@@ -330,7 +330,7 @@ function obsHeader() {
 		 </tr>);
 }
 
-function obsRow(r, rmap) {
+function obsRow(r, rmap, dcr) {
 
   // observations may have compound results, which we treat as
   // multiple distinct observations ... not ideal but it works ok.
@@ -339,22 +339,22 @@ function obsRow(r, rmap) {
 
   const rows = [];
 
-  const outerName = (r.code ? futil.renderCodeableJSX(r.code) : "");
-  const outerValue = futil.renderCrazyValue(r, "value");
+  const outerName = (r.code ? futil.renderCodeableJSX(r.code, dcr) : "");
+  const outerValue = futil.renderCrazyValue(r, "value", dcr);
 
   if (outerValue || r.dataAbsentReason) {
-	pushObsRow(effective, outerName, outerValue, r, rows);
+	pushObsRow(effective, outerName, outerValue, r, rows, dcr);
   }
 
   if (r.component && r.component.length) {
 	for (const i in r.component) {
 	  const c = r.component[i];
-	  const compName = (c.code ? futil.renderCodeableJSX(c.code) : "");
+	  const compName = (c.code ? futil.renderCodeableJSX(c.code, dcr) : "");
 	  if (compName !== outerName) {
 
-		const compValue = futil.renderCrazyValue(c, "value");
+		const compValue = futil.renderCrazyValue(c, "value", dcr);
 		if (compValue || c.dataAbsentReason) {
-		  pushObsRow(effective, compName, compValue, c, rows);
+		  pushObsRow(effective, compName, compValue, c, rows, dcr);
 		}
 	  }
 
@@ -364,14 +364,14 @@ function obsRow(r, rmap) {
   return(rows);
 }
 
-function pushObsRow(effective, name, value, obj, rows) {
+function pushObsRow(effective, name, value, obj, rows, dcr) {
 
   const realValue = (value ? value
-					 : futil.renderCodeableJSX(obj.dataAbsentReason));
+					 : futil.renderCodeableJSX(obj.dataAbsentReason, dcr));
 
   let flag = undefined;
   if (obj.interpretation && obj.interpretation.length) {
-	flag = obj.interpretation.map((i) => futil.renderCodeableJSX(i)).join("\n");
+	flag = obj.interpretation.map((i) => futil.renderCodeableJSX(i, dcr)).join("\n");
   }
 
   rows.push(
