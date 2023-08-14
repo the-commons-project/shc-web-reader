@@ -3,7 +3,7 @@
 // module tries to normalize all of the vagaries of this data into something
 // simple that translates system + code into a display name.
 //
-// Most of these are FHIR ValueSet or CodeSystem resources. Others are just
+// Most of these are FHIR ValueSet (NYI) or CodeSystem resources. Others are just
 // scraped or hacked together from who knows where. Such a hassle.
 
 // +--------------------+
@@ -51,6 +51,18 @@ const systems = {
   "http://snomed.info/sct": {
 	"type": "dictionary",
 	"url": "codes-snomed-sct.json"
+  },
+
+  // CPT (Docket Snapshot)
+  "http://www.ama-assn.org/go/cpt": {
+	"type": "docket-cpt",
+	"url": "https://raw.githubusercontent.com/hellodocket/vaccine-code-mappings/main/vaccine-code-mapping.json"
+  },
+  
+  // CVX (Docket Snapshot)
+  "http://hl7.org/fhir/sid/cvx": {
+	"type": "docket-cvx",
+	"url": "https://raw.githubusercontent.com/hellodocket/vaccine-code-mappings/main/vaccine-code-mapping.json"
   }
 }
 
@@ -162,6 +174,12 @@ async function loadSystem(system) {
 	case "dictionary":
 	  return(await response.json());
 
+	case "docket-cvx":
+	  return(parseDocketVaccineMappings(await response.json(), "cvx"));
+
+	case "docket-cpt":
+	  return(parseDocketVaccineMappings(await response.json(), "cpt"));
+
 	default:
 	  throw new Error(`Unknown system type ${type} for ${system}`);
   }
@@ -218,5 +236,21 @@ function addCodeSystemConcept(system, c) {
 
 function parseFhirValueSet(resource) {
   throw new Error(`NYI`);
+}
+
+// +----------------------------+
+// | parseDocketVaccineMappings |
+// +----------------------------+
+
+function parseDocketVaccineMappings(json, tag) {
+
+  const values = json[tag];
+  const parsed = {};
+
+  Object.keys(values).forEach((key,index) => {
+	parsed[key.toString()] = values[key].name;
+  });
+
+  return(parsed);
 }
 
