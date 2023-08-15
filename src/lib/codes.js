@@ -6,6 +6,8 @@
 // Most of these are FHIR ValueSet (NYI) or CodeSystem resources. Others are just
 // scraped or hacked together from who knows where. Such a hassle.
 
+import config from './config.js';
+
 // +--------------------+
 // | Systems Dictionary |
 // +--------------------+
@@ -44,25 +46,34 @@ const systems = {
   // WHO ATC (Snapshot)
   "http://www.whocc.no/atc": {
 	"type": "dictionary",
-	"url": "codes-who-atc.json"
+	"url": "codes-who-atc.json",
+	"placeHolder": "..."
   },
 
   // SNOMED SCT (Snapshot / Subset)
   "http://snomed.info/sct": {
 	"type": "dictionary",
-	"url": "codes-snomed-sct.json"
+	"url": "codes-snomed-sct.json",
+	"plaecHolder": "..."
   },
 
   // CPT (Docket Snapshot)
   "http://www.ama-assn.org/go/cpt": {
 	"type": "docket-cpt",
-	"url": "https://raw.githubusercontent.com/hellodocket/vaccine-code-mappings/main/vaccine-code-mapping.json"
+	"url": "https://raw.githubusercontent.com/hellodocket/vaccine-code-mappings/main/vaccine-code-mapping.json",
+	"placeHolder": "..."
   },
   
   // CVX (Docket Snapshot)
   "http://hl7.org/fhir/sid/cvx": {
 	"type": "docket-cvx",
-	"url": "https://raw.githubusercontent.com/hellodocket/vaccine-code-mappings/main/vaccine-code-mapping.json"
+	"url": "https://raw.githubusercontent.com/hellodocket/vaccine-code-mappings/main/vaccine-code-mapping.json",
+	"placeHolder": "..."
+  },
+
+  // ObservationInterpretation
+  "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation": {
+	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-v3-ObservationInterpretation.json"
   }
 }
 
@@ -120,13 +131,20 @@ export async function safeDisplay(system, code) {
 }
 
 function safeDisplaySync(system, code) {
-  if (systemLoaded(system)) return([ _loadedSystems[system][code] || code, false ]);
-  return([ code, systemLoadable(system) ]);
+
+  if (systemLoaded(system) || getSystemLocal(system)) {
+	return([ _loadedSystems[system][code] || code, false ]);
+  }
+
+  const loadable = systemLoadable(system);
+  const placeHolder = (loadable ? (systems[system].placeHolder || code) : code);
+  return([ placeHolder, loadable ]);
 }
 
 // +----------------+
 // | systemLoadable |
 // | systemLoaded   |
+// | getSystemLocal |
 // | getSystem      |
 // +----------------+
 
@@ -141,13 +159,28 @@ function systemLoaded(system) {
   return(_loadedSystems[system]);
 }
 
+function getSystemLocal(system) {
+
+  const local = getFromLocal(system);
+  if (!local) return(undefined);
+
+  _loadedSystems[system] = local;
+  return(local);
+}
+
 export async function getSystem(system) {
 
   if (systemLoaded(system)) return(_loadedSystems[system]);
   if (!systemLoadable(system)) return(undefined);
 
   try {
-	_loadedSystems[system] = await loadSystem(system);
+	let loaded = getFromLocal(system);
+	if (!loaded) {
+	  loaded = await loadSystem(system);
+	  saveToLocal(system, loaded);
+	}
+	
+	_loadedSystems[system] = loaded;
 	return(_loadedSystems[system]);
   }
   catch (err) {
@@ -253,4 +286,123 @@ function parseDocketVaccineMappings(json, tag) {
 
   return(parsed);
 }
+
+// +--------------+
+// | getFromLocal |
+// | saveToLocal  |
+// +--------------+
+
+const CACHE_PREFIX = "sys__";
+
+function getFromLocal(system) {
+
+  const key = getCacheKey(system);
+  const cached = localStorage.getItem(key);
+  if (!cached) return(undefined);
+
+  try {
+	let expireDate = getCacheDate(cached);
+	expireDate.setSeconds(expireDate.getSeconds() + config("terminologyCacheSeconds"));
+	if (new Date() > expireDate) throw new Error("expired");
+	return(JSON.parse(cached.substring(cached.indexOf("|") + 1)));
+  }
+  catch (err) {
+	console.log(`pruning ${system} from cache (${err})`);
+	localStorage.removeItem(key);
+	return(undefined);
+  }
+}
+
+function saveToLocal(system, dict) {
+
+  const key = getCacheKey(system);
+  const cached = `${new Date()}|${JSON.stringify(dict)}`;
+
+  if (cached.length > config("terminologyCacheItemCeiling")) {
+	console.log(`system ${system} too big to cache (${cached.length})`);
+	return;
+  }
+
+  if (trySaveLocal(key, cached)) {
+	console.log(`successfully cached ${system} on first try`);
+	return;
+  }
+
+  // try to prune things out and save in the background
+  
+  setTimeout(() => {
+	
+	// start pruning from the cache FIFO
+	// (sort comes from getCacheState)
+	
+	let cchNeeded = cached.length;
+	const cacheState = getCacheState();
+
+	let i = 0;
+	while (cchNeeded > 0 && i < cacheState.length) {
+	  localStorage.removeItem(cacheState[i].key);
+	  cchNeeded -= cacheState[i].cch;
+	  ++i;
+	}
+
+	if (cchNeeded > 0) {
+	  // so sad too bad
+	  console.log(`can't cache ${system} (${cached.length} cch)`);
+	  return;
+	}
+
+	if (!trySaveLocal(key, cached)) {
+	  console.log(`failed caching ${system} on second try`);
+	}
+  }, 0);
+  
+}
+
+function trySaveLocal(key, cached) {
+  try {
+	localStorage.setItem(key, cached);
+	return(true);
+  }
+  catch (err) {
+	console.log(err.toString());
+	return(false);
+  }
+}
+
+function getCacheKey(system) {
+  return(CACHE_PREFIX + system);
+}
+
+function getCacheDate(cached) {
+  const ichPipe = cached.indexOf("|");
+  if (ichPipe === -1) throw new Error("invalid cache item");
+  const cacheDate = new Date();
+  cacheDate.setTime(Date.parse(cached.substring(0, ichPipe)));
+  return(cacheDate);
+}
+
+function getCacheState() {
+
+  const state = [];
+
+  for (let i = 0; i < localStorage.length; ++i) {
+	
+	const key = localStorage.key(i);
+	if (!key.startsWith(CACHE_PREFIX)) continue;
+
+	const cached = localStorage.getItem(key);
+	
+	state.push({
+	  key: key,
+	  cached: getCacheDate(cached),
+	  cch: cached.length
+	});
+  }
+
+  state.sort((a,b) => (a.cached - b.cached));
+  
+  return(state);
+}
+
+
 

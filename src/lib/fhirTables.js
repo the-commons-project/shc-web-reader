@@ -10,31 +10,31 @@ import * as futil from "./fhirUtil.js";
 // +-------------+
 
 export function addResource(resource, tableState, rmap) {
+
+  const r = futil.resolveReference(resource, rmap);
   
-  const rtype = resource.resourceType;
+  if (r === undefined) {
+	console.log("Unable to resolve reference for: " + JSON.stringify(resource));
+	return;
+  }
+  
+  const rtype = r.resourceType;
 
   // for DRs, just add individual Observations
-  if (rtype === "DiagnosticReport" &&
-	  resource.result &&
-	  resource.result.length) {
-	
-	for (const i in resource.result) addResource(resource.result[i], tableState, rmap);
+  if (rtype === "DiagnosticReport" && r.result && r.result.length) {
+	for (const i in r.result) addResource(r.result[i], tableState, rmap);
 	return;
   }
 
   // otherwise accumulate the resource in our state
   if (!tableState[rtype]) tableState[rtype] = [];
-  tableState[rtype].push(resource);
+  tableState[rtype].push(r);
 
   // Observation can included a list of referenced Observations
-  if (rtype === "Observation" &&
-	  resource.hasMember &&
-	  resource.hasMember.length > 0) {
+  if (rtype === "Observation" && r.hasMember && r.hasMember.length > 0) {
 
-	for (const i in resource.hasMember) {
-	  
-	  addResource(rmap[resource.hasMember[i].reference],
-				  tableState, rmap);
+	for (const i in r.hasMember) {
+	  addResource(r.hasMember[i], tableState, rmap);
 	}
   }
 }
