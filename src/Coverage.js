@@ -6,7 +6,7 @@ import Copyable from './Copyable.js';
 
 import styles from './Coverage.module.css';
 
-export default function Coverage({ organized }) {
+export default function Coverage({ organized, dcr }) {
 
   const [showPayorContacts, setShowPayorContacts] = useState(false);
 
@@ -36,8 +36,8 @@ export default function Coverage({ organized }) {
 
 	const idTxt = (cov.identifier ? cov.identifier[0].value : "");
 	const id = (idTxt ? <><Copyable txt={idTxt} jsx=<b>{idTxt}</b> /><br/></> : "");
-	
-	const rel = (cov.relationship ? "Relationship: " + futil.renderCodable(cov.relationship) : "");
+					
+	const rel = (cov.relationship ? "Relationship: " + futil.renderCodeable(cov.relationship, dcr) : "");
 
 	return(
 	  <tr>
@@ -76,30 +76,39 @@ export default function Coverage({ organized }) {
 	
 	const rows = o.contact.reduce((result, c) => {
 
-	  const purpose = (c.purpose ? futil.renderCodable(c.purpose) : "Contact");
+	  const purpose = (c.purpose ? futil.renderCodeable(c.purpose, dcr) : "Contact");
 
 	  const addr = (c.address ? <>{futil.renderAddressSingleLine(c.address)}<br/></> : "");
+
+	  let key2 = 1;
+	  let elt;
 	  
 	  const telecom = (!c.telecom ? "" : c.telecom.map((t) => {
 		switch (t.system) {
 		  case "phone":
 		    url = "tel:" + t.value;
-		    return(<><a href={url}>{t.value}</a><br/></>);
+		    elt = <a href={url}>{t.value}</a>;
+			break;
 
 		  case "email":
 		    url = "mailto:" + t.value;
-		    return(<><a href={url}>{t.value}</a><br/></>);
+		    elt = <a href={url}>{t.value}</a>;
+			break;
 
 		  case "url":
-		    return(<><a target="blank" rel="noreferrer" href={t.value}>{t.value}</a><br/></>);
+		    elt = <a target="blank" rel="noreferrer" href={t.value}>{t.value}</a>;
+			break;
 
 		  default:
-		    return(<>{t.system}: {t.value}<br/></>);
+			elt = <span>{t.system}: {t.value}</span>;
+			break;
 		}
+
+		return(<span key={`${key}-${key2++}`}>{elt}<br/></span>);
 	  }));
 
 	  if (addr === "" && telecom === "") return(result);
-			
+
 	  result.push(
 	    <tr key={key++}>
 		  <th>{purpose}:</th>
@@ -189,7 +198,7 @@ export default function Coverage({ organized }) {
 
 	const rows = cov.costToBeneficiary.map((c) => {
 
-	  const hdr = futil.renderCodable(c.type);
+	  const hdr = futil.renderCodeable(c.type, dcr);
 	  return(<tr key={hdr}><th>{hdr}:</th><td>{futil.renderMoney(c.valueMoney)}</td></tr>);
 	});
 	

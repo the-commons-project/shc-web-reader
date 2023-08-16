@@ -1,6 +1,9 @@
 
 import * as futil from "./fhirUtil.js";
-import { fhirCodes, fhirKey } from "./fhirCodes.js";
+
+const CLASS_SYSTEM = "http://terminology.hl7.org/CodeSystem/coverage-class";
+const COPAY_SYSTEM = "http://terminology.hl7.org/CodeSystem/coverage-copay-type";
+const COPAYEXT_SYSTEM = "http://hl7.org/fhir/us/insurance-card/CodeSystem/C4DICExtendedCopayTypeCS";
 
 // +----------------+
 // | Coverage Dates |
@@ -48,15 +51,8 @@ export function coverageClassName(cov, code) {
 }
 
 export function coverageClass(cov, code) {
-
-  const checkedCode = fhirKey(fhirCodes.systems.class, code);
-
-  if (checkedCode) {
-	const item = futil.findCodedItem(cov.class, fhirCodes.systems.class, checkedCode);
-	if (item) return [ item.value, item.name ];
-  }
-
-  return [undefined, undefined];
+  const item = futil.findCodedItem(cov.class, CLASS_SYSTEM, code);
+  return(item ? [ item.value, item.name ] : [ undefined, undefined ]);
 }
 
 // +------------------------------+
@@ -64,27 +60,9 @@ export function coverageClass(cov, code) {
 // +------------------------------+
 
 export function costToBeneficiaryValue(cov, code) {
-
-  let system = fhirCodes.systems.copay;
-  let checkedCode = fhirKey(system, code);
-  
-  if (!checkedCode) {
-	system = fhirCodes.systems.copayExt;
-	checkedCode = fhirKey(system, code);
-  }
-
-  // TEMP - look in demo codeset too
-  if (!checkedCode) {
-	system = fhirCodes.systems.demo;
-	checkedCode = fhirKey(system, code);
-  }
-
-  if (checkedCode) {
-	const item = futil.findCodedItem(cov.costToBeneficiary, system, checkedCode);
-	if (item) return(futil.renderMoney(item.valueMoney));
-  }
-
-  return(undefined);
+  let item = futil.findCodedItem(cov.costToBeneficiary, COPAY_SYSTEM, code);
+  if (!item) item = futil.findCodedItem(cov.costToBeneficiary, COPAYEXT_SYSTEM, code);
+  return(item ? futil.renderMoney(item.valueMoney) : undefined);
 }
 
 // +-----------------+

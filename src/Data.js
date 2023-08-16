@@ -3,6 +3,7 @@ import { Button, TextField, Select, MenuItem } from '@mui/material';
 import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
 import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
+import { getDeferringCodeRenderer } from './lib/codes.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
 import WrongPatientWarning from './WrongPatientWarning.js';
@@ -17,6 +18,8 @@ export default function Data({ shx }) {
   const [shxResult, setShxResult] = useState(undefined);
   const [bundleIndex, setBundleIndex] = useState(0);
   const [showSource, setShowSource] = useState(false);
+
+  const [dcr, setDcr] = useState(getDeferringCodeRenderer());
 
   const fhir = useOptionalFhir();
 
@@ -92,15 +95,15 @@ export default function Data({ shx }) {
 	  switch (organized.typeInfo.btype) {
 		
 	    case res.BTYPE_COVERAGE:
-		  elt = <Coverage organized={ organized } />;
+		  elt = <Coverage organized={ organized } dcr={ dcr } />;
 		  break;
 
 	    case res.BTYPE_PS:
-		  elt = <PatientSummary organized={ organized } />;
+		  elt = <PatientSummary organized={ organized } dcr={ dcr } />;
 		  break;
 
 	    case res.BTYPE_IMMUNIZATION:
-		  elt = <ImmunizationHistory organized={ organized } />;
+		  elt = <ImmunizationHistory organized={ organized } dcr={ dcr } />;
 		  break;
 
 		// >>> ADD MORE RENDERERS HERE <<<
@@ -192,6 +195,11 @@ export default function Data({ shx }) {
   useEffect(() => {
 	verifySHX(shx, passcode).then(result => setShxResult(result));
   }, [shx,passcode]);
+
+  useEffect(() => {
+	const checkDcr = async () => { if (await dcr.awaitDeferred()) setDcr(getDeferringCodeRenderer()); }
+	checkDcr();
+  });
 
   if (shxResult && shxResult.shxStatus === SHX_STATUS_NEED_PASSCODE) {
 	return(renderNeedPasscode());
