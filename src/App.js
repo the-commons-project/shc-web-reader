@@ -28,6 +28,10 @@ export default function App() {
 	setTabValue(newValue);
   };
 
+  function setTab(newTab) {
+	setTabValue(newTab);
+  }
+
   function viewData(shx) {
 	setScannedSHX(shx);
 	setTabValue(TabValue.Data);
@@ -57,7 +61,7 @@ export default function App() {
 	  </div>
 
 	  <div className={styles.content}>
-		{ tabValue === TabValue.About  && <About /> }
+		{ tabValue === TabValue.About  && <About setTab={setTab} tabValues={TabValue} /> }
 		{ tabValue === TabValue.Scan   && <Scan viewData={viewData} /> }
 		{ tabValue === TabValue.Photo  && <Photo viewData={viewData} /> }
 		{ tabValue === TabValue.Search && <Search viewData={viewData} /> }
