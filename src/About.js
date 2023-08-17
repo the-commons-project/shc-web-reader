@@ -18,7 +18,6 @@ export default function About({ setTab, tabValues }) {
 
   const commonsLink = lnk("The Commons Project", "https://www.thecommonsproject.org/");
   const smartLink =	lnk("SMART Health Cards and Links", "https://smarthealth.cards/");
-  const blogLink = lnk("this blog post", "https://shutdownhook.com");
   
   const srcLink = lnk("open source application",
 					  "https://github.com/the-commons-project/shc-web-reader");
@@ -56,9 +55,8 @@ export default function About({ setTab, tabValues }) {
 		<p>
 		  If you would like to host the viewer yourself, contribute features or fixes
 		  to the project, or have any other questions, please contact {commonsLink}.
-		  For additional technical details, you may find {blogLink} useful. Personal
-		  health information is processed exclusively in the browser and is never sent
-		  to the servers hosting the viewer.
+		  Personal health information is processed exclusively in the browser and is
+		  never sent to the servers hosting the viewer.
 		</p>
 	  </div>
 	</div>
