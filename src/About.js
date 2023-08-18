@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@mui/material';
 import { useOptionalFhir } from './OptionalFhir';
+import config from './lib/config.js';
 
 import styles from './About.module.css';
 
@@ -39,10 +40,10 @@ export default function About({ setTab, tabValues }) {
 	  <div className={styles.content} >
 		<h1>View SMART Health Cards and Links</h1>
 
-		{ renderTabButton(tabValues.Scan, "Use a 2D barcode scanner") }
-		{ renderTabButton(tabValues.Photo, "Use your camera") }
-		{ renderTabButton(tabValues.Scan, "Type or paste a code") }
-		{ fhir && renderTabButton(tabValues.Search, "Find a code in patient record") }
+		{ config("showScan") && renderTabButton(tabValues.Scan, "Use a 2D barcode scanner") }
+		{ config("showPhoto") && renderTabButton(tabValues.Photo, "Use your camera") }
+		{ config("showScan") && renderTabButton(tabValues.Scan, "Type or paste a code") }
+		{ fhir && config("showSearch") && renderTabButton(tabValues.Search, "Find a code in patient record") }
 	  </div>
 
 	  <div className={styles.deets} >

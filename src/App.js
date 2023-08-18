@@ -52,9 +52,9 @@ export default function App() {
 	  
 		<Tabs value={tabValue} onChange={handleTabChange} orientation='horizontal'>
 		  <Tab label='About' value={TabValue.About} />
-		  <Tab label='Scan Card' value={TabValue.Scan} />
-		  <Tab label='Take Photo'  value={TabValue.Photo} />
-		  { fhir && <Tab label='Search Record' value={TabValue.Search} /> }
+		  { config("showScan") && <Tab label='Scan Card' value={TabValue.Scan} /> }
+		  { config("showPhoto") && <Tab label='Take Photo'  value={TabValue.Photo} /> }
+		  { fhir && config("showSearch") && <Tab label='Search Record' value={TabValue.Search} /> }
 		  { scannedSHX && <Tab label='Card Details' value={TabValue.Data} /> }
 		</Tabs>
 
