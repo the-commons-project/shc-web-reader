@@ -19,5 +19,12 @@ export const DEFAULT_CONFIG = {
 
   // don't try to save terminologies more than this many characters
   // in local storage (default 500k characters of serialized JSON)
-  "terminologyCacheItemCeiling": (1024 * 500) 
+  "terminologyCacheItemCeiling": (1024 * 500),
+
+  // these are good defaults for dev and test but should always be
+  // updated for a production instance!
+  "trustedDirectories": [
+	'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json',
+	'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
+  ]
 };
