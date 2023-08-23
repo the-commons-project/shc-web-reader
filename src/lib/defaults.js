@@ -9,6 +9,13 @@ export const DEFAULT_CONFIG = {
   "showPhoto": true,
   "showSearch": true,
 
+  // these are good defaults for dev and test but should always be
+  // updated for a production instance!
+  "trustedDirectories": [
+	'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json',
+	'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
+  ],
+
   // stop camera scanning after this many millis (default 120 seconds).
   // this is to work around what appear to be memory leaks in the
   // camera module
@@ -19,12 +26,21 @@ export const DEFAULT_CONFIG = {
 
   // don't try to save terminologies more than this many characters
   // in local storage (default 500k characters of serialized JSON)
-  "terminologyCacheItemCeiling": (1024 * 500),
-
-  // these are good defaults for dev and test but should always be
-  // updated for a production instance!
-  "trustedDirectories": [
-	'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json',
-	'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
-  ]
+  "terminologyCacheItemCeiling": (1024 * 500)
 };
+
+export const DOMAIN_OVERRIDES = {
+
+  // TCP production
+  "commonhealth.org": {
+	
+	"showScan": false,
+	"showSearch": false,
+	
+	"trustedDirectories": [
+	  'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json'
+	]
+  }
+  
+};
+
