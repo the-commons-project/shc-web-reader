@@ -1,6 +1,4 @@
 
-import config from './lib/config.js';
-
 import styles from './TCPFooter.module.css';
 
 export default function TCPFooter() {
