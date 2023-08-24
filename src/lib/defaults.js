@@ -26,7 +26,10 @@ export const DEFAULT_CONFIG = {
 
   // don't try to save terminologies more than this many characters
   // in local storage (default 500k characters of serialized JSON)
-  "terminologyCacheItemCeiling": (1024 * 500)
+  "terminologyCacheItemCeiling": (1024 * 500),
+
+  // true = show TCP privacy, disclaimer, etc.
+  "tcpFooter": true
 };
 
 export const DOMAIN_OVERRIDES = {
@@ -39,7 +42,15 @@ export const DOMAIN_OVERRIDES = {
 	
 	"trustedDirectories": [
 	  'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json'
-	]
+	],
+
+	tcpFooter: true
+  },
+
+  // TCP development
+  "tcpdev.org": {
+
+	tcpFooter: true
   }
   
 };

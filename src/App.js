@@ -5,6 +5,7 @@ import Scan from './Scan.js';
 import Photo from './Photo.js';
 import Search from './Search.js';
 import Data from './Data.js';
+import TCPFooter from './TCPFooter.js';
 import { useOptionalFhir } from './OptionalFhir';
 import config from './lib/config.js';
 
@@ -67,6 +68,8 @@ export default function App() {
 		{ tabValue === TabValue.Search && <Search viewData={viewData} /> }
 		{ tabValue === TabValue.Data   && <Data shx={scannedSHX} /> }
 	  </div>
+
+	  { config("tcpFooter") && <TCPFooter /> }
 
 	</div>
   );
