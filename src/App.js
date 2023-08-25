@@ -5,6 +5,7 @@ import Scan from './Scan.js';
 import Photo from './Photo.js';
 import Search from './Search.js';
 import Data from './Data.js';
+import TCPFooter from './TCPFooter.js';
 import { useOptionalFhir } from './OptionalFhir';
 import config from './lib/config.js';
 
@@ -28,6 +29,10 @@ export default function App() {
 	setTabValue(newValue);
   };
 
+  function setTab(newTab) {
+	setTabValue(newTab);
+  }
+
   function viewData(shx) {
 	setScannedSHX(shx);
 	setTabValue(TabValue.Data);
@@ -48,21 +53,23 @@ export default function App() {
 	  
 		<Tabs value={tabValue} onChange={handleTabChange} orientation='horizontal'>
 		  <Tab label='About' value={TabValue.About} />
-		  <Tab label='Scan Card' value={TabValue.Scan} />
-		  <Tab label='Take Photo'  value={TabValue.Photo} />
-		  { fhir && <Tab label='Search Record' value={TabValue.Search} /> }
+		  { config("showScan") && <Tab label='Scan Card' value={TabValue.Scan} /> }
+		  { config("showPhoto") && <Tab label='Take Photo'  value={TabValue.Photo} /> }
+		  { fhir && config("showSearch") && <Tab label='Search Record' value={TabValue.Search} /> }
 		  { scannedSHX && <Tab label='Card Details' value={TabValue.Data} /> }
 		</Tabs>
 
 	  </div>
 
 	  <div className={styles.content}>
-		{ tabValue === TabValue.About  && <About /> }
+		{ tabValue === TabValue.About  && <About setTab={setTab} tabValues={TabValue} /> }
 		{ tabValue === TabValue.Scan   && <Scan viewData={viewData} /> }
 		{ tabValue === TabValue.Photo  && <Photo viewData={viewData} /> }
 		{ tabValue === TabValue.Search && <Search viewData={viewData} /> }
 		{ tabValue === TabValue.Data   && <Data shx={scannedSHX} /> }
 	  </div>
+
+	  { config("tcpFooter") && <TCPFooter /> }
 
 	</div>
   );

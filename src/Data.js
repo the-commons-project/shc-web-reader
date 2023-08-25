@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
+import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
+import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
+import { getDeferringCodeRenderer } from './lib/codes.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
+import WrongPatientWarning from './WrongPatientWarning.js';
 
 import Coverage from './Coverage.js';
+import ImmunizationHistory from './ImmunizationHistory.js'
 import PatientSummary from './PatientSummary.js';
 
 export default function Data({ shx }) {
@@ -13,6 +18,10 @@ export default function Data({ shx }) {
   const [shxResult, setShxResult] = useState(undefined);
   const [bundleIndex, setBundleIndex] = useState(0);
   const [showSource, setShowSource] = useState(false);
+
+  const [dcr, setDcr] = useState(getDeferringCodeRenderer());
+
+  const fhir = useOptionalFhir();
 
   // +--------------------+
   // | renderNeedPasscode |
@@ -77,20 +86,24 @@ export default function Data({ shx }) {
   const renderBundle = () => {
 
 	const bundle = shxResult.bundles[bundleIndex];
-	const organized = bundle.organized;
+	const organized = (bundle.contentOK() ? bundle.organized : undefined);
 	
-	let elt = <></>;
+	let elt = undefined;
 
 	if (organized) {
 	  
-	  switch (organized.btype) {
+	  switch (organized.typeInfo.btype) {
 		
 	    case res.BTYPE_COVERAGE:
-		  elt = <Coverage organized={ organized } />;
+		  elt = <Coverage organized={ organized } dcr={ dcr } />;
 		  break;
 
 	    case res.BTYPE_PS:
-		  elt = <PatientSummary organized={ organized } />;
+		  elt = <PatientSummary organized={ organized } dcr={ dcr } />;
+		  break;
+
+	    case res.BTYPE_IMMUNIZATION:
+		  elt = <ImmunizationHistory organized={ organized } dcr={ dcr } />;
 		  break;
 
 		// >>> ADD MORE RENDERERS HERE <<<
@@ -103,11 +116,16 @@ export default function Data({ shx }) {
 	
 	return(
 	  <>
-		<ValidationInfo bundle={bundle} />
 		{ renderBundleChooser() }
-		{ elt }
+		<div id="bundle-contents">
+		  <ValidationInfo bundle={bundle} />
+		  <WrongPatientWarning organized={organized} />
+		  { elt }
+		</div>
 		<div>
 	      <Button onClick={ () => setShowSource(!showSource) }>source</Button>
+	      { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
+	      { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
 	      { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
 		</div>
 	  </>
@@ -115,22 +133,49 @@ export default function Data({ shx }) {
 	
   }
 
+  const onSaveClick = (toFile) => {
+
+	// defensive because we can show in error cases too
+	const baseName = (shxResult &&
+					  shxResult.bundles &&
+					  shxResult.bundles[bundleIndex] &&
+					  shxResult.bundles[bundleIndex].organized &&
+					  shxResult.bundles[bundleIndex].organized.typeInfo &&
+					  shxResult.bundles[bundleIndex].organized.typeInfo.label
+					  
+					  ? shxResult.bundles[bundleIndex].organized.typeInfo.label
+					  : "Shared Information");
+
+	const div = document.getElementById("bundle-contents");
+	
+	if (toFile) {
+	  saveDivToFile(div, baseName);
+	}
+	else {
+	  saveDivToFHIR(fhir, div, baseName);
+	}
+  }
+
   const onBundleChange = (evt) => {
-	setBundleIndex(evt.target.value);
+	setBundleIndex(parseInt(evt.target.value));
   }
   
   const renderBundleChooser = () => {
 
 	if (shxResult.bundles.length <= 1) return(undefined);
 
-	const elts = [];
+ 	const elts = [];
 	for (const i in shxResult.bundles) {
 	  elts.push(<MenuItem key={i} value={i}>
-				  {shxResult.bundles[i].organized.label}
+				  {shxResult.bundles[i].organized.typeInfo.label}
 				</MenuItem>);
 	}
-	
+
 	return(
+	  <>
+		<span style={{ padding: "0px 8px 0px 6px" }} >
+		  Section { bundleIndex + 1 } of { shxResult.bundles.length }:
+		</span>
 	  <Select
 		value={bundleIndex}
 		sx={{ mb: 2 }}
@@ -139,6 +184,7 @@ export default function Data({ shx }) {
 		{ elts }
 		
 	  </Select>
+	  </>
 	);
   }
   
@@ -149,6 +195,11 @@ export default function Data({ shx }) {
   useEffect(() => {
 	verifySHX(shx, passcode).then(result => setShxResult(result));
   }, [shx,passcode]);
+
+  useEffect(() => {
+	const checkDcr = async () => { if (await dcr.awaitDeferred()) setDcr(getDeferringCodeRenderer()); }
+	checkDcr();
+  });
 
   if (shxResult && shxResult.shxStatus === SHX_STATUS_NEED_PASSCODE) {
 	return(renderNeedPasscode());

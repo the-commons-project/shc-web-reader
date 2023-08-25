@@ -1,0 +1,13 @@
+
+.container {
+	width: 100%;
+	margin-top: 32px;
+	border-top: 1px dotted darkgray;
+	padding: 8px 8px 8px 8px;
+	font-size: 9px;
+}
+
+.container div {
+	margin-bottom: 6px;
+}
+

@@ -1,6 +1,4 @@
 
-import { fhirCodes } from "./fhirCodes.js";
-
 const NA = "Unknown";
 
 // +--------------------+
@@ -27,6 +25,65 @@ export function renderContact(c, withLinks) {
   return(<>{addr}{telecom}</>);
 }
 
+// +----------------------+
+// | seemsLikeSamePatient |
+// +----------------------+
+
+// There are a ton of pitfalls here ... this method works best when
+// trying to avoid "random" mismatches by matching on family name and
+// date of birth. We could reasonably add at least the first "given"
+// name to this as well, but this could easily be foiled by spelling or
+// nickname issues. We don't want to over-warn in our use cases so this
+// seems a good start.
+
+export function seemsLikeSamePatient(p1, p2) {
+
+  if (!p1 && !p2) return(true);
+  if (!p1 || !p2) return(false);
+
+  // family names ... "name" is defined as an array but I've seen cases
+  // where they just add a single element so protecting against that here.
+  // if no data for either one skip the test
+  
+  const names1 = (p1.name ? (Array.isArray(p1.name) ? p1.name : [ p1.name] )
+				  : undefined);
+
+  const names2 = (p2.name ? (Array.isArray(p2.name) ? p2.name : [ p2.name] )
+				  : undefined);
+
+  if (names1 && names1.length && names2 && names2.length) {
+
+	let foundMatch = false;
+	
+	for (const i1 in names1) {
+	  const family1 = names1[i1].family;
+	  if (!family1) continue;
+	  
+	  for (const i2 in names2) {
+		const family2 = names2[i2].family;
+
+		if (family2 && (family1 === family2)) {
+		  
+		  foundMatch = true;
+		  break;
+		}
+	  }
+	}
+
+	// we had names but never found a match, so call it a miss
+	if (!foundMatch) return(false);
+  }
+
+  // date of birth --- if either is missing, ignore this test
+  const dob1 = p1.birthDate;
+  const dob2 = p2.birthDate;
+
+  if (dob1 && dob2 && (dob1 !== dob2)) return(false);
+
+  // seems legit?
+  return(true);
+}
+
 // +--------------+
 // | renderPerson |
 // +--------------+
@@ -48,7 +105,7 @@ function renderPersonResource(person) {
   );
 }
 
-function getPersonDisplayName(name) {
+export function getPersonDisplayName(name) {
 
   if (name.text) return(name.text);
 
@@ -308,10 +365,10 @@ export function parseCrazyDateTimeBestGuess(parent, prefix) {
 //       valueAttachment (NOT SUPPORTED)
 //       valueReference(MolecularSequence) (NOT SUPPORTED)
 
-export function renderCrazyValue(parent, prefix) {
+export function renderCrazyValue(parent, prefix, dcr) {
 
   if (parent[prefix + "Quantity"]) return(renderQuantity(parent[prefix + "Quantity"]));
-  if (parent[prefix + "CodeableConcept"]) return(renderCodeableJSX(parent[prefix + "CodeableConcept"]));
+  if (parent[prefix + "CodeableConcept"]) return(renderCodeableJSX(parent[prefix + "CodeableConcept"], dcr));
   if (parent[prefix + "String"]) return(parent[prefix + "String"]);
   if (parent[prefix + "Boolean"]) return(parent[prefix + "Boolean"]);
   if (parent[prefix + "Integer"]) return(parent[prefix + "Integer"]);
@@ -336,7 +393,7 @@ export function renderCrazyValue(parent, prefix) {
 // | renderTiming |
 // +--------------+
 
-export function renderTiming(t) {
+export function renderTiming(t, dcr) {
 
   if (!t) return(undefined);
   
@@ -361,7 +418,7 @@ export function renderTiming(t) {
 
   if (t.code) {
   // code
-	disp = delimiterAppend(disp, renderCodeableJSX(t.code), "; ");
+	disp = delimiterAppend(disp, renderCodeableJSX(t.code, dcr), "; ");
   }
   else if (t.repeat) {
 	// repeat - first figure out the what ...
@@ -432,16 +489,16 @@ export function renderTiming(t) {
 // | renderDoseAndRate |
 // +-------------------+
 
-export function renderDosage(d) {
+export function renderDosage(d, dcr) {
   if (!d) return(undefined);
-  if (!Array.isArray(d)) return(renderOneDosage(d));
+  if (!Array.isArray(d)) return(renderOneDosage(d, dcr));
 
   let disp = "";
-  for (const i in d) disp = delimiterAppend(disp, renderOneDosage(d[i]), "\n");
+  for (const i in d) disp = delimiterAppend(disp, renderOneDosage(d[i], dcr), "\n");
   return(disp);
 }
 
-export function renderOneDosage(d) {
+export function renderOneDosage(d, dcr) {
   
   if (!d) return(undefined);
   if (d.text) return(d.text);
@@ -449,11 +506,11 @@ export function renderOneDosage(d) {
   let disp = "";
   
   if (d.asNeededBoolean) disp = d.asNeededBoolean;
-  else if (d.asNeededCodeableConcept) disp = renderCodeableJSX(d.asNeededCodeableConcept);
+  else if (d.asNeededCodeableConcept) disp = renderCodeableJSX(d.asNeededCodeableConcept, dcr);
 
-  disp = delimiterAppend(disp, renderCodeableJSX(d.route), "; ");
+  disp = delimiterAppend(disp, renderCodeableJSX(d.route, dcr), "; ");
   disp = delimiterAppend(disp, renderDoseAndRate(d.doseAndRate), "; ");
-  disp = delimiterAppend(disp, renderTiming(d.timing), "; ");
+  disp = delimiterAppend(disp, renderTiming(d.timing, dcr), "; ");
 
   return(disp);
 }
@@ -560,21 +617,18 @@ export function renderTelecomJSX(t, withLinks) {
 	<span key={key++}>{renderTelecomItemJSX(item, withLinks)}<br/></span>));
 }
 
-// +-----------------+
-// | renderCoding    |
-// | renderOneCoding |
-// +-----------------+
+// +-------------------+
+// | renderCodeable    |
+// | renderCodeableJSX |
+// +-------------------+
 
-export function renderCodable(c) {
-
-  let disp = ((c.text && typeof c.text === "string") ? c.text : undefined);
-  if (!disp && c.coding && c.coding.length >= 1) disp = renderOneCoding(c.coding[0]);
-  if (!disp) disp = NA;
-
-  return(disp);
+export function renderCodeable(c, dcr) {
+  if (c.text && typeof c.text === "string") return(c.text);
+  if (!c.coding || c.coding.length === 0) return("");
+  return(dcr.safeCodingDisplay(c.coding[0]));
 }
 
-export function renderCodeableJSX(c) {
+export function renderCodeableJSX(c, dcr) {
 
   if (!c) return(undefined);
   
@@ -590,7 +644,7 @@ export function renderCodeableJSX(c) {
   // if no text, use the first code we find as base text
   let iFirstAlt = 0;
   if (!disp && c.coding && c.coding.length > 0) {
-	disp = renderOneCoding(c.coding[0]);
+	disp = dcr.safeCodingDisplay(c.coding[0]);
 	iFirstAlt = 1;
   }
 
@@ -601,19 +655,10 @@ export function renderCodeableJSX(c) {
   let alt = "";
   for (let i = iFirstAlt; i < c.coding.length; ++i) {
 	if (alt.length > 0) alt += "\n";
-	alt += renderOneCoding(c.coding[i]);
+	alt += dcr.safeCodingDisplay(c.coding[i]);
   }
 
   return(<span className="xtrahover" title={alt}>{disp}</span>);
-}
-
-export function renderOneCoding(c) {
-
-  let disp = c.display;
-  if (!disp && c.system in fhirCodes) disp = fhirCodes[c.system][c.code];
-  if (!disp) disp = c.code;
-
-  return(disp);
 }
 
 // +---------------+

@@ -8,3 +8,7 @@ body {
 	background-color: whitesmoke;
 }
 
+#bundle-contents {
+	padding: 4px 4px 4px 4px;
+}
+

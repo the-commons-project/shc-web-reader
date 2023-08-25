@@ -1,0 +1,13 @@
+
+.warning {
+	margin-top: 8px;
+	border: 1px solid grey;
+	background-color: #f0f8ff;
+	padding: 8px 8px 8px 8px;
+	max-width: 640px;
+	color: red;
+	font-style: italic;
+}
+
+.deets {
+}

@@ -47,6 +47,7 @@ import { verify, Directory } from 'smart-health-card-decoder'
 import { compactDecrypt } from 'jose';
 import { b64u_to_str, b64u_to_arr, arr_to_str } from './b64.js';
 import { organizeResources } from './resources.js';
+import config from './config.js';
 
 // +------------------+
 // | Public Constants |
@@ -73,11 +74,6 @@ const SHL_RECIPIENT = 'SMART Health Card Web Reader';
 const SHC_CONTENTTYPE = 'application/smart-health-card';
 const FHIR_CONTENTTYPE = 'application/fhir+json';
 const INFER_CONTENTTYPE = '___INFER___';
-
-const DIRECTORY_PATHS = [
-  'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json',
-  'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
-];
 
 // +---------------+
 // | Custom Errors |
@@ -169,9 +165,8 @@ async function getDirectory() {
   if (_verifyDir) return(_verifyDir);
 
   const dirs = [];
-  for (const i in DIRECTORY_PATHS) {
-	dirs.push(await Directory.create(DIRECTORY_PATHS[i]));
-  }
+  const urls = config("trustedDirectories");
+  for (const i in urls) dirs.push(await Directory.create(urls[i]));
 
   _verifyDir = Directory.create(dirs);
   return(_verifyDir);

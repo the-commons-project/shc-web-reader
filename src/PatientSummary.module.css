@@ -42,3 +42,21 @@
 	border-top: 1px solid lightgray;
 }
 
+.narrative {
+	background-color: whitesmoke;
+	padding: 8px 8px 8px 8px;
+}
+
+.narrative table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.narrative th, .narrative td {
+	padding: 4px 4px 4px 4px;
+	font-size: unset;
+}
+
+.patCell {
+	font-weight: bold;
+}
