@@ -10,6 +10,7 @@ import PdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { b64_to_arr } from './b64.js';
 import { looksLikeSHX } from './SHX.js';
 
+// Ensure scanning operations provide feedback that is mobile-friendly, e.g., progress indicators, error messages, etc.
 export default async function getDocSHX(fhir, doc) {
 
   console.log(`Scanning ${doc.id} ${doc.title}`);
@@ -32,6 +33,7 @@ export default async function getDocSHX(fhir, doc) {
   return(shx);
 }
 
+// Ensure any rendering or visual elements during PDF scanning are mobile-friendly.
 async function scanPdf(doc, base64) {
 
   const canvas = document.createElement('canvas');
@@ -63,6 +65,7 @@ async function scanPdf(doc, base64) {
   return(undefined);
 }
 
+// Ensure any rendering or visual elements during image URI scanning are mobile-friendly.
 async function scanImageUri(doc, dataUri) {
 
   let shx = undefined;

@@ -14,7 +14,8 @@ export default function Copyable({ txt, jsx }) {
 
 	if (perms.state === "denied") {
 	  const url = "copyText.html?" + encodeURIComponent(txt);
-	  window.open(url, 'copyText',
+	  // Consider replacing the popup window approach with a modal or in-page element for better mobile experience.
+	 window.open(url, 'copyText',
 				  'width=300,height=50,popup,noopener,noreferrer,left=100,top=100');
 	}
 	else {

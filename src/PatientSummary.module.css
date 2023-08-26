@@ -10,7 +10,7 @@
 }
 
 .dataTable th, .dataTable td {
-	min-width: 100px;
+	min-width: 50px;
 	text-align: left;
 	vertical-align: top;
 	border: 1px solid black;
@@ -59,4 +59,12 @@
 
 .patCell {
 	font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .dataTable, .fhirTable, .narrative table {
+        width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
 }

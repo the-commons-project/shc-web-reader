@@ -279,7 +279,7 @@ export default function DemoCoverage({ cardData, resources }) {
 	if (cardData.issuerName) {
 	  issuer = <>
 				 <div className={styles.blueHeader}>Issuer</div>
-				 <img src="https://smarthealthit.org/wp-content/themes/SMART/images/logo.svg"
+		<img src="https://smarthealthit.org/wp-content/themes/SMART/images/logo.svg"
 					  alt="SMART logo" className={styles.smartLogo} />
 				 <div className={styles.org}>{cardData.issuerName}</div>
 				 <img src="https://images.squarespace-cdn.com/content/v1/6055264fa5940469575508a4/1617891600462-LY5SKLL1XUNP7PCDPRFO/CTN_Logo_Horizontal.png"

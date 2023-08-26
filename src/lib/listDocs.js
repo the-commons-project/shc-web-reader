@@ -15,6 +15,7 @@ const DocClass = {
   Payment: 2
 }
 
+// Ensure that the listed documents are displayed in a mobile-friendly manner, e.g., consider responsive lists, collapsible sections, etc.
 export default async function listDocs(fhir) {
 
   // request ... sadly not much up-front filtering

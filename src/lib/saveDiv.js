@@ -63,7 +63,8 @@ export async function saveDivToFHIR(fhir, div, baseName) {
 
   try {
 	fhir.create(documentReference).then((response) => {
-	  alert("View saved to patient record");
+	  // Consider using a more mobile-friendly notification mechanism instead of the default alert.
+alert("View saved to patient record");
 	  console.log("DocumentReference ID: " + response.id);
 	});
   }

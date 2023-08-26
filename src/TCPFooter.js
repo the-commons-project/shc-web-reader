@@ -6,12 +6,14 @@ export default function TCPFooter() {
   return (
 	<div className={styles.container}>
 	  <div>
-		<a href="https://www.commonhealth.org/website-privacy-policy">Website Privacy Policy</a>
+		{/* Ensure links are easily clickable on mobile devices. */}
+	<a href="https://www.commonhealth.org/website-privacy-policy">Website Privacy Policy</a>
 		&nbsp;|&nbsp;
 		<a href="https://www.commonhealth.org/terms">Terms of Service</a>
 	  </div>
 	  <div>
-		<b>DISCLAIMER:</b> THE COMMONS PROJECT FOUNDATION (“TCP”) DOES NOT
+		{/* Ensure the disclaimer text is easily readable on mobile devices. Consider adjusting font size, line height, or spacing. */}
+	<b>DISCLAIMER:</b> THE COMMONS PROJECT FOUNDATION (“TCP”) DOES NOT
 		PROVIDE MEDICAL ADVICE OR ADMINISTER ANY DIAGNOSTIC MEDICAL
 		TESTS, VACCINES OR OTHER HEALTHCARE INTERVENTIONS. TCP MAKES NO
 		ENDORSEMENT OR REPRESENTATION AS TO THE ACCREDITATION, LICENSING

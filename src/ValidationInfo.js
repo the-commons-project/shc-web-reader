@@ -12,6 +12,7 @@ export default function ValidationInfo({ bundle }) {
 	
 	let issuer = bundle.issuerName;
 	if (bundle.issuerURL) {
+	  // Ensure this link is easily clickable on mobile devices.
 	  issuer = <a target="_blank" rel="noreferrer"
 				  href={bundle.issuerURL}>{issuer}</a>;
 	}
@@ -25,6 +26,7 @@ export default function ValidationInfo({ bundle }) {
 		   details may have changed since that time.</>);
 
 	return(
+	  // Ensure the text content is easily readable on mobile devices. Consider adjusting font size, line height, or spacing.
 	  <div className={styles.container}>
 		This card is <span className={styles.green}>valid</span> and
 		was issued by <b>{issuer}</b> on <b>{issueDate}</b>.
@@ -42,6 +44,7 @@ export default function ValidationInfo({ bundle }) {
 	const reasons = bundle.reasons.map(r => <li key={r}>{r}</li>);
 	
 	return(
+	  // Ensure the text content is easily readable on mobile devices. Consider adjusting font size, line height, or spacing.
 	  <div className={styles.container}>
 		This card is <span className={styles.red}>invalid</span>.
 		<ul>{reasons}</ul>

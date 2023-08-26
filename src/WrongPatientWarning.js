@@ -55,6 +55,7 @@ export default function WrongPatientWarning({ organized }) {
   if (foundMatch) return(undefined);
 
   return(
+	// Ensure the warning message is easily readable on mobile devices. Consider adjusting font size, line height, or spacing.
 	<div class={styles.warning}>
 	  Warning: It appears that the subject referenced in the information
 	  below may differ from the patient selected in the 

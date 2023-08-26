@@ -1,3 +1,4 @@
+// Ensure that any UI components displaying results or errors from these functions are mobile-friendly.
 
 //
 // Primary method is verifySHX which takes an incoming SHC or SHL string

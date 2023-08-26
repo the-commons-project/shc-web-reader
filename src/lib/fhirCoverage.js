@@ -72,6 +72,7 @@ export function costToBeneficiaryValue(cov, code) {
 const LOGO_EXTENSION =
 	  "http://hl7.org/fhir/us/insurance-card/StructureDefinition/C4DIC-Logo-extension";
 
+// Ensure the rendered logo image is mobile-friendly. Consider adjusting size, margins, or other styles as needed.
 export function renderLogoImage(cov, className) {
   
   const logoExt = futil.searchArray(cov.extension, (o) => {
@@ -85,6 +86,7 @@ export function renderLogoImage(cov, className) {
 // | renderPayorDisplayName |
 // +------------------------+
 
+// Ensure the rendered payor display name is easily readable on mobile devices. Consider adjusting font size, line height, or spacing.
 export function renderPayorDisplayName(cov, resources) {
 
   const renderMap = {

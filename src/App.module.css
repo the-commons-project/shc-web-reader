@@ -4,7 +4,7 @@
 	grid-template-rows: 40px 1fr;
 	gap: 12px;
 	margin: 16px;
-	max-width: 1000px;
+	width: 95%; max-width: 1000px;
 }
 
 .nav {
@@ -16,3 +16,9 @@
 	padding: 12px;
 }
 
+
+@media (max-width: 768px) {
+    .container {
+        margin: 8px;
+    }
+}

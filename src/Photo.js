@@ -7,6 +7,16 @@ export default function Photo({ viewData }) {
 
   const [haveCamera, setHaveCamera] = useState(true);
   const [paused, setPaused] = useState(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState('environment');
+
+  const toggleCamera = () => {
+    if (cameraFacingMode === 'environment') {
+      setCameraFacingMode('user');
+    } else {
+      setCameraFacingMode('environment');
+    }
+  };
+
 
   const openCameraClick = () => {
 	window.openCameraResult = openCameraResult;
@@ -30,7 +40,7 @@ export default function Photo({ viewData }) {
 	  document.getElementById('video'),
 	  result => viewData(result.data), 
 	  {
-		preferredCamera: 'user',
+		preferredCamera: cameraFacingMode,
 		highlightScanRegion: true,
 		highlightCodeOutline: true,
 		returnDetailedScanResult: true
@@ -66,7 +76,10 @@ export default function Photo({ viewData }) {
 	  { haveCamera &&
 		<video id='video' style={{ width: '400px', height: '225px' }}></video> }
 	  
-	  { !haveCamera &&
+	  
+  { window.innerWidth <= 768 && <Button variant='contained' onClick={toggleCamera}>Toggle Camera</Button> }
+
+  { !haveCamera &&
 		<Button variant='contained' onClick={openCameraClick}>Open Camera</Button> }
 	  
 	</div>

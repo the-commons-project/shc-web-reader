@@ -69,15 +69,18 @@ export default function Search({ viewData }) {
   let refresh = <></>;
 
   if (err !== undefined) {
-	progress = <p className='error'>{err.toString()}</p>;
-	refresh = <Button variant='contained' onClick={refreshClick}>Search Again</Button>;
+	progress = 
+	  <p className='error'>{err.toString()}</p>;
+	refresh = 
+	  <Button variant='contained' onClick={refreshClick}>Search Again</Button>;
   }
   else if (docs === undefined) {
 	progress = <p className='working'>Searching documents...</p>;
   }
   else if (docs.length === 0 || idocCurrent === docs.length) {
 	progress = <p className='final'>No scannable documents found for patient.</p>;
-	refresh = <Button variant='contained' onClick={refreshClick}>Search Again</Button>;
+	refresh = 
+	  <Button variant='contained' onClick={refreshClick}>Search Again</Button>;
   }
   else if (idocCurrent !== undefined) {
 	progress = <p className='working'>Scanning {docs[idocCurrent].title}...</p>

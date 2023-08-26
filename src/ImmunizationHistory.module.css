@@ -5,7 +5,7 @@
 }
 
 .dataTable th, .dataTable td {
-	min-width: 100px;
+	min-width: 50px;
 	text-align: left;
 	vertical-align: top;
 	border: 1px solid grey;
@@ -26,4 +26,12 @@
 	border-left: none;
 	border-right: none;
 	border-bottom: 1px solid lightgray;
+}
+
+@media (max-width: 768px) {
+    .dataTable, .innerTable {
+        width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
 }

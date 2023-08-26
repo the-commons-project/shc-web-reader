@@ -32,7 +32,7 @@ export default function PatientSummary({ organized, dcr }) {
   return(
     <div className={styles.container}>
 	  <h2>{comp.title}</h2>
-	  <table className={styles.dataTable}>
+	<table className={styles.dataTable}>
 		<tbody>
 		  <tr>
 			<th>Patient</th>

@@ -3,7 +3,7 @@
 	border: 1px solid grey;
 	background-color: #f0f8ff;
 	padding: 8px 8px 8px 8px;
-	max-width: 640px;
+	width: 95%; max-width: 640px;
 }
 
 .errors {
@@ -24,4 +24,12 @@
 .red {
 	font-weight: bold;
 	color: red;
+}
+
+@media (max-width: 768px) {
+    .errors {
+        float: none;
+        text-align: center;
+        margin-bottom: 10px;
+    }
 }

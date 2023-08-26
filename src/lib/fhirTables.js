@@ -75,6 +75,7 @@ const renderConfig = {
   }
 }
 
+// Ensure the rendered tables are mobile-friendly. Consider using responsive tables or other UI components for mobile.
 export function renderJSX(tableState, className, rmap, dcr) {
 
   const tables = Object.keys(tableState).reduce((acc, rtype) => {
@@ -321,6 +322,7 @@ function renderOneReaction(reaction, rmap, dcr) {
 // | Observation |
 // +-------------+
 
+// Ensure the table headers are easily readable on mobile devices. Consider adjusting font size, line height, or spacing.
 function obsHeader() {
   return(<tr>
 		   <th>Performed</th>

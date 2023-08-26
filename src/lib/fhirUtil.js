@@ -5,6 +5,7 @@ const NA = "Unknown";
 // | renderOrganization |
 // +--------------------+
 
+// Ensure the rendered organization is mobile-friendly. Consider adjusting font size, line height, or spacing.
 export function renderOrganization(org, resources) {
   return(renderReference(org, resources, renderOrganizationResource));
 }
@@ -88,6 +89,7 @@ export function seemsLikeSamePatient(p1, p2) {
 // | renderPerson |
 // +--------------+
 
+// Ensure the rendered person details are mobile-friendly. Consider adjusting font size, line height, or spacing.
 export function renderPerson(person, resources) {
   return(renderReference(person, resources, renderPersonResource));
 }
@@ -141,6 +143,7 @@ export function renderMoney(m) {
 // | renderImage |
 // +-------------+
 
+// Ensure the rendered image is mobile-friendly. Consider adjusting size, margins, or other styles as needed.
 export function renderImage(img, className) {
 
   const imageExt = searchArray(img.extension, (o) => (o.url && o.url === "image"));

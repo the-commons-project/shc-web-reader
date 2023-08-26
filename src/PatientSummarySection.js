@@ -73,7 +73,8 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
   // | renderNarrative |
   // +-----------------+
 
-  const renderNarrative = () => {
+
+const renderNarrative = () => {
 	if (DOMPurify.isSupported) {
 	  const safeHtml = DOMPurify.sanitize(s.text.div);
 	  return(<div className={styles.narrative}
@@ -90,7 +91,8 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
   // | renderStructured |
   // +------------------+
 
-  const renderStructured = () => {
+
+const renderStructured = () => {
 	const tableState = {};
 	for (const i in s.entry) ftabs.addResource(rmap[s.entry[i].reference], tableState, rmap);
 	return(ftabs.renderJSX(tableState, styles.fhirTable, rmap, dcr));

@@ -2,7 +2,7 @@
 .outermost {
 	background-color: #F3F7FF;
 	padding: 10px;
-	max-width: 1000px;
+	width: 95%; max-width: 1000px;
 }
 
 /* +------------------+
@@ -209,4 +209,19 @@
 	width: 150px;
 	padding-top: 6px;
 	float: left;
+}
+
+@media (max-width: 768px) {
+    .gridContainer {
+        grid-template-columns: 1fr;
+    }
+    .banner, .demos, .benefits, .other {
+        padding: 6px;
+    }
+    .payorLogo, .smartLogo, .ctnLogo {
+        float: none;
+        margin: 0 auto;
+        display: block;
+        text-align: center;
+    }
 }

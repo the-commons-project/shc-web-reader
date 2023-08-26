@@ -89,7 +89,7 @@ function renderImmunizationGroup(
   };
 
   return (
-    <table className={styles.dataTable}>
+	<table className={styles.dataTable}>
       <tbody>{renderPatient()}</tbody>
       <tbody>{renderImmunizationHeaders()}</tbody>
       <tbody>{renderImmunizations()}</tbody>

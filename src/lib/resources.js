@@ -41,6 +41,7 @@ export const BTYPE_EMPTY = "empty"; // degenerate
 
 // "bundle" is as returned from SHX.js
 
+// When using the organized resources for UI elements, ensure those elements are displayed in a mobile-friendly manner.
 export function organizeResources(bundle, labelCounters) {
 
   const organized = {

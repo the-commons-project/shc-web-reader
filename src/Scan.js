@@ -22,6 +22,7 @@ export default function Scan({ viewData }) {
 	<div>
 	  <h1>Scan a Smart Health Card QR Code</h1>
 
+	  {/* Ensure this input field is easily interactable on mobile devices. */}
 	  <TextField variant='outlined'
 				 rows={6}
 				 margin='normal'
@@ -32,6 +33,7 @@ export default function Scan({ viewData }) {
 				 onChange={handleQRCodeChange}
 	  />
 
+	  {/* Ensure this button is easily interactable on mobile devices. */}
 	  <Button variant='contained'
 			  disabled={ !maybeSHX() }
 			  onClick={ async () => viewData(qrCode) } >

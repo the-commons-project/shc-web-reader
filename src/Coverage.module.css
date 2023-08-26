@@ -24,7 +24,7 @@
 }
 
 .dataTable th, .dataTable td {
-	min-width: 100px;
+	min-width: 50px;
 	text-align: left;
 	vertical-align: top;
 	border: 1px solid grey;
@@ -56,4 +56,18 @@
 .payorContacts {
 	float: right;
 	font-size: smaller;
+}
+
+@media (max-width: 768px) {
+    .dataTable, .innerTable {
+        width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
+    .logoImg, .payorContacts {
+        float: none;
+        margin: 0 auto;
+        display: block;
+        text-align: center;
+    }
 }
