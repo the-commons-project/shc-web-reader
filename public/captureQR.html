@@ -4,11 +4,15 @@
 
     <title>SHC Reader Capture Window</title>
     <script src='qr-scanner.umd.min.js'></script>
+	<script src="switchCamera.js"></script>
 
   </head>
   <body>
 
 	<video id='video' style='width: 400px; height: 225px;'></video>
+	<div id='switchCamera' style='display: none; margin-top: 8px;'>
+	  <button onclick='sc.switchCameraClick()'>Switch Camera</button>
+	</div>
   
     <script>
 
@@ -16,18 +20,23 @@
 		window.opener.openCameraResult(result.data);
 		window.close();
 	  }
+
+	  const hash = window.location.hash;
+	  const defaultMode = (hash ? hash.substring(1) : 'environment');
 	  
 	  const qrScanner = new QrScanner(
 		document.getElementById('video'),
 		handleQR,
 		{
-		  preferredCamera: 'user',
+		  preferredCamera: sc.getSelectedCamera(defaultMode),
 		  highlightScanRegion: true,
 		  highlightCodeOutline: true,
 		  returnDetailedScanResult: true
 		});
 
-	  qrScanner.start();
+	  qrScanner.start().then(() => {
+		sc.maybeShowSwitchCamera(qrScanner, 'switchCamera');
+	  });
 	  
     </script>
 

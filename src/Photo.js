@@ -9,7 +9,8 @@ export default function Photo({ viewData }) {
   const [paused, setPaused] = useState(false);
 
   const openCameraClick = () => {
-	const url = 'captureQR.html#' + escape(getSelectedCamera());
+	const cameraIdMode = window.sc.getSelectedCamera(config("cameraIdMode"));
+	const url = 'captureQR.html#' + escape(cameraIdMode);
 	window.openCameraResult = openCameraResult;
 	window.open(url, 'captureQR', 'width=500,height=300');
   }
@@ -21,95 +22,6 @@ export default function Photo({ viewData }) {
   // eslint-disable-next-line
   const openCameraResult = (shx) => {
 	viewData(shx);
-  }
-
-  // +---------------+
-  // | Switch Camera |
-  // +---------------+
-
-  const maybeShowSwitchCamera = async (qrScanner) => {
-
-	const cams = await QrScanner.listCameras();
-	if (cams.length === 1) return;
-
-	document.getElementById('switchCamera').style.display = 'block';
-  }
-
-  let switchTimer = undefined;
-  const dblClickMillis = 250;
-  
-  const switchCameraClick = async (isTimer) => {
-
-	if (isTimer) {
-	  // double-click timeout --- single
-	  switchTimer = undefined;
-	  await switchCameraAction(false);
-	}
-	else if (switchTimer) {
-	  // second click within period --- double
-	  clearTimeout(switchTimer);
-	  switchTimer = undefined;
-	  await switchCameraAction(true);
-	}
-	else {
-	  // first click --- set timer
-	  switchTimer = setTimeout(() => switchCameraClick(true), dblClickMillis);
-	}
-  }
-
-  const switchCameraAction = async (isDouble) => {
-	
-	let currentCam = getSelectedCamera();
-	let newCam = undefined;
-
-	if (isDouble) {
-	  // switch by id
-	  if (isFacingMode(currentCam)) currentCam = findCurrentCam(true);
-	  newCam = await findNextCameraId(currentCam);
-	}
-	else {
-	  // switch by mode
-	  if (!isFacingMode(currentCam)) currentCam = findCurrentCam(false);
-	  newCam = (currentCam === 'user' ? 'environment' : 'user');
-	}
-
-	console.log(`Switching camera from ${currentCam} to ${newCam}`);
-	
-	saveSelectedCamera(newCam);
-	window.scanner.setCamera(newCam);
-  }
-
-  const findCurrentCam = (getId) => {
-
-	const vid = document.getElementById('video');
-	const track = vid.srcObject.getTracks().find(t => t.kind === 'video');
-	const settings = track.getSettings();
-	return(getId ? settings.deviceId : settings.facingMode);
-  }
-
-  const findNextCameraId = async (currentId) => {
-
-	const cams = await QrScanner.listCameras(true);
-
-	let i = 0;
-	while (i < cams.length) {
-	  if (cams[i].id === currentId) break;
-	  ++i;
-	}
-
-	return(cams[(i >= (cams.length - 1)) ? 0 : i + 1].id);
-  }
-
-  const isFacingMode = (s) => (s === 'user' || s === 'environment');
-
-  function getSelectedCamera() {
-	const cached = localStorage.getItem('cameraIdMode');
-	return(cached || config('cameraIdMode'));
-  }
-
-  function saveSelectedCamera(cameraIdMode) {
-	try { localStorage.setItem('cameraIdMode', cameraIdMode); }
-	catch (err) { console.error(err.toString()); }
   }
 
   // +-----------+
@@ -124,15 +36,14 @@ export default function Photo({ viewData }) {
 	  document.getElementById('video'),
 	  result => viewData(result.data), 
 	  {
-		preferredCamera: getSelectedCamera(),
+		preferredCamera: window.sc.getSelectedCamera(config("cameraIdMode")),
 		highlightScanRegion: true,
 		highlightCodeOutline: true,
 		returnDetailedScanResult: true
 	  });
 
 	qrScanner.start().then(() => {
-	  window.scanner = qrScanner;
-	  maybeShowSwitchCamera();
+	  window.sc.maybeShowSwitchCamera(qrScanner, 'switchCamera');
 	})
 	.catch((err) => {
 	  console.error(err);
@@ -170,7 +81,7 @@ export default function Photo({ viewData }) {
 		<>
 		  <video id='video' style={{ width: '400px', height: '225px' }}></video>
 		  <div id='switchCamera' style={{ display: 'none' }}>
-			<Button variant='text' onClick={() => switchCameraClick(false) }>
+			<Button variant='text' onClick={ window.sc.switchCameraClick }>
 			  Change Camera
 			</Button> 
 		  </div>
