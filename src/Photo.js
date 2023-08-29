@@ -57,7 +57,6 @@ export default function Photo({ viewData }) {
 	  clearTimeout(timerId);
 	  qrScanner.stop();
 	  qrScanner.destroy();
-	  window.scanner = undefined;
 	}
 	
   }, [haveCamera, setHaveCamera, paused, viewData]);
