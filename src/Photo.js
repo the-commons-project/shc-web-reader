@@ -9,8 +9,10 @@ export default function Photo({ viewData }) {
   const [paused, setPaused] = useState(false);
 
   const openCameraClick = () => {
+	const cameraIdMode = window.sc.getSelectedCamera(config("cameraIdMode"));
+	const url = 'captureQR.html#' + escape(cameraIdMode);
 	window.openCameraResult = openCameraResult;
-	window.open('captureQR.html', 'captureQR', 'width=500,height=300');
+	window.open(url, 'captureQR', 'width=500,height=300');
   }
 
   const unPauseCameraClick = () => { setPaused(false); }
@@ -22,6 +24,10 @@ export default function Photo({ viewData }) {
 	viewData(shx);
   }
 
+  // +-----------+
+  // | useEffect |
+  // +-----------+
+
   useEffect(() => {
 
 	if (!haveCamera || paused) return;
@@ -30,13 +36,16 @@ export default function Photo({ viewData }) {
 	  document.getElementById('video'),
 	  result => viewData(result.data), 
 	  {
-		preferredCamera: 'user',
+		preferredCamera: window.sc.getSelectedCamera(config("cameraIdMode")),
 		highlightScanRegion: true,
 		highlightCodeOutline: true,
 		returnDetailedScanResult: true
 	  });
 
-	qrScanner.start().catch((err) => {
+	qrScanner.start().then(() => {
+	  window.sc.maybeShowSwitchCamera(qrScanner, 'switchCamera');
+	})
+	.catch((err) => {
 	  console.error(err);
 	  setHaveCamera(false);
 	});
@@ -52,6 +61,10 @@ export default function Photo({ viewData }) {
 	
   }, [haveCamera, setHaveCamera, paused, viewData]);
 	
+  // +--------+
+  // | render |
+  // +--------+
+
   return (
 	<div>
 
@@ -64,8 +77,16 @@ export default function Photo({ viewData }) {
 		</div> }
 
 	  { haveCamera &&
-		<video id='video' style={{ width: '400px', height: '225px' }}></video> }
-	  
+		<>
+		  <video id='video' style={{ width: '400px', height: '225px' }}></video>
+		  <div id='switchCamera' style={{ display: 'none' }}>
+			<Button variant='text' onClick={ window.sc.switchCameraClick }>
+			  Change Camera
+			</Button> 
+		  </div>
+		</>
+	  }
+
 	  { !haveCamera &&
 		<Button variant='contained' onClick={openCameraClick}>Open Camera</Button> }
 	  

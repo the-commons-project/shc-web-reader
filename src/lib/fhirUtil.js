@@ -687,7 +687,7 @@ export function renderReferenceMap(o, resources, refRenderFuncMap) {
 	return(renderReferenceMapThrow(o, resources, refRenderFuncMap));
   }
   catch (err) {
-	return(<div>{o.display ? o.display : NA}</div>);
+	return(<div>{o && o.display ? o.display : NA}</div>);
   }
 }
 

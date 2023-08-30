@@ -16,6 +16,9 @@ export const DEFAULT_CONFIG = {
 	'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
   ],
 
+  // default camera mode ('environment' or 'user') or ID
+  "cameraIdMode": 'environment',
+
   // stop camera scanning after this many millis (default 120 seconds).
   // this is to work around what appear to be memory leaks in the
   // camera module
