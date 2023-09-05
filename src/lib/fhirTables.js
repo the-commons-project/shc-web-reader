@@ -217,8 +217,15 @@ function renderMedXNameJSX(r, rmap, dcr) {
   let nameJSX = "Unknown";
   
   if (r.medicationReference) {
-	const m = rmap[r.medicationReference.reference];
-	nameJSX = futil.renderCodeableJSX(m.code, dcr);
+	const ref = r.medicationReference;
+	const m = rmap[ref.reference];
+	if (m) {
+	  nameJSX = futil.renderCodeableJSX(m.code, dcr);
+	}
+	else {
+	  if (ref.display) nameJSX = ref.display;
+	  console.error(`medicationReference.reference not found: ${ref.reference}`);
+	}
   }
   else if (r.medicationCodeableConcept) {
 	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept, dcr);

@@ -31,6 +31,10 @@ export const DEFAULT_CONFIG = {
   // in local storage (default 500k characters of serialized JSON)
   "terminologyCacheItemCeiling": (1024 * 500),
 
+  // allow display of SHCs that have validation errors as long as
+  // they are not "fatal" ... e.g., fullUrl values not in resource:# format
+  "permissive": false,
+  
   // true = show TCP privacy, disclaimer, etc.
   "tcpFooter": true
 };
