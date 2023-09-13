@@ -138,8 +138,10 @@ async function _verifySHX(shx, passcode) {
   
     const dir = await getDirectory();
 
+	const permissive = config("permissive");
 	for (const i in resolved.verifiableCredentials) {
 	  const vres = await verify(resolved.verifiableCredentials[i], dir);
+	  if (permissive) bePermissive(vres);
 	  addVerifiableBundle(statusObj, vres);
 	}
   }
@@ -170,6 +172,23 @@ async function getDirectory() {
 
   _verifyDir = Directory.create(dirs);
   return(_verifyDir);
+}
+
+function bePermissive(vres) {
+
+  if (vres.verified) return;
+  if (!vres.data || !vres.data.errors) return;
+
+  let anyFatal = false;
+  for (const i in vres.data.errors) {
+	if (vres.data.errors[i].fatal) {
+	  anyFatal = true;
+	  break;
+	}
+  }
+
+  if (anyFatal) return;
+  vres.verified = true;
 }
 
 // +------------+

@@ -16,6 +16,9 @@ export const DEFAULT_CONFIG = {
 	'https://raw.githubusercontent.com/seanno/shc-demo-data/main/keystore/directory.json'
   ],
 
+  // default camera mode ('environment' or 'user') or ID
+  "cameraIdMode": 'environment',
+
   // stop camera scanning after this many millis (default 120 seconds).
   // this is to work around what appear to be memory leaks in the
   // camera module
@@ -28,6 +31,10 @@ export const DEFAULT_CONFIG = {
   // in local storage (default 500k characters of serialized JSON)
   "terminologyCacheItemCeiling": (1024 * 500),
 
+  // allow display of SHCs that have validation errors as long as
+  // they are not "fatal" ... e.g., fullUrl values not in resource:# format
+  "permissive": false,
+  
   // true = show TCP privacy, disclaimer, etc.
   "tcpFooter": true
 };

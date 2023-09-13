@@ -3,6 +3,7 @@ const NA = "Unknown";
 
 // +--------------------+
 // | renderOrganization |
+// | renderOrgOrPerson  | |
 // +--------------------+
 
 export function renderOrganization(org, resources) {
@@ -11,6 +12,16 @@ export function renderOrganization(org, resources) {
 
 function renderOrganizationResource(org) {
   return(<div>{org.name}</div>);
+}
+
+export function renderOrgOrPerson(oop, resources) {
+
+  const renderMap = {
+	"Organization": renderOrganization,
+	"any": renderPerson
+  };
+
+  return(renderReferenceMap(oop, resources, renderMap));
 }
 
 // +---------------+
@@ -687,7 +698,7 @@ export function renderReferenceMap(o, resources, refRenderFuncMap) {
 	return(renderReferenceMapThrow(o, resources, refRenderFuncMap));
   }
   catch (err) {
-	return(<div>{o.display ? o.display : NA}</div>);
+	return(<div>{o && o.display ? o.display : NA}</div>);
   }
 }
 
