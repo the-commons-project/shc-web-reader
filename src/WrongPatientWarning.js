@@ -55,7 +55,7 @@ export default function WrongPatientWarning({ organized }) {
   if (foundMatch) return(undefined);
 
   return(
-	<div class={styles.warning}>
+	<div className={styles.warning}>
 	  Warning: It appears that the subject referenced in the information
 	  below may differ from the patient selected in the 
 	  EHR (<span className={styles.deets}>{getPatientDeets()}</span>).

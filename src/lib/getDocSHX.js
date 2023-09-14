@@ -5,8 +5,6 @@
 // NYI --- reuse canvas and engine for perf
 
 import QrScanner from 'qr-scanner';
-import * as PdfjsLib from 'pdfjs-dist/build/pdf';
-import PdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { b64_to_arr } from './b64.js';
 import { looksLikeSHX } from './SHX.js';
 
@@ -33,6 +31,14 @@ export default async function getDocSHX(fhir, doc) {
 }
 
 async function scanPdf(doc, base64) {
+  
+  const PdfjsLib = await import('pdfjs-dist/build/pdf');
+  const PdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
+
+  return(await _scanPdf(doc, base64, PdfjsLib, PdfjsWorker));
+}
+
+async function _scanPdf(doc, base64, PdfjsLib, PdfjsWorker) {
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
