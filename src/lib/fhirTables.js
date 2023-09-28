@@ -401,6 +401,11 @@ function obsCompare(a, b) {
   return(effectiveB - effectiveA);
 }
 
+// +--------------------+
+// |    Plan of Care    |
+// +--------------------+
+
+
 function carePlanHeader() {
   return (
     <tr>
@@ -427,4 +432,3 @@ function carePlanRow(r, rmap, dcr) {
     </tr>
   );
 }
-
