@@ -72,6 +72,10 @@ const renderConfig = {
 	"hdrFn": immunizationHeader,
 	"rowFn": immunizationRow,
 	"compFn": immunizationCompare
+  },
+  "CarePlan": {
+    "hdrFn": carePlanHeader,
+    "rowFn": carePlanRow,
   }
 }
 
@@ -395,5 +399,32 @@ function obsCompare(a, b) {
   const effectiveA = futil.parseCrazyDateTimeBestGuess(a, "effective");
   const effectiveB = futil.parseCrazyDateTimeBestGuess(b, "effective");
   return(effectiveB - effectiveA);
+}
+
+function carePlanHeader() {
+  return (
+    <tr>
+      <th>Status</th>
+      <th>Intent</th>
+      <th>Activities</th>
+      {/* Add other relevant CarePlan properties as table columns */}
+    </tr>
+  );
+}
+
+function carePlanRow(r, rmap, dcr) {
+  console.log("CarePlan resource:", r);
+  const status = r.status;
+  const intent = r.intent;
+  const activities = r.activity ? r.activity.map(activity => activity.detail.code.text).join(", ") : "";
+
+  return (
+    <tr key={r.id}>
+      <td>{status}</td>
+      <td>{intent}</td>
+      <td>{activities}</td>
+      {/* Render other relevant CarePlan properties as table cells */}
+    </tr>
+  );
 }
 
