@@ -72,6 +72,14 @@ const renderConfig = {
 	"hdrFn": immunizationHeader,
 	"rowFn": immunizationRow,
 	"compFn": immunizationCompare
+  },
+  "CarePlan": {
+    "hdrFn": carePlanHeader,
+    "rowFn": carePlanRow,
+  },
+  "Consent": {
+    "hdrFn": consentHeader,
+    "rowFn": consentRow
   }
 }
 
@@ -397,3 +405,81 @@ function obsCompare(a, b) {
   return(effectiveB - effectiveA);
 }
 
+// +--------------------+
+// |    Plan of Care    |
+// +--------------------+
+
+
+function carePlanHeader() {
+  return (
+    <tr>
+      <th>Status</th>
+      <th>Intent</th>
+      <th>Activities</th>
+      <th>Category</th>
+      <th>Period Start</th>
+      {/* Add headers for other relevant CarePlan properties */}
+    </tr>
+  );
+}
+
+function carePlanRow(r, rmap, dcr) {
+  const status = r.status;
+  const intent = r.intent;
+  const activities = r.activity ? r.activity.map(activity => activity.detail.code.text).join(", ") : "";
+  const category = r.category ? r.category.map(c => c.text).join(", ") : "";
+  const periodStart = r.period ? futil.renderDateTime(r.period.start) : "";
+
+  return (
+    <tr key={r.id}>
+      <td>{status}</td>
+      <td>{intent}</td>
+      <td>{activities}</td>
+      <td>{category}</td>
+      <td>{periodStart}</td>
+      {/* Render other relevant CarePlan properties as table cells */}
+    </tr>
+  );
+}
+
+// +--------------------+
+// |      Consent       |
+// +--------------------+
+
+function consentHeader() {
+  return (
+    <tr>
+      <th>Status</th>
+      <th>Scope</th>
+      <th>Category</th>
+      <th>Date/Time</th>
+      <th>Policy Rule</th>
+      <th>Provision Period</th>
+      <th>Organization</th>
+    </tr>
+  );
+}
+
+function consentRow(r, rmap, dcr) {
+  const status = r.status;
+  const scopeDisplay = r.scope?.coding[0]?.display || "";
+  const categoryDisplay = r.category?.[0]?.coding[0]?.display || "";
+  const dateTime = r.dateTime ? futil.renderDateTime(r.dateTime) : "";
+  const policyRule = r.policyRule?.coding[0]?.display || "";
+  const provisionPeriodStart = r.provision?.period?.start ? futil.renderDateTime(r.provision.period.start) : "";
+  const provisionPeriodEnd = r.provision?.period?.end ? futil.renderDateTime(r.provision.period.end) : "";
+  const provisionPeriod = `${provisionPeriodStart} - ${provisionPeriodEnd}`;
+  const organization = r.organization?.[0]?.reference || "";
+
+  return (
+    <tr key={r.id}>
+      <td>{status}</td>
+      <td>{scopeDisplay}</td>
+      <td>{categoryDisplay}</td>
+      <td>{dateTime}</td>
+      <td>{policyRule}</td>
+      <td>{provisionPeriod}</td>
+      <td>{organization}</td>
+    </tr>
+  );
+}
