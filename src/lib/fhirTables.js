@@ -412,22 +412,27 @@ function carePlanHeader() {
       <th>Status</th>
       <th>Intent</th>
       <th>Activities</th>
-      {/* Add other relevant CarePlan properties as table columns */}
+      <th>Category</th>
+      <th>Period Start</th>
+      {/* Add headers for other relevant CarePlan properties */}
     </tr>
   );
 }
 
 function carePlanRow(r, rmap, dcr) {
-  console.log("CarePlan resource:", r);
   const status = r.status;
   const intent = r.intent;
   const activities = r.activity ? r.activity.map(activity => activity.detail.code.text).join(", ") : "";
+  const category = r.category ? r.category.map(c => c.text).join(", ") : "";
+  const periodStart = r.period ? futil.renderDateTime(r.period.start) : "";
 
   return (
     <tr key={r.id}>
       <td>{status}</td>
       <td>{intent}</td>
       <td>{activities}</td>
+      <td>{category}</td>
+      <td>{periodStart}</td>
       {/* Render other relevant CarePlan properties as table cells */}
     </tr>
   );
