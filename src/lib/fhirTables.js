@@ -54,6 +54,16 @@ const renderConfig = {
 	"rowFn": medStmtRow,
 	"compFn": medStmtCompare
   },
+  "MedicationAdministration": { // reuse medStmt
+	"hdrFn": medStmtHeader, 
+	"rowFn": medStmtRow,
+	"compFn": medStmtCompare
+  },
+  "MedicationDispense": {
+	"hdrFn": medDispHeader,
+	"rowFn": medDispRow,
+	"compFn": medDispCompare
+  },
   "MedicationRequest": {
 	"hdrFn": medReqHeader,
 	"rowFn": medReqRow,
@@ -72,6 +82,11 @@ const renderConfig = {
 	"hdrFn": immunizationHeader,
 	"rowFn": immunizationRow,
 	"compFn": immunizationCompare
+  },
+  "Procedure": {
+	"hdrFn": procHeader,
+	"rowFn": procRow,
+	"compFn": procCompare
   }
 }
 
@@ -180,6 +195,49 @@ function medStmtCompare(a, b) {
   const effectiveA = futil.parseCrazyDateTimeBestGuess(a, "effective");
   const effectiveB = futil.parseCrazyDateTimeBestGuess(b, "effective");
   return(effectiveB - effectiveA);
+}
+
+// +--------------------+
+// | MedicationDispense |
+// +--------------------+
+
+function medDispHeader() {
+  return(<tr>
+		   <th>Status</th>
+		   <th>Name</th>
+		   <th>Quantity</th>
+		   <th>Days Supply</th>
+		   <th>Delivered</th>
+		   <th>Substitution</th>
+		 </tr>);
+}
+
+function medDispRow(r, rmap, dcr) {
+
+  const rsub = r.substitution;
+  let sub = "";
+  if (rsub && rsub.wasSubstituted) {
+	if (rsub.type) sub += futil.renderCodeableJSX(rsub.type, dcr);
+	if (rsub.reason) {
+	  if (sub.length) sub += "; ";
+	  sub += futil.renderCodeableJSX(futil.firstOrObject(rsub.reason), dcr);
+	}
+  }
+  
+  return(<tr key={r.id}>
+		   <td>{r.status}</td>
+		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
+		   <td>{r.quantity ? futil.renderQuantity(r.quantity) : undefined}</td>
+		   <td>{r.daysSupply ? futil.renderQuantity(r.daysSupply) : undefined}</td>
+		   <td>{(r.whenHandedOver ? futil.renderDateTime(r.whenHandedOver) : "")}</td>
+		   <td>{sub}</td>
+		 </tr>);
+}
+
+function medDispCompare(a, b) {
+  const dateA = (a.whenHandedOver ? futil.parseDateTime(a.whenHandedOver) : new Date());
+  const dateB = (b.whenHandedOver ? futil.parseDateTime(b.whenHandedOver) : new Date());
+  return(dateB - dateA);
 }
 
 // +--------------------+
@@ -397,3 +455,36 @@ function obsCompare(a, b) {
   return(effectiveB - effectiveA);
 }
 
+// +-----------+
+// | Procedure |
+// +-----------+
+
+function procHeader() {
+  return(<tr>
+		   <th>Status</th>
+		   <th>Name</th>
+		   <th>Performed</th>
+		   <th>Outcome</th>
+		 </tr>);
+}
+
+function procRow(r, rmap, dcr) {
+
+  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, dcr) : "");
+  const name = r.code ? futil.renderCodeableJSX(r.code, dcr) : "Unknown";
+  const performed = futil.renderCrazyDateTime(r, "performed");
+  const outcome = r.outcome ? futil.renderCodeableJSX(r.outcome, dcr) : undefined;
+  
+  return(<tr key={r.id}>
+		   <td>{status}</td>
+		   <td>{name}</td>
+		   <td>{performed}</td>
+		   <td>{outcome}</td>
+		 </tr>);
+}
+
+function procCompare(a, b) {
+  const dateA = futil.parseCrazyDateTimeBestGuess(a, "performed");
+  const dateB = futil.parseCrazyDateTimeBestGuess(b, "performed");
+  return(dateB - dateA);
+}
