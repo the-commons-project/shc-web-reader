@@ -422,9 +422,24 @@ function carePlanHeader() {
 function carePlanRow(r, rmap, dcr) {
   const status = r.status;
   const intent = r.intent;
-  const activities = r.activity ? r.activity.map(activity => activity.detail.code.text).join(", ") : "";
-  const category = r.category ? r.category.map(c => c.text).join(", ") : "";
-  const periodStart = r.period ? futil.renderDateTime(r.period.start) : "";
+
+  const activities = futil.joinJSXElements(
+    (r.activity || []).map(activity =>
+      activity.detail && activity.detail.code
+      ? futil.renderCodeableJSX(activity.detail.code, dcr)
+      : null
+    ).filter(activity => activity !== null),
+    ', '
+  );
+
+  const category = futil.joinJSXElements(
+    (r.category || []).map(c =>
+      c.text ? futil.renderCodeableJSX(c, dcr) : null
+    ).filter(c => c !== null),
+    ', '
+  );
+
+  const period = r.period ? futil.renderPeriod(r.period) : "";
 
   return (
     <tr key={r.id}>
@@ -432,7 +447,7 @@ function carePlanRow(r, rmap, dcr) {
       <td>{intent}</td>
       <td>{activities}</td>
       <td>{category}</td>
-      <td>{periodStart}</td>
+      <td>{period}</td>
       {/* Render other relevant CarePlan properties as table cells */}
     </tr>
   );
