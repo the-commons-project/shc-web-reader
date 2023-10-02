@@ -283,7 +283,7 @@ export async function resolveSHL(shl, passcode, resolved) {
 
 	  if (shlJson.resourceType === "Bundle") {
 		// already a bundle
-		resolved.rawBundles.push = shlJson;
+		resolved.rawBundles.push(shlJson);
 	  }
 	  else {
 		// put it into a bundle
