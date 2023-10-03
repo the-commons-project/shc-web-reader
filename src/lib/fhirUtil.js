@@ -839,3 +839,11 @@ export function currentLocale() {
   return(navigator.language ? navigator.language : "en-US");
 }
 
+export function joinJSXElements(elements, delimiter = '') {
+  return elements.reduce((acc, curr, idx) => {
+    if (idx === 0) {
+      return [curr];
+    }
+    return [...acc, delimiter, curr];
+  }, []);
+}

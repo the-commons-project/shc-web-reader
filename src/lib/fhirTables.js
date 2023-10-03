@@ -80,7 +80,15 @@ const renderConfig = {
   "Consent": {
     "hdrFn": consentHeader,
     "rowFn": consentRow
-  }
+  },
+  "DeviceUseStatement": {
+    "hdrFn": deviceUseStatementHeader,
+    "rowFn": deviceUseStatementRow
+  },
+   "ClinicalImpression": {
+     "hdrFn": clinicalImpressionHeader,
+     "rowFn": clinicalImpressionRow
+   }
 }
 
 export function renderJSX(tableState, className, rmap, dcr) {
@@ -409,7 +417,6 @@ function obsCompare(a, b) {
 // |    Plan of Care    |
 // +--------------------+
 
-
 function carePlanHeader() {
   return (
     <tr>
@@ -426,9 +433,24 @@ function carePlanHeader() {
 function carePlanRow(r, rmap, dcr) {
   const status = r.status;
   const intent = r.intent;
-  const activities = r.activity ? r.activity.map(activity => activity.detail.code.text).join(", ") : "";
-  const category = r.category ? r.category.map(c => c.text).join(", ") : "";
-  const periodStart = r.period ? futil.renderDateTime(r.period.start) : "";
+
+  const activities = futil.joinJSXElements(
+    (r.activity || []).map(activity =>
+      activity.detail && activity.detail.code
+      ? futil.renderCodeableJSX(activity.detail.code, dcr)
+      : null
+    ).filter(activity => activity !== null),
+    ', '
+  );
+
+  const category = futil.joinJSXElements(
+    (r.category || []).map(c =>
+      c.text ? futil.renderCodeableJSX(c, dcr) : null
+    ).filter(c => c !== null),
+    ', '
+  );
+
+  const period = r.period ? futil.renderPeriod(r.period) : "";
 
   return (
     <tr key={r.id}>
@@ -436,7 +458,7 @@ function carePlanRow(r, rmap, dcr) {
       <td>{intent}</td>
       <td>{activities}</td>
       <td>{category}</td>
-      <td>{periodStart}</td>
+      <td>{period}</td>
       {/* Render other relevant CarePlan properties as table cells */}
     </tr>
   );
@@ -462,14 +484,12 @@ function consentHeader() {
 
 function consentRow(r, rmap, dcr) {
   const status = r.status;
-  const scopeDisplay = r.scope?.coding[0]?.display || "";
-  const categoryDisplay = r.category?.[0]?.coding[0]?.display || "";
+  const scopeDisplay = r.scope ? futil.renderCodeableJSX(r.scope, dcr) : "";
+  const categoryDisplay = r.category ? futil.renderCodeableJSX(r.category[0], dcr) : "";
   const dateTime = r.dateTime ? futil.renderDateTime(r.dateTime) : "";
-  const policyRule = r.policyRule?.coding[0]?.display || "";
-  const provisionPeriodStart = r.provision?.period?.start ? futil.renderDateTime(r.provision.period.start) : "";
-  const provisionPeriodEnd = r.provision?.period?.end ? futil.renderDateTime(r.provision.period.end) : "";
-  const provisionPeriod = `${provisionPeriodStart} - ${provisionPeriodEnd}`;
-  const organization = r.organization?.[0]?.reference || "";
+  const policyRule = r.policyRule ? futil.renderCodeableJSX(r.policyRule, dcr) : "";
+  const provisionPeriod = futil.renderPeriod(r.provision?.period);
+  const organization = r.organization?.[0] ? futil.renderOrganization(r.organization[0], dcr) : "";
 
   return (
     <tr key={r.id}>
@@ -482,4 +502,95 @@ function consentRow(r, rmap, dcr) {
       <td>{organization}</td>
     </tr>
   );
+}
+
+// +--------------------+
+// | DeviceUseStatement |
+// +--------------------+
+
+function deviceUseStatementHeader() {
+    return (
+        <tr>
+            <th>Subject</th>
+            <th>Timing</th>
+            <th>Source</th>
+            <th>Device</th>
+            <th>Body Site</th>
+            {/* Add other relevant headers if needed */}
+        </tr>
+    );
+}
+
+function deviceUseStatementRow(r, rmap, dcr) {
+    const subject = futil.renderReference(r.subject, dcr);
+    let timing = null;
+
+    if (r.timingDateTime) {
+        timing = futil.renderDateTime(r.timingDateTime);
+    } else if (r.timingPeriod) {
+        timing = futil.renderPeriod(r.timingPeriod);
+    } else if (r.timingTiming) {
+        timing = futil.renderTiming(r.timingTiming, dcr);
+    } else if (r["data-absent-reason"]) {
+        timing = r["data-absent-reason"];
+    }
+
+    const source = r.source ? futil.renderReference(r.source, dcr) : "N/A";
+    const device = futil.renderReference(r.device, dcr);
+    const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, dcr) : "N/A";
+
+    return (
+        <tr key={r.id}>
+            <td>{subject}</td>
+            <td>{timing}</td>
+            <td>{source}</td>
+            <td>{device}</td>
+            <td>{bodySite}</td>
+        </tr>
+    );
+};
+
+// +--------------------+
+// | ClinicalImpression |
+// +--------------------+
+
+function clinicalImpressionHeader() {
+    return (
+        <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Effective Period/DateTime</th>
+            <th>Summary</th>
+            <th>Subject</th>
+            <th>Assessor</th>
+            {/* Add other relevant headers if needed */}
+        </tr>
+    );
+}
+
+function clinicalImpressionRow(r, rmap, dcr) {
+    const status = r.status;
+    const description = r.description || "N/A";
+    let effective = null;
+    if (r.effectiveDateTime) {
+        effective = futil.renderDateTime(r.effectiveDateTime);
+    } else if (r.effectivePeriod) {
+        effective = futil.renderPeriod(r.effectivePeriod);
+    }
+    const summary = r.summary || "N/A";
+    const subject = futil.renderReference(r.subject, dcr);
+    const assessor = futil.renderReference(r.assessor, dcr);
+
+
+    return (
+        <tr key={r.id}>
+            <td>{status}</td>
+            <td>{description}</td>
+            <td>{effective}</td>
+            <td>{summary}</td>
+            <td>{subject}</td>
+            <td>{assessor}</td>
+            {/* Render other relevant ClinicalImpression properties as table cells */}
+        </tr>
+    );
 }
