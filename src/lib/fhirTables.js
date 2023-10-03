@@ -590,8 +590,8 @@ function clinicalImpressionRow(r, rmap, dcr) {
         effective = futil.renderPeriod(r.effectivePeriod);
     }
     const summary = r.summary || "";
-    const subject = futil.renderReference(r.subject, dcr);
-    const assessor = futil.renderReference(r.assessor, dcr);
+    const subject = futil.renderReference(r.subject, dcr) || "";
+    const assessor = futil.renderReference(r.assessor, dcr) || "";
 
 
     return (
