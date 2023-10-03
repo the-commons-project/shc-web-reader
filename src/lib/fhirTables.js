@@ -483,13 +483,25 @@ function consentHeader() {
 }
 
 function consentRow(r, rmap, dcr) {
-  const status = r.status;
-  const scopeDisplay = r.scope ? futil.renderCodeableJSX(r.scope, dcr) : "";
-  const categoryDisplay = r.category ? futil.renderCodeableJSX(r.category[0], dcr) : "";
-  const dateTime = r.dateTime ? futil.renderDateTime(r.dateTime) : "";
-  const policyRule = r.policyRule ? futil.renderCodeableJSX(r.policyRule, dcr) : "";
-  const provisionPeriod = futil.renderPeriod(r.provision?.period);
-  const organization = r.organization?.[0] ? futil.renderOrganization(r.organization[0], dcr) : "";
+  const status = r.status || "N/A";
+  const scopeDisplay = r.scope && Array.isArray(r.scope.coding) && r.scope.coding.length > 0
+    ? futil.renderCodeableJSX(r.scope, dcr)
+    : "N/A";
+  const categoryDisplay = r.category && Array.isArray(r.category) && r.category.length > 0
+    ? futil.renderCodeableJSX(r.category[0], dcr)
+    : "N/A";
+  const dateTime = r.dateTime
+    ? futil.renderDateTime(r.dateTime)
+    : "N/A";
+  const policyRule = r.policyRule && Array.isArray(r.policyRule.coding) && r.policyRule.coding.length > 0
+    ? futil.renderCodeableJSX(r.policyRule, dcr)
+    : "N/A";
+  const provisionPeriod = r.provision && r.provision.period
+    ? futil.renderPeriod(r.provision.period)
+    : "N/A";
+  const organization = r.organization && Array.isArray(r.organization) && r.organization.length > 0
+    ? futil.renderOrganization(r.organization[0], dcr)
+    : "N/A";
 
   return (
     <tr key={r.id}>
