@@ -486,22 +486,22 @@ function consentRow(r, rmap, dcr) {
   const status = r.status || "N/A";
   const scopeDisplay = r.scope && Array.isArray(r.scope.coding) && r.scope.coding.length > 0
     ? futil.renderCodeableJSX(r.scope, dcr)
-    : "N/A";
+    : "";
   const categoryDisplay = r.category && Array.isArray(r.category) && r.category.length > 0
     ? futil.renderCodeableJSX(r.category[0], dcr)
-    : "N/A";
+    : "";
   const dateTime = r.dateTime
     ? futil.renderDateTime(r.dateTime)
-    : "N/A";
+    : "";
   const policyRule = r.policyRule && Array.isArray(r.policyRule.coding) && r.policyRule.coding.length > 0
     ? futil.renderCodeableJSX(r.policyRule, dcr)
-    : "N/A";
+    : "";
   const provisionPeriod = r.provision && r.provision.period
     ? futil.renderPeriod(r.provision.period)
-    : "N/A";
+    : "";
   const organization = r.organization && Array.isArray(r.organization) && r.organization.length > 0
     ? futil.renderOrganization(r.organization[0], dcr)
-    : "N/A";
+    : "";
 
   return (
     <tr key={r.id}>
@@ -547,9 +547,9 @@ function deviceUseStatementRow(r, rmap, dcr) {
         timing = r["data-absent-reason"];
     }
 
-    const source = r.source ? futil.renderReference(r.source, dcr) : "N/A";
+    const source = r.source ? futil.renderReference(r.source, dcr) : "";
     const device = futil.renderReference(r.device, dcr);
-    const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, dcr) : "N/A";
+    const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, dcr) : "";
 
     return (
         <tr key={r.id}>
@@ -582,14 +582,14 @@ function clinicalImpressionHeader() {
 
 function clinicalImpressionRow(r, rmap, dcr) {
     const status = r.status;
-    const description = r.description || "N/A";
+    const description = r.description || "";
     let effective = null;
     if (r.effectiveDateTime) {
         effective = futil.renderDateTime(r.effectiveDateTime);
     } else if (r.effectivePeriod) {
         effective = futil.renderPeriod(r.effectivePeriod);
     }
-    const summary = r.summary || "N/A";
+    const summary = r.summary || "";
     const subject = futil.renderReference(r.subject, dcr);
     const assessor = futil.renderReference(r.assessor, dcr);
 
