@@ -50,8 +50,8 @@ const systems = {
 	"placeHolder": "..."
   },
 
-  // SNOMED SCT (IPS Version)
-  // used under CC4 Attribution; see https://www.snomed.org/international-patient-summary-terminology
+  // SNOMED SCT (Global Patient Set)
+  // used under CC4 Attribution; see https://www.snomed.org/gps
   "http://snomed.info/sct": {
 	"type": "dictionary",
 	"url": "codes-snomed-sct.json",

@@ -3,24 +3,21 @@
 # | sct-to-json.awk |
 # +-----------------+
 
-# Converts the SNOMED CT IPS Terminology file into a simple dictionary
+# Converts the SNOMED Global Patient Set source file into a simple dictionary
 # we can use to render codes. Files and license information can be found
-# at https://www.snomed.org/international-patient-summary-terminology.
+# at https://www.snomed.org/gps
 #
-# Input file is sct2_Description_IPSSnapshot-en_IPST_20221130.txt.
+# Input file is SnomedINTL_GPSRelease_PRODUCTION_20220731T120000Z.txt
+# (timestamp portion may be newer over time of course)
 
 BEGIN {
+	RS = "\r\n" # input file seems to have MSDOS line breaks
 	FS = "\t"
 	printf "{"
 }
 
-$3 != "1" {
+$2 != "1" {
 	# skip non-active entries
-	next
-}
-
-$6 != "en" {
-	# skip non-english lines
 	next
 }
 
@@ -29,8 +26,9 @@ NR > 2 {
 }
 
 NR > 1 {
-	gsub(/%/, "%%", $8)
-	printf "\n  \"" $5 "\": \"" $8 "\"" 
+	gsub(/%/, "%%", $4) # escape percents
+    gsub(/["\\]/, "\\\\&", $4) # escape quotes and backslashes
+	printf "\n  \"" $1 "\": \"" $4 "\"" 
 }
 
 
