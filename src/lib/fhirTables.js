@@ -55,7 +55,7 @@ const renderConfig = {
 	"compFn": medStmtCompare
   },
   "MedicationAdministration": { // reuse medStmt
-	"hdrFn": medStmtHeader, 
+	"hdrFn": medStmtHeader,
 	"rowFn": medStmtRow,
 	"compFn": medStmtCompare
   },
@@ -87,6 +87,10 @@ const renderConfig = {
 	"hdrFn": procHeader,
 	"rowFn": procRow,
 	"compFn": procCompare
+  },
+  "CarePlan": {
+    "hdrFn": carePlanHeader,
+    "rowFn": carePlanRow,
   }
 }
 
@@ -223,7 +227,7 @@ function medDispRow(r, rmap, dcr) {
 	  sub += futil.renderCodeableJSX(futil.firstOrObject(rsub.reason), dcr);
 	}
   }
-  
+
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
 		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
@@ -474,7 +478,7 @@ function procRow(r, rmap, dcr) {
   const name = r.code ? futil.renderCodeableJSX(r.code, dcr) : "Unknown";
   const performed = futil.renderCrazyDateTime(r, "performed");
   const outcome = r.outcome ? futil.renderCodeableJSX(r.outcome, dcr) : undefined;
-  
+
   return(<tr key={r.id}>
 		   <td>{status}</td>
 		   <td>{name}</td>
@@ -487,4 +491,55 @@ function procCompare(a, b) {
   const dateA = futil.parseCrazyDateTimeBestGuess(a, "performed");
   const dateB = futil.parseCrazyDateTimeBestGuess(b, "performed");
   return(dateB - dateA);
+}
+// +--------------------+
+// |    Plan of Care    |
+// +--------------------+
+
+
+function carePlanHeader() {
+  return (
+    <tr>
+      <th>Status</th>
+      <th>Intent</th>
+      <th>Activities</th>
+      <th>Category</th>
+      <th>Period Start</th>
+      {/* Add headers for other relevant CarePlan properties */}
+    </tr>
+  );
+}
+
+function carePlanRow(r, rmap, dcr) {
+  const status = r.status;
+  const intent = r.intent;
+
+  const activities = futil.joinJSXElements(
+    (r.activity || []).map(activity =>
+      activity.detail && activity.detail.code
+      ? futil.renderCodeableJSX(activity.detail.code, dcr)
+      : null
+    ).filter(activity => activity !== null),
+    ', '
+  );
+
+  const category = futil.joinJSXElements(
+    (r.category || []).map(c =>
+      c.text ? futil.renderCodeableJSX(c, dcr) : null
+    ).filter(c => c !== null),
+    ', '
+  );
+
+  const period = r.period ? futil.renderPeriod(r.period) : "";
+
+  return (
+    <tr key={r.id}>
+      <td>{status}</td>
+      <td>{intent}</td>
+      <td>{activities}</td>
+      <td>{category}</td>
+      <td>{period}</td>
+      {/* Render other relevant CarePlan properties as table cells */}
+    </tr>
+  );
 }
