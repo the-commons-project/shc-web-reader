@@ -74,6 +74,11 @@ const systems = {
   // ObservationInterpretation
   "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation": {
 	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-v3-ObservationInterpretation.json"
+  },
+
+  // Substance Admin Substitution
+  "http://terminology.hl7.org/CodeSystem/v3-substanceAdminSubstitution": {
+	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-v3-substanceAdminSubstitution.json"
   }
 }
 

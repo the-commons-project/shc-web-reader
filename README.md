@@ -1,5 +1,7 @@
 # Getting Started
 
+Note: A deep dive into this code for developers can be found at https://shutdownhook.com/2023/09/09/anatomy-of-a-smart-health-card-link-viewer/
+
 shc-web-reader is a create-react-app web application that can run standalone or
 as a provider-launch SMART-on-FHIR application. It scans Smart Health Card QR
 Codes sourced from barcode scanners, copy/paste, connected cameras or by
