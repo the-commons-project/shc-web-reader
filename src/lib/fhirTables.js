@@ -518,6 +518,7 @@ function carePlanHeader() {
       <th>Activities</th>
       <th>Category</th>
       <th>Period Start</th>
+      <th>Note</th>
       {/* Add headers for other relevant CarePlan properties */}
     </tr>
   );
@@ -543,8 +544,8 @@ function carePlanRow(r, rmap, dcr) {
        ', '
    );
 
-
   const period = r.period ? futil.renderPeriod(r.period) : "";
+  const note = r.note ? r.note : "";
 
   return (
     <tr key={r.id}>
@@ -553,6 +554,7 @@ function carePlanRow(r, rmap, dcr) {
       <td>{activities}</td>
       <td>{category}</td>
       <td>{period}</td>
+      <td>{note}</td>
       {/* Render other relevant CarePlan properties as table cells */}
     </tr>
   );
