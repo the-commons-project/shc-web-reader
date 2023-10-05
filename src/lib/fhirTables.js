@@ -545,7 +545,7 @@ function carePlanRow(r, rmap, dcr) {
    );
 
   const period = r.period ? futil.renderPeriod(r.period) : "";
-  const note = r.note ? r.note : "";
+  const note = r.note ? r.note.text : "";
 
   return (
     <tr key={r.id}>
