@@ -504,6 +504,7 @@ function procCompare(a, b) {
   const dateB = futil.parseCrazyDateTimeBestGuess(b, "performed");
   return(dateB - dateA);
 }
+
 // +--------------------+
 // |    Plan of Care    |
 // +--------------------+
@@ -535,62 +536,13 @@ function carePlanRow(r, rmap, dcr) {
     ', '
   );
 
-  const category = futil.joinJSXElements(
-    (r.category || []).map(c =>
-      c.text ? futil.renderCodeableJSX(c, dcr) : null
-    ).filter(c => c !== null),
-    ', '
-  );
+   const category = futil.joinJSXElements(
+       (r.category || []).map(c =>
+          util.renderCodeableJSX(c, dcr)
+       ).filter(c => c !== null),
+       ', '
+   );
 
-  const period = r.period ? futil.renderPeriod(r.period) : "";
-
-  return (
-    <tr key={r.id}>
-      <td>{status}</td>
-      <td>{intent}</td>
-      <td>{activities}</td>
-      <td>{category}</td>
-      <td>{period}</td>
-      {/* Render other relevant CarePlan properties as table cells */}
-    </tr>
-  );
-}
-// +--------------------+
-// |    Plan of Care    |
-// +--------------------+
-
-function carePlanHeader() {
-  return (
-    <tr>
-      <th>Status</th>
-      <th>Intent</th>
-      <th>Activities</th>
-      <th>Category</th>
-      <th>Period Start</th>
-      {/* Add headers for other relevant CarePlan properties */}
-    </tr>
-  );
-}
-
-function carePlanRow(r, rmap, dcr) {
-  const status = r.status;
-  const intent = r.intent;
-
-  const activities = futil.joinJSXElements(
-    (r.activity || []).map(activity =>
-      activity.detail && activity.detail.code
-      ? futil.renderCodeableJSX(activity.detail.code, dcr)
-      : null
-    ).filter(activity => activity !== null),
-    ', '
-  );
-
-  const category = futil.joinJSXElements(
-    (r.category || []).map(c =>
-      c.text ? futil.renderCodeableJSX(c, dcr) : null
-    ).filter(c => c !== null),
-    ', '
-  );
 
   const period = r.period ? futil.renderPeriod(r.period) : "";
 
