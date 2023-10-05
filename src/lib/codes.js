@@ -79,6 +79,15 @@ const systems = {
   // Substance Admin Substitution
   "http://terminology.hl7.org/CodeSystem/v3-substanceAdminSubstitution": {
 	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-v3-substanceAdminSubstitution.json"
+  },
+
+  // Consent Policy and Scope Definitions
+"http://terminology.hl7.org/CodeSystem/consentpolicycodes": {
+  "url": "https://terminology.hl7.org/5.2.0/CodeSystem-consentpolicycodes.json"
+  },
+
+"http://terminology.hl7.org/CodeSystem/consentscope": {
+  "url": "https://terminology.hl7.org/5.2.0/CodeSystem-consentscope.json"
   }
 }
 
