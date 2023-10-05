@@ -538,7 +538,7 @@ function carePlanRow(r, rmap, dcr) {
 
    const category = futil.joinJSXElements(
        (r.category || []).map(c =>
-          util.renderCodeableJSX(c, dcr)
+          futil.renderCodeableJSX(c, dcr)
        ).filter(c => c !== null),
        ', '
    );
