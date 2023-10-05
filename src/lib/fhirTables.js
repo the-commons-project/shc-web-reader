@@ -580,24 +580,23 @@ function consentHeader() {
 
 function consentRow(r, rmap, dcr) {
   const status = r.status || "N/A";
-  const scopeDisplay = r.scope && Array.isArray(r.scope.coding) && r.scope.coding.length > 0
-    ? futil.renderCodeableJSX(r.scope, dcr)
-    : "";
-  const categoryDisplay = r.category && Array.isArray(r.category) && r.category.length > 0
-    ? futil.renderCodeableJSX(r.category[0], dcr)
-    : "";
+  const scopeDisplay = futil.renderCodeableJSX(r.scope, dcr);
+  const categoryDisplay = futil.joinJSXElements(
+      (r.category || []).map(c => futil.renderCodeableJSX(c, dcr)),
+      ', '
+  );
   const dateTime = r.dateTime
     ? futil.renderDateTime(r.dateTime)
     : "";
-  const policyRule = r.policyRule && Array.isArray(r.policyRule.coding) && r.policyRule.coding.length > 0
-    ? futil.renderCodeableJSX(r.policyRule, dcr)
-    : "";
+  const policyRule = futil.renderCodeableJSX(r.policyRule, dcr);
+
   const provisionPeriod = r.provision && r.provision.period
     ? futil.renderPeriod(r.provision.period)
     : "";
-  const organization = r.organization && Array.isArray(r.organization) && r.organization.length > 0
-    ? futil.renderOrganization(r.organization[0], dcr)
-    : "";
+  const organization = futil.joinJSXElements(
+      (r.organization || []).map(org => futil.renderOrganization(org, dcr)),
+      ', '
+  );
 
   return (
     <tr key={r.id}>
@@ -631,18 +630,7 @@ function deviceUseStatementHeader() {
 
 function deviceUseStatementRow(r, rmap, dcr) {
     const subject = futil.renderReference(r.subject, dcr);
-    let timing = null;
-
-    if (r.timingDateTime) {
-        timing = futil.renderDateTime(r.timingDateTime);
-    } else if (r.timingPeriod) {
-        timing = futil.renderPeriod(r.timingPeriod);
-    } else if (r.timingTiming) {
-        timing = futil.renderTiming(r.timingTiming, dcr);
-    } else if (r["data-absent-reason"]) {
-        timing = r["data-absent-reason"];
-    }
-
+    const timing = futil.renderCrazyDateTime(r, "timing");
     const source = r.source ? futil.renderReference(r.source, dcr) : "";
     const device = futil.renderReference(r.device, dcr);
     const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, dcr) : "";
@@ -679,12 +667,7 @@ function clinicalImpressionHeader() {
 function clinicalImpressionRow(r, rmap, dcr) {
     const status = r.status;
     const description = r.description || "";
-    let effective = null;
-    if (r.effectiveDateTime) {
-        effective = futil.renderDateTime(r.effectiveDateTime);
-    } else if (r.effectivePeriod) {
-        effective = futil.renderPeriod(r.effectivePeriod);
-    }
+    const effective = futil.renderCrazyDateTime(r, "effective");
     const summary = r.summary || "";
     const subject = futil.renderReference(r.subject, dcr) || "";
     const assessor = futil.renderReference(r.assessor, dcr) || "";

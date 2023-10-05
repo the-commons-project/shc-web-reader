@@ -338,8 +338,7 @@ export function renderCrazyDateTime(parent, prefix) {
   if (parent[prefix + "Instant"]) return(renderDateTime(parent[prefix + "Instant"]));
 
   if (parent[prefix + "Timing"]) {
-	console.error("Unsupported CrazyDateTime format");
-	return("Unsupported");
+    return renderTiming(parent[prefix + "Timing"]);
   }
   
   return(undefined);
