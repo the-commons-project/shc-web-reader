@@ -78,7 +78,7 @@ export default function Photo({ viewData }) {
 
 	  { haveCamera &&
 		<>
-		  <video id='video' style={{ width: '400px', height: '225px' }}></video>
+          <video id='video' style={{ width: '100%', maxWidth: '400px', height: 'auto' }}></video>
 		  <div id='switchCamera' style={{ display: 'none' }}>
 			<Button variant='text' onClick={ window.sc.switchCameraClick }>
 			  Change Camera
