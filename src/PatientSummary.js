@@ -46,8 +46,6 @@ export default function PatientSummary({ organized, dcr }) {
        </div>
      </div>
   );
-
-
 }
 
 
