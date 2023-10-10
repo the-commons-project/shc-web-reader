@@ -35,7 +35,7 @@ export default function PatientSummary({ organized, dcr }) {
   return (
      <div className={styles.container}>
        <h2>{comp.title}</h2>
-       <div className={styles.dataGrid}>
+       <div className={styles.dataTable}>
          <div className={styles.patientLabel}>Patient</div>
          <div className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</div>
 

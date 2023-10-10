@@ -4,31 +4,31 @@
     margin-top: 12px;
 }
 
-.dataGrid {
+.dataTable {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1px;
     border: 1px solid #e0e0e0;
 }
 
-.dataGrid > * {
+.dataTable > * {
     padding: 8px;
     font-size: smaller;
     border: 1px solid #e0e0e0;
 }
 
-.dataGrid > :nth-child(odd) {
+.dataTable > :nth-child(odd) {
     background-color: #f5f5f5;
     font-weight: bold;
 }
 
 @media only screen and (max-width: 600px) {
-    .dataGrid > * {
+    .dataTable > * {
         padding: 2px;
         font-size: x-small;
     }
 
-    .dataGrid {
+    .dataTable {
         grid-template-columns: 1fr;
     }
 }
