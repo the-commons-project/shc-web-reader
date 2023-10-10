@@ -9,18 +9,18 @@ export default function PatientSummary({ organized, dcr }) {
   // | renderSections |
   // +----------------+
 
-   const renderSections = () => {
-     return comp.section.flatMap((s) => {
-       return [
-         <div key={`${s.title}-title`} className={styles.sectionTitle}>
-           {s.title}
-         </div>,
-         <div key={`${s.title}-content`} className={styles.sectionContent}>
-           <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />
-         </div>
-       ];
-     });
-   }
+  const renderSections = () => {
+    return comp.section.flatMap((s) => {
+      return [
+        <div key={`${s.title}-title`} className={styles.sectionTitle}>
+          {s.title}
+        </div>,
+        <div key={`${s.title}-content`} className={styles.sectionContent}>
+          <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />
+        </div>
+      ];
+    });
+  }
 
 
   // +-------------+
