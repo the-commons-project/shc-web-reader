@@ -51,10 +51,16 @@ const systems = {
   },
 
   // SNOMED SCT (Global Patient Set)
-  // used under CC4 Attribution; see https://www.snomed.org/gps
   "http://snomed.info/sct": {
 	"type": "dictionary",
 	"url": "codes-snomed-sct.json",
+	"plaecHolder": "..."
+  },
+
+  // LOINC
+  "http://loinc.org": {
+	"type": "dictionary",
+	"url": "codes-loinc.json",
 	"plaecHolder": "..."
   },
 

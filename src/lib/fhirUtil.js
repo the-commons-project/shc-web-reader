@@ -803,6 +803,16 @@ export function findCodedItem(arr, system, code) {
 // | utilities |
 // +-----------+
 
+export async function fetchJson(url) {
+
+  const response = await fetch(url);
+  if (response.status < 200 || response.status >= 300) {
+	throw new Error(`fetching ${url} (${response.status})`);
+  }
+
+  return(await response.json());
+}
+
 export function spaceAppend(cur, str) {
   return(delimiterAppend(cur, str, " "));
 }
