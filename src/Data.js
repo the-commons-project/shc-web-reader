@@ -38,7 +38,7 @@ export default function Data({ shx }) {
 	if (evt.key === 'Enter') passcodeClick(); 
   }
 
-  const handleFocus = (evt) => {
+  const handleFocus = (event) => {
     event.target.removeAttribute('readOnly');
   }
   
