@@ -58,15 +58,16 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
   const renderToggle = () => {
 
 	return(
+	  <div className={styles.toggleButton}>
 	  <Button
 		data-html2canvas-ignore="true"
-		sx={{ float: "right", marginTop: "10px;" }}
 		size="small"
 		onClick={ () => setViewState(viewState === NTOGGLE ? STOGGLE : NTOGGLE) }
 		startIcon={ <RemoveRedEyeOutlinedIcon /> }>
 		Toggle view
 	  </Button>
-	);
+		</div>
+ 	);
   }
 
   // +-----------------+
