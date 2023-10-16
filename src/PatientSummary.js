@@ -10,44 +10,42 @@ export default function PatientSummary({ organized, dcr }) {
   // +----------------+
 
   const renderSections = () => {
-	return(comp.section.map((s) => {
-	  return(
-		<tr key={ s.title }>
-		  <th>{ s.title }</th>
-		  <td><PatientSummarySection s={s} rmap={rmap} dcr={dcr} /></td>
-		</tr>
-	  );
-	}));
+    return comp.section.flatMap((s) => {
+      return [
+        <div key={`${s.title}-title`} className={styles.sectionTitle}>
+          {s.title}
+        </div>,
+        <div key={`${s.title}-content`} className={styles.sectionContent}>
+          <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />
+        </div>
+      ];
+    });
   }
+
 
   // +-------------+
   // | Main Render |
   // +-------------+
-  
+
   const comp = organized.byType.Composition[0];
   const rmap = organized.byId;
 
   const authors = comp.author.map((a) => futil.renderOrgOrPerson(a, rmap));
-  
-  return(
-    <div className={styles.container}>
-	  <h2>{comp.title}</h2>
-	  <table className={styles.dataTable}>
-		<tbody>
-		  <tr>
-			<th>Patient</th>
-			<td className={styles.patCell}>{ futil.renderPerson(comp.subject, rmap) }</td>
-		  </tr>
-		  <tr>
-			<th>Summary prepared by</th>
-			<td>{ authors }</td>
-		  </tr>
-		  { renderSections() }
-		</tbody>
-	  </table>
-	</div>
-  );
 
+  return (
+     <div className={styles.container}>
+       <h2>{comp.title}</h2>
+       <div className={styles.dataTable}>
+         <div className={styles.patientLabel}>Patient</div>
+         <div className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</div>
+
+         <div className={styles.authorLabel}>Summary prepared by</div>
+         <div>{authors}</div>
+
+         {renderSections()}
+       </div>
+     </div>
+  );
 }
 
 
