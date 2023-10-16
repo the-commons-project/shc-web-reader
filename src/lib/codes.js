@@ -3,7 +3,7 @@
 // module tries to normalize all of the vagaries of this data into something
 // simple that translates system + code into a display name.
 //
-// Most of these are FHIR ValueSet (NYI) or CodeSystem resources. Others are just
+// Most of these are FHIR CodeSystem resources. Others are just
 // scraped or hacked together from who knows where. Such a hassle.
 
 import config from './config.js';
@@ -13,7 +13,7 @@ import config from './config.js';
 // +--------------------+
 
 // Edit this to add new systems. "url" should resolve to the source data;
-// "type" defaults to "fhir" which means a ValueSet or CodeSystem resource.
+// "type" defaults to "fhir" which means a CodeSystem resource.
 // See "loadSystem" for alternative type options.
 
 const systems = {
@@ -89,13 +89,20 @@ const systems = {
   },
 
   // Consent Policy and Scope Definitions
-"http://terminology.hl7.org/CodeSystem/consentpolicycodes": {
-  "url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-consentpolicycodes.json"
+  "http://terminology.hl7.org/CodeSystem/consentpolicycodes": {
+	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-consentpolicycodes.json"
   },
 
-"http://terminology.hl7.org/CodeSystem/consentscope": {
-  "url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-consentscope.json"
-  }
+  "http://terminology.hl7.org/CodeSystem/consentscope": {
+	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-consentscope.json"
+  },
+
+  // Consent Category value set dependencies
+  "http://terminology.hl7.org/CodeSystem/consentcategorycodes": {
+	"url": "https://build.fhir.org/ig/HL7/UTG/CodeSystem-consentcategorycodes.json"
+  },
+
+  
 }
 
 // +--------------------------+
@@ -250,9 +257,6 @@ function parseFhirSystem(system, resource) {
 	case "CodeSystem":
 	  return(parseFhirCodeSystem(resource));
 
-	case "ValueSet":
-	  return(parseFhirValueSet(resource));
-	  
 	default:
 	  throw new Error(`Can't parse ${resource.resourceType} for ${system}`);
   }
@@ -282,14 +286,6 @@ function addCodeSystemConcept(system, c) {
 	  addCodeSystemConcept(system, c.concept[i]);
 	}
   }
-}
-
-// +--------------------+
-// | parseFhirValueSet  |
-// +--------------------+
-
-function parseFhirValueSet(resource) {
-  throw new Error(`NYI`);
 }
 
 // +----------------------------+
