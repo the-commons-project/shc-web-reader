@@ -39,7 +39,7 @@ export default function Data({ shx }) {
   }
 
   const handleFocus = (evt) => {
-    event.target.removeAttribute('readOnly');
+    evt.target.removeAttribute('readOnly');
   }
   
   const renderNeedPasscode = () => {
