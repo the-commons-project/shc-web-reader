@@ -36,10 +36,10 @@ export default function PatientSummary({ organized, dcr }) {
      <div className={styles.container}>
        <h2>{comp.title}</h2>
        <div className={styles.dataTable}>
-         <div className={styles.patientLabel}>Patient</div>
+         <div className={styles.sectionTitle}>Patient</div>
          <div className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</div>
 
-         <div className={styles.authorLabel}>Summary prepared by</div>
+         <div className={styles.sectionTitle}>Summary prepared by</div>
          <div>{authors}</div>
 
          {renderSections()}
