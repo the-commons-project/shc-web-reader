@@ -37,10 +37,6 @@ export default function Data({ shx }) {
   const passcodeKeyDown = (evt) => {
 	if (evt.key === 'Enter') passcodeClick(); 
   }
-
-  const handleFocus = (evt) => {
-    evt.target.removeAttribute('readOnly');
-  }
   
   const renderNeedPasscode = () => {
 
@@ -57,7 +53,6 @@ export default function Data({ shx }) {
 					 margin='normal'
 					 type='password'
 					 autoComplete='off'
-                     onFocus={handleFocus}
 					 autoFocus
 					 inputRef={passcodeRef}
 					 onKeyDown={passcodeKeyDown}
