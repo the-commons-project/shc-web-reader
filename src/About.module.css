@@ -22,3 +22,14 @@
 	grid-row: 2;
 	font-size: smaller;
 }
+
+@media (max-width: 800px) {
+	
+	.container {
+		display: block;
+	}
+	
+	.cardImg {
+		display: none;
+	}
+}

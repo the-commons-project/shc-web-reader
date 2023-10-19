@@ -51,7 +51,12 @@ export default function App() {
 
 	  <div className={styles.nav}>
 	  
-		<Tabs value={tabValue} onChange={handleTabChange} orientation='horizontal'>
+		<Tabs
+		  value={tabValue}
+		  onChange={handleTabChange}
+		  orientation='horizontal'
+		  variant='scrollable'>
+		  
 		  <Tab label='About' value={TabValue.About} />
 		  { config("showScan") && <Tab label='Scan Card' value={TabValue.Scan} /> }
 		  { config("showPhoto") && <Tab label='Take Photo'  value={TabValue.Photo} /> }

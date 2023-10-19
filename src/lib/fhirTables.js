@@ -54,6 +54,16 @@ const renderConfig = {
 	"rowFn": medStmtRow,
 	"compFn": medStmtCompare
   },
+  "MedicationAdministration": { // reuse medStmt
+	"hdrFn": medStmtHeader,
+	"rowFn": medStmtRow,
+	"compFn": medStmtCompare
+  },
+  "MedicationDispense": {
+	"hdrFn": medDispHeader,
+	"rowFn": medDispRow,
+	"compFn": medDispCompare
+  },
   "MedicationRequest": {
 	"hdrFn": medReqHeader,
 	"rowFn": medReqRow,
@@ -72,7 +82,28 @@ const renderConfig = {
 	"hdrFn": immunizationHeader,
 	"rowFn": immunizationRow,
 	"compFn": immunizationCompare
-  }
+  },
+  "Procedure": {
+	"hdrFn": procHeader,
+	"rowFn": procRow,
+	"compFn": procCompare
+  },
+  "CarePlan": {
+    "hdrFn": carePlanHeader,
+    "rowFn": carePlanRow,
+  },
+  "Consent": {
+    "hdrFn": consentHeader,
+    "rowFn": consentRow
+  },
+  "DeviceUseStatement": {
+    "hdrFn": deviceUseStatementHeader,
+    "rowFn": deviceUseStatementRow
+  },
+   "ClinicalImpression": {
+     "hdrFn": clinicalImpressionHeader,
+     "rowFn": clinicalImpressionRow
+   }
 }
 
 export function renderJSX(tableState, className, rmap, dcr) {
@@ -180,6 +211,49 @@ function medStmtCompare(a, b) {
   const effectiveA = futil.parseCrazyDateTimeBestGuess(a, "effective");
   const effectiveB = futil.parseCrazyDateTimeBestGuess(b, "effective");
   return(effectiveB - effectiveA);
+}
+
+// +--------------------+
+// | MedicationDispense |
+// +--------------------+
+
+function medDispHeader() {
+  return(<tr>
+		   <th>Status</th>
+		   <th>Name</th>
+		   <th>Quantity</th>
+		   <th>Days Supply</th>
+		   <th>Delivered</th>
+		   <th>Substitution</th>
+		 </tr>);
+}
+
+function medDispRow(r, rmap, dcr) {
+
+  const rsub = r.substitution;
+  let sub = "";
+  if (rsub && rsub.wasSubstituted) {
+	if (rsub.type) sub += futil.renderCodeableJSX(rsub.type, dcr);
+	if (rsub.reason) {
+	  if (sub.length) sub += "; ";
+	  sub += futil.renderCodeableJSX(futil.firstOrObject(rsub.reason), dcr);
+	}
+  }
+
+  return(<tr key={r.id}>
+		   <td>{r.status}</td>
+		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
+		   <td>{r.quantity ? futil.renderQuantity(r.quantity) : undefined}</td>
+		   <td>{r.daysSupply ? futil.renderQuantity(r.daysSupply) : undefined}</td>
+		   <td>{(r.whenHandedOver ? futil.renderDateTime(r.whenHandedOver) : "")}</td>
+		   <td>{sub}</td>
+		 </tr>);
+}
+
+function medDispCompare(a, b) {
+  const dateA = (a.whenHandedOver ? futil.parseDateTime(a.whenHandedOver) : new Date());
+  const dateB = (b.whenHandedOver ? futil.parseDateTime(b.whenHandedOver) : new Date());
+  return(dateB - dateA);
 }
 
 // +--------------------+
@@ -397,3 +471,217 @@ function obsCompare(a, b) {
   return(effectiveB - effectiveA);
 }
 
+// +-----------+
+// | Procedure |
+// +-----------+
+
+function procHeader() {
+  return(<tr>
+		   <th>Status</th>
+		   <th>Name</th>
+		   <th>Performed</th>
+		   <th>Outcome</th>
+		 </tr>);
+}
+
+function procRow(r, rmap, dcr) {
+
+  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, dcr) : "");
+  const name = r.code ? futil.renderCodeableJSX(r.code, dcr) : "Unknown";
+  const performed = futil.renderCrazyDateTime(r, "performed");
+  const outcome = r.outcome ? futil.renderCodeableJSX(r.outcome, dcr) : undefined;
+
+  return(<tr key={r.id}>
+		   <td>{status}</td>
+		   <td>{name}</td>
+		   <td>{performed}</td>
+		   <td>{outcome}</td>
+		 </tr>);
+}
+
+function procCompare(a, b) {
+  const dateA = futil.parseCrazyDateTimeBestGuess(a, "performed");
+  const dateB = futil.parseCrazyDateTimeBestGuess(b, "performed");
+  return(dateB - dateA);
+}
+
+// +--------------------+
+// |    Plan of Care    |
+// +--------------------+
+
+
+function carePlanHeader() {
+  return (
+    <tr>
+      <th>Status</th>
+      <th>Intent</th>
+      <th>Activities</th>
+      <th>Category</th>
+      <th>Period Start</th>
+      <th>Note</th>
+      {/* Add headers for other relevant CarePlan properties */}
+    </tr>
+  );
+}
+
+function carePlanRow(r, rmap, dcr) {
+  const status = r.status;
+  const intent = r.intent;
+
+  const activities = futil.joinJSXElements(
+    (r.activity || []).map(activity =>
+      activity.detail && activity.detail.code
+      ? futil.renderCodeableJSX(activity.detail.code, dcr)
+      : null
+    ).filter(activity => activity !== null),
+    ', '
+  );
+
+   const category = futil.joinJSXElements(
+       (r.category || []).map(c =>
+          futil.renderCodeableJSX(c, dcr)
+       ).filter(c => c !== null),
+       ', '
+   );
+
+  const period = r.period ? futil.renderPeriod(r.period) : "";
+  const note = r.note ? r.note.text : "";
+
+  return (
+    <tr key={r.id}>
+      <td>{status}</td>
+      <td>{intent}</td>
+      <td>{activities}</td>
+      <td>{category}</td>
+      <td>{period}</td>
+      <td>{note}</td>
+      {/* Render other relevant CarePlan properties as table cells */}
+    </tr>
+  );
+}
+
+// +--------------------+
+// |      Consent       |
+// +--------------------+
+
+function consentHeader() {
+  return (
+    <tr>
+      <th>Status</th>
+      <th>Scope</th>
+      <th>Category</th>
+      <th>Date/Time</th>
+      <th>Policy Rule</th>
+      <th>Provision Period</th>
+      <th>Organization</th>
+    </tr>
+  );
+}
+
+function consentRow(r, rmap, dcr) {
+  const status = r.status || "N/A";
+  const scopeDisplay = futil.renderCodeableJSX(r.scope, dcr);
+  const categoryDisplay = futil.joinJSXElements(
+      (r.category || []).map(c => futil.renderCodeableJSX(c, dcr)),
+      ', '
+  );
+  const dateTime = r.dateTime
+    ? futil.renderDateTime(r.dateTime)
+    : "";
+  const policyRule = futil.renderCodeableJSX(r.policyRule, dcr);
+
+  const provisionPeriod = r.provision && r.provision.period
+    ? futil.renderPeriod(r.provision.period)
+    : "";
+  const organization = futil.joinJSXElements(
+      (r.organization || []).map(org => futil.renderOrganization(org, dcr)),
+      ', '
+  );
+
+  return (
+    <tr key={r.id}>
+      <td>{status}</td>
+      <td>{scopeDisplay}</td>
+      <td>{categoryDisplay}</td>
+      <td>{dateTime}</td>
+      <td>{policyRule}</td>
+      <td>{provisionPeriod}</td>
+      <td>{organization}</td>
+    </tr>
+  );
+}
+
+// +--------------------+
+// | DeviceUseStatement |
+// +--------------------+
+
+function deviceUseStatementHeader() {
+    return (
+        <tr>
+            <th>Subject</th>
+            <th>Timing</th>
+            <th>Source</th>
+            <th>Device</th>
+            <th>Body Site</th>
+            {/* Add other relevant headers if needed */}
+        </tr>
+    );
+}
+
+function deviceUseStatementRow(r, rmap, dcr) {
+    const subject = futil.renderReference(r.subject, dcr);
+    const timing = futil.renderCrazyDateTime(r, "timing");
+    const source = r.source ? futil.renderReference(r.source, dcr) : "";
+    const device = futil.renderReference(r.device, dcr);
+    const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, dcr) : "";
+
+    return (
+        <tr key={r.id}>
+            <td>{subject}</td>
+            <td>{timing}</td>
+            <td>{source}</td>
+            <td>{device}</td>
+            <td>{bodySite}</td>
+        </tr>
+    );
+};
+
+// +--------------------+
+// | ClinicalImpression |
+// +--------------------+
+
+function clinicalImpressionHeader() {
+    return (
+        <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Effective Period/DateTime</th>
+            <th>Summary</th>
+            <th>Subject</th>
+            <th>Assessor</th>
+            {/* Add other relevant headers if needed */}
+        </tr>
+    );
+}
+
+function clinicalImpressionRow(r, rmap, dcr) {
+    const status = r.status;
+    const description = r.description || "";
+    const effective = futil.renderCrazyDateTime(r, "effective");
+    const summary = r.summary || "";
+    const subject = futil.renderReference(r.subject, dcr) || "";
+    const assessor = futil.renderReference(r.assessor, dcr) || "";
+
+
+    return (
+        <tr key={r.id}>
+            <td>{status}</td>
+            <td>{description}</td>
+            <td>{effective}</td>
+            <td>{summary}</td>
+            <td>{subject}</td>
+            <td>{assessor}</td>
+            {/* Render other relevant ClinicalImpression properties as table cells */}
+        </tr>
+    );
+}

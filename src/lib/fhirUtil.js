@@ -338,8 +338,7 @@ export function renderCrazyDateTime(parent, prefix) {
   if (parent[prefix + "Instant"]) return(renderDateTime(parent[prefix + "Instant"]));
 
   if (parent[prefix + "Timing"]) {
-	console.error("Unsupported CrazyDateTime format");
-	return("Unsupported");
+    return renderTiming(parent[prefix + "Timing"]);
   }
   
   return(undefined);
@@ -839,3 +838,11 @@ export function currentLocale() {
   return(navigator.language ? navigator.language : "en-US");
 }
 
+export function joinJSXElements(elements, delimiter = '') {
+  return elements.reduce((acc, curr, idx) => {
+    if (idx === 0) {
+      return [curr];
+    }
+    return [...acc, delimiter, curr];
+  }, []);
+}
