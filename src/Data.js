@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
 import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
-import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
+import { saveDivToFile, saveDivToFHIR, downloadBundleToJSON } from './lib/saveDiv.js';
 import { getDeferringCodeRenderer } from './lib/codes.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
@@ -122,15 +122,15 @@ export default function Data({ shx }) {
 		  <WrongPatientWarning organized={organized} />
 		  { elt }
 		</div>
-		<div>
-	      <Button onClick={ () => setShowSource(!showSource) }>source</Button>
-	      { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
-	      { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
-	      { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
-		</div>
-	  </>
-	);
-	
+        <div>
+          { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
+          { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
+          { elt && <Button onClick={ () => downloadBundleToJSON(bundle, "fhir-bundle-data") }>Save as FHIR</Button> }
+          <Button onClick={ () => setShowSource(!showSource) }>source</Button>
+          { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
+        </div>
+      </>
+    );
   }
 
   const onSaveClick = (toFile) => {
