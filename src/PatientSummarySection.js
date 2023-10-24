@@ -56,7 +56,7 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
   // +--------------+
 
   const renderToggle = () => {
-    let buttonText = (viewState === NTOGGLE) ? "Show Structured Version" : "Show Narrative Version";
+    let buttonText = (viewState === NTOGGLE) ? "Show Structured" : "Show Narrative";
 
     return(
         <div className={styles.toggleButton}>
