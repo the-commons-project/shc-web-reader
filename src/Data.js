@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
 import { saveDivToFile, saveDivToFHIR, downloadBundleToJSON } from './lib/saveDiv.js';
@@ -20,6 +21,7 @@ export default function Data({ shx }) {
   const [showSource, setShowSource] = useState(false);
 
   const [dcr, setDcr] = useState(getDeferringCodeRenderer());
+  const [loading, setLoading] = useState(false);
 
   const fhir = useOptionalFhir();
 
@@ -193,13 +195,31 @@ export default function Data({ shx }) {
   // +-------------+
   
   useEffect(() => {
-	verifySHX(shx, passcode).then(result => setShxResult(result));
-  }, [shx,passcode]);
+    setLoading(true); // Begin loading
+    verifySHX(shx, passcode)
+        .then(result => {
+            setShxResult(result);
+            setLoading(false); // End loading
+        })
+        .catch(() => {
+            setLoading(false); // End loading in case of an error
+        });
+  }, [shx, passcode]);
+
 
   useEffect(() => {
 	const checkDcr = async () => { if (await dcr.awaitDeferred()) setDcr(getDeferringCodeRenderer()); }
 	checkDcr();
   });
+
+  if (loading) {
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw', margin: 0, padding: 0 }}>
+            <CircularProgress />
+        </div>
+
+    );
+  }
 
   if (shxResult && shxResult.shxStatus === SHX_STATUS_NEED_PASSCODE) {
 	return(renderNeedPasscode());
