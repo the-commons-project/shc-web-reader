@@ -40,9 +40,9 @@ export default function Data({ shx }) {
   
   const renderNeedPasscode = () => {
 
-	const msg = (passcode
-				 ? "Given passcode not valid for this SMART Health Link."
-				 : "This SMART Health Link requires a passcode.");
+    const msg = (passcode
+                ? shxResult.reasons[0]  // Display the specific error message from PasscodeError
+                : "This SMART Health Link requires a passcode.");
 	
 	return(
 	  <>
@@ -75,7 +75,9 @@ export default function Data({ shx }) {
   // +-------------+
 
   const renderError = (reasons) => {
-	return(<div>{Array.isArray(reasons) ? reasons.join('; ') : reasons}</div>);
+       let displayReasons = Array.isArray(reasons) ? reasons : [reasons];
+       displayReasons = displayReasons.map(reason => reason.replace(/^Error: /, ''));
+       return(<div>{displayReasons.join('; ')}</div>);
   }
 
   // +---------------------+

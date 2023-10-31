@@ -324,7 +324,14 @@ async function fetchSHLManifest(shlPayload, passcode) {
   });
 
   if (response.status === 401 && passcode) {
-	throw new PasscodeError("Passcode incorrect.");
+    const responseBody = await response.json();
+    const remainingAttempts = responseBody.remainingAttempts;
+    const attemptText = remainingAttempts === 1 ? "attempt" : "attempts";
+    throw new PasscodeError(`Passcode incorrect. ${remainingAttempts} ${attemptText} remaining.`);
+  }
+
+  if (response.status === 404) {
+    throw new Error("The SHL is no longer active.");
   }
 
   if (response.status !== 200) {
