@@ -1,6 +1,6 @@
 import * as futil from  './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
-
+import DisplayDemoLogo from './IssuerLogo.js';
 import styles from './PatientSummary.module.css';
 
 export default function PatientSummary({ organized, dcr }) {
@@ -44,6 +44,7 @@ export default function PatientSummary({ organized, dcr }) {
 
          {renderSections()}
        </div>
+           <DisplayDemoLogo /> {/* Add this line to display the logo */}
      </div>
   );
 }
