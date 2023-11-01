@@ -40,10 +40,7 @@ const valueSets = {
 
   // Consent category & dependents
   "http://hl7.org/fhir/ValueSet/consent-category":
-  "https://hl7.org/fhir/R4/valueset-consent-category.json",
-
-  "http://terminology.hl7.org/ValueSet/v3-ActConsentType":
-  ""
+  "https://hl7.org/fhir/R4/valueset-consent-category.json"
 }
 
 // +-------------+
