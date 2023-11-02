@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, TextField } from '@mui/material';
 import { looksLikeSHX } from './lib/SHX.js';
+import { looksLikeJSON } from './lib/fhirUtil.js';
 
 export default function Scan({ viewData }) {
 
   const [qrCode, setQRCode] = useState('');
 
   const maybeSHX = useCallback(() => {
-	return(looksLikeSHX(qrCode));
+	return(looksLikeSHX(qrCode) || looksLikeJSON(qrCode));
   }, [qrCode]);
   
   const handleQRCodeChange = async (evt) => {

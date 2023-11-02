@@ -803,6 +803,11 @@ export function findCodedItem(arr, system, code) {
 // | utilities |
 // +-----------+
 
+export function looksLikeJSON(str) {
+  // heuristic --- first non-whitespace char is an opening brace
+  return(str.match(/^[\s]*\{/));
+}
+
 export function spaceAppend(cur, str) {
   return(delimiterAppend(cur, str, " "));
 }
