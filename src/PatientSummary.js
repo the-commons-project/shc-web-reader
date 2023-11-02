@@ -1,6 +1,5 @@
 import * as futil from  './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
-import DisplayDemoLogo from './IssuerLogo.js';
 import styles from './PatientSummary.module.css';
 
 export default function PatientSummary({ organized, dcr }) {
@@ -31,6 +30,7 @@ export default function PatientSummary({ organized, dcr }) {
   const rmap = organized.byId;
 
   const authors = comp.author.map((a) => futil.renderOrgOrPerson(a, rmap));
+  const logoUrl = "https://images.squarespace-cdn.com/content/v1/5f9c27bd4ee0a44f8d718110/1604069613309-IEK0SQB4KXDVEKDDQLBD/CommonHealth_Logo.png?format=1500w";
 
   return (
      <div className={styles.container}>
@@ -39,15 +39,17 @@ export default function PatientSummary({ organized, dcr }) {
          <div className={styles.sectionTitle}>Patient</div>
          <div className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</div>
 
-         <div className={styles.sectionTitle}>Summary prepared by</div>
-         <div>{authors}</div>
+       <div className={styles.sectionTitle}>Summary prepared by</div>
+       <div className={styles.titleWithLogo}>  {/* Flexbox container */}
+           <img src={logoUrl} alt="Issuer Logo" style={{width: '125px', marginRight: '10px'}} />
+           <div>{authors}</div>
+       </div>
+
 
          {renderSections()}
        </div>
-           <DisplayDemoLogo /> {/* Add this line to display the logo */}
      </div>
   );
 }
-
 
 

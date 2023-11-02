@@ -77,6 +77,19 @@
 	margin-top: 6px;
 }
 
+.titleWithLogo {
+  display: flex;
+  alignItems: center;  /* This ensures vertical alignment */
+  gap: 10px;
+}
+
+
+.logo {
+  width: 125px; /* Adjust this as needed */
+  marginRight: 25px; /* Space between logo and text */
+}
+
+
 @media only screen and (max-width: 600px) {
 	.toggleButton {
 		display: flex;
