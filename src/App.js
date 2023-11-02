@@ -72,7 +72,7 @@ export default function App() {
 	  <div className={styles.content}>
 		{ tabValue === TabValue.About  && <About setTab={setTab} tabValues={TabValue} /> }
 		{ tabValue === TabValue.Scan   && <Scan viewData={viewData} /> }
-		{ tabValue === TabValue.File   && <File setTab={setTab} tabValues={TabValue} viewData={viewData} /> }
+		{ tabValue === TabValue.File   && <File viewData={viewData} /> }
 		{ tabValue === TabValue.Photo  && <Photo viewData={viewData} /> }
 		{ tabValue === TabValue.Search && <Search viewData={viewData} /> }
 		{ tabValue === TabValue.Data   && <Data shx={scannedSHX} /> }
