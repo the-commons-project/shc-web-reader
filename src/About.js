@@ -42,6 +42,7 @@ export default function About({ setTab, tabValues }) {
 
 		{ config("showScan") && renderTabButton(tabValues.Scan, "Use a 2D barcode scanner") }
 		{ config("showPhoto") && renderTabButton(tabValues.Photo, "Use your camera") }
+		{ config("showFile") && renderTabButton(tabValues.File, "Open a file") }
 		{ config("showScan") && renderTabButton(tabValues.Scan, "Type or paste a code") }
 		{ fhir && config("showSearch") && renderTabButton(tabValues.Search, "Find a code in patient record") }
 	  </div>

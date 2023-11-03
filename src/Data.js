@@ -125,7 +125,7 @@ export default function Data({ shx }) {
         <div>
           { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
           { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
-          { elt && <Button onClick={ () => downloadBundleToJSON(bundle, "fhir-bundle-data") }>Save as FHIR</Button> }
+          { elt && <Button onClick={ () => downloadBundleToJSON(bundle.fhir, "fhir-bundle-data") }>Save as FHIR</Button> }
           <Button onClick={ () => setShowSource(!showSource) }>source</Button>
           { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
         </div>

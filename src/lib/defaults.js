@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG = {
   "showScan": true,
   "showPhoto": true,
   "showSearch": true,
+  "showFile": true,
 
   // these are good defaults for dev and test but should always be
   // updated for a production instance!
@@ -46,6 +47,7 @@ export const DOMAIN_OVERRIDES = {
 	
 	"showScan": false,
 	"showSearch": false,
+	"showFile": false,
 	
 	"trustedDirectories": [
 	  'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json'
