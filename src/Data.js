@@ -21,7 +21,6 @@ export default function Data({ shx }) {
   const [showSource, setShowSource] = useState(false);
 
   const [dcr, setDcr] = useState(getDeferringCodeRenderer());
-  const [loading, setLoading] = useState(false);
 
   const fhir = useOptionalFhir();
 
@@ -195,14 +194,13 @@ export default function Data({ shx }) {
   // +-------------+
   
   useEffect(() => {
-    setLoading(true); // Begin loading
+
     verifySHX(shx, passcode)
         .then(result => {
             setShxResult(result);
-            setLoading(false); // End loading
         })
-        .catch(() => {
-            setLoading(false); // End loading in case of an error
+        .catch(error => {
+            // Handle the error appropriately
         });
   }, [shx, passcode]);
 
@@ -211,15 +209,6 @@ export default function Data({ shx }) {
 	const checkDcr = async () => { if (await dcr.awaitDeferred()) setDcr(getDeferringCodeRenderer()); }
 	checkDcr();
   });
-
-  if (loading) {
-    return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw', margin: 0, padding: 0 }}>
-            <CircularProgress />
-        </div>
-
-    );
-  }
 
   if (shxResult && shxResult.shxStatus === SHX_STATUS_NEED_PASSCODE) {
 	return(renderNeedPasscode());
@@ -230,7 +219,11 @@ export default function Data({ shx }) {
   }
 
   if (!shxResult || shxResult.bundles.length === 0) {
-	return(<></>);
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw' }}>
+        <CircularProgress />
+      </div>
+    );
   }
 
   return(renderBundle());
