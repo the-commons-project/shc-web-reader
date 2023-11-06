@@ -56,19 +56,20 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
   // +--------------+
 
   const renderToggle = () => {
+    let buttonText = (viewState === NTOGGLE) ? "Show Structured" : "Show Narrative";
 
-	return(
-	  <div className={styles.toggleButton}>
-	  <Button
-		data-html2canvas-ignore="true"
-		size="small"
-		onClick={ () => setViewState(viewState === NTOGGLE ? STOGGLE : NTOGGLE) }
-		startIcon={ <RemoveRedEyeOutlinedIcon /> }>
-		Toggle view
-	  </Button>
-		</div>
- 	);
-  }
+    return(
+        <div className={styles.toggleButton}>
+            <Button
+                data-html2canvas-ignore="true"
+                size="small"
+                onClick={ () => setViewState(viewState === NTOGGLE ? STOGGLE : NTOGGLE) }
+                startIcon={ <RemoveRedEyeOutlinedIcon /> }>
+                {buttonText}
+            </Button>
+        </div>
+    );
+}
 
   // +-----------------+
   // | renderNarrative |
