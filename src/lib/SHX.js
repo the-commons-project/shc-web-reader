@@ -47,6 +47,7 @@ import { verify, Directory } from 'smart-health-card-decoder'
 import { compactDecrypt } from 'jose';
 import { b64u_to_str, b64u_to_arr, arr_to_str } from './b64.js';
 import { organizeResources } from './resources.js';
+import { looksLikeJSON } from './fhirUtil.js';
 import config from './config.js';
 
 // +------------------+
@@ -217,17 +218,62 @@ async function resolveSHX(shx, passcode) {
   };
 
   let target = shx.trim();
-  
+
   if (looksLikeSHL(target)) {
 	// yeah this is going to take some work
 	await resolveSHL(target, passcode, resolved);
   }
-  else {
-	// assume it's an SHC... we'll error on verification if not
+  else if (!resolveFromJSON(resolved, target)) {
+	// wasn't JSON, so assume it's an SHC... we'll error on verification if not
 	resolved.verifiableCredentials.push(target);
   }
-
+  
   return(resolved);
+}
+
+function resolveFromJSON(resolved, input) {
+
+  if (!looksLikeJSON(input)) return(false);
+
+  try {
+	const json = JSON.parse(input);
+	const vc = json.verifiableCredential;
+	  
+	if (vc) {
+	  // shc
+	  for (const i in vc) resolved.verifiableCredentials.push(vc[i]);
+	  return(true);
+	}
+	else if (json.resourceType) {
+	  // fhir
+	  pushRawBundle(resolved, json);
+	  return(true);
+	}
+  }
+  catch {
+	// eat it and return false
+  }
+
+  return(false);
+}
+
+function pushRawBundle(resolved, fhir) {
+  
+  if (fhir.resourceType === "Bundle") {
+	// already a bundle
+	resolved.rawBundles.push(fhir);
+  }
+  else {
+	// put it into a bundle
+	resolved.rawBundles.push({
+	  "resourceType": "Bundle",
+	  "type": "collection",
+	  "entry": [ {
+		"fullUrl": "resource:0",
+		"resource": fhir
+	  } ]
+	});
+  }
 }
 
 // +------------+
@@ -284,22 +330,7 @@ export async function resolveSHL(shl, passcode, resolved) {
 	}
 	else if (shlJson.resourceType) {
 	  // feels like fhir!
-
-	  if (shlJson.resourceType === "Bundle") {
-		// already a bundle
-		resolved.rawBundles.push(shlJson);
-	  }
-	  else {
-		// put it into a bundle
-		resolved.rawBundles.push({
-		  "resourceType": "Bundle",
-		  "type": "collection",
-		  "entry": [ {
-			"fullUrl": "resource:0",
-			"resource": shlJson
-		  } ]
-		});
-	  }
+	  pushRawBundle(resolved, shlJson);
 	}
   }
 }

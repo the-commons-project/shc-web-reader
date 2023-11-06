@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
 import { saveDivToFile, saveDivToFHIR, downloadBundleToJSON } from './lib/saveDiv.js';
@@ -129,7 +130,7 @@ export default function Data({ shx }) {
         <div>
           { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
           { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
-          { elt && <Button onClick={ () => downloadBundleToJSON(bundle, "fhir-bundle-data") }>Save as FHIR</Button> }
+          { elt && <Button onClick={ () => downloadBundleToJSON(bundle.fhir, "fhir-bundle-data") }>Save as FHIR</Button> }
           <Button onClick={ () => setShowSource(!showSource) }>source</Button>
           { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
         </div>
@@ -197,8 +198,16 @@ export default function Data({ shx }) {
   // +-------------+
   
   useEffect(() => {
-	verifySHX(shx, passcode).then(result => setShxResult(result));
-  }, [shx,passcode]);
+
+    verifySHX(shx, passcode)
+        .then(result => {
+            setShxResult(result);
+        })
+        .catch(error => {
+            // Handle the error appropriately
+        });
+  }, [shx, passcode]);
+
 
   useEffect(() => {
 	const checkDcr = async () => { if (await dcr.awaitDeferred()) setDcr(getDeferringCodeRenderer()); }
@@ -214,7 +223,11 @@ export default function Data({ shx }) {
   }
 
   if (!shxResult || shxResult.bundles.length === 0) {
-	return(<></>);
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw' }}>
+        <CircularProgress />
+      </div>
+    );
   }
 
   return(renderBundle());
