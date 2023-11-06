@@ -81,8 +81,12 @@ const INFER_CONTENTTYPE = '___INFER___';
 // +---------------+
 
 class PasscodeError extends Error {
-  constructor(msg) { super(msg); this.name = "PasscodeError"; }
+  constructor(message) {
+    super(message);
+    this.name = "PasscodeError";
+  }
 }
+
 
 class ExpiredError extends Error {
   constructor(msg) { super(msg); this.name = "ExpiredError"; }
@@ -355,13 +359,28 @@ async function fetchSHLManifest(shlPayload, passcode) {
   });
 
   if (response.status === 401 && passcode) {
-	throw new PasscodeError("Passcode incorrect.");
+    let responseBody;
+    try {
+      responseBody = await response.json();
+    } catch (error) {
+      // If JSON parsing fails, log the error and throw a generic error
+      console.error('There was an error processing the passcode.', error);
+      throw new Error('There was an error processing the passcode.');
+    }
+    // If JSON parsing succeeds but the passcode is incorrect, throw a PasscodeError
+    const remainingAttempts = responseBody.remainingAttempts;
+    const attemptText = remainingAttempts === 1 ? "attempt" : "attempts";
+    throw new PasscodeError(`Passcode incorrect. ${remainingAttempts} ${attemptText} remaining.`);
+  }
+
+  if (response.status === 404) {
+    throw new Error("The SHL is no longer active.");
   }
 
   if (response.status !== 200) {
 	throw new Error(`Manifest: ${response.status}`);
   }
-	
+
   return(await response.json());
 }
 
@@ -422,7 +441,7 @@ function addBaseBundle(statusObj) {
 
   statusObj.bundles.push(obj);
   statusObj.shxStatus = SHX_STATUS_OK; // at least one bundle in package
-  
+
   return(obj);
 }
 
@@ -442,22 +461,22 @@ function addVerifiableBundle(statusObj, vres) {
 
   if (!statusObj) statusObj = status();
 
-  // 1. create the bundle object and set status 
+  // 1. create the bundle object and set status
 
   const obj = addBaseBundle(statusObj);
   obj.certStatus = (vres.verified ? CERT_STATUS_VALID : CERT_STATUS_INVALID);
   obj.validationResult = vres;
 
   // 2. add reasons / warnings / errors
-  
+
   if (vres.reason) {
 	obj.reasons = vres.reason.split('|');
   }
-  
+
   if (vres.data) {
 
 	if (vres.data.fhirBundle) obj.fhir = vres.data.fhirBundle;
-	
+
 	if (vres.data.errors) {
 
 	  for (const i in vres.data.errors) {
@@ -466,7 +485,7 @@ function addVerifiableBundle(statusObj, vres) {
 
 	  obj.errors = vres.data.errors;
 	}
-  
+
 	if (vres.data.warnings) {
 
 	  for (const i in vres.data.warnings) {
@@ -479,13 +498,13 @@ function addVerifiableBundle(statusObj, vres) {
   }
 
   // 3. add issuer-related details
-  
+
   if (vres.verified) {
-	
+
 	obj.issuerISS = (vres.data.signature.issuer.iss ?
 					 vres.data.signature.issuer.iss :
 					 vres.data.jws.payload.iss);
-					 
+
 	obj.issuerName = (vres.data.signature.issuer.name ?
 					  vres.data.signature.issuer.name :
 					  obj.issuerISS);
@@ -493,11 +512,10 @@ function addVerifiableBundle(statusObj, vres) {
 	obj.supportsRevocation =
 	  (("crlVersion" in vres.data.signature.key) ||
 	   ("rid" in vres.data.jws.payload.vc));
-  
+
 	obj.issuerURL = vres.data.signature.issuer.website;
 	obj.issueDate = new Date(vres.data.jws.payload.nbf * 1000);
   }
 
   return(statusObj);
 }
-
