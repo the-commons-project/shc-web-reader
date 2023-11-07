@@ -1,19 +1,33 @@
-
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
-// +---------------+
-// | saveDivToFile |
-// +---------------+
+// +-------------------+
+// | saveDivToPdfFile |
+// +-------------------+
 
-export async function saveDivToFile(div, baseName) {
+export async function saveDivToPdfFile(div, baseName) {
+  // Convert the div to a canvas element
+  const canvas = await html2canvas(div);
 
-  const imageInfo = await divToImage(div);
-  
-  const link = document.createElement("a");
-  link.href = imageInfo.url;
-  link.download = getFilename(baseName, imageInfo.extension);
+  // Get the canvas data as an image
+  const imgData = canvas.toDataURL('image/png');
 
-  link.click();
+  // Calculate the number of pages
+  const pdfWidth = canvas.width * 0.264583; // Width in mm (1px = 0.264583mm based on 96dpi)
+  const pdfHeight = canvas.height * 0.264583; // Height in mm
+
+  // Create a new jsPDF instance
+  const pdf = new jsPDF({
+    orientation: pdfWidth > pdfHeight ? 'l' : 'p',
+    unit: 'mm',
+    format: [pdfWidth, pdfHeight]
+  });
+
+  // Add the image to the PDF
+  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+  // Save the PDF
+  pdf.save(`${baseName}.pdf`);
 }
 
 // +---------------+
