@@ -6,14 +6,29 @@ const NA = "Unknown";
 // | renderOrgOrPerson  | |
 // +--------------------+
 
+// Assuming this logoMap is defined in a scope accessible to renderOrganizationResource
+const logoMap = {
+  "Common Health": "https://images.squarespace-cdn.com/content/v1/5f9c27bd4ee0a44f8d718110/1604069613309-IEK0SQB4KXDVEKDDQLBD/CommonHealth_Logo.png?format=1500w",
+  "More Informatics, Inc": "https://images.freeimages.com/vhq/images/previews/214/generic-logo-140952.png",
+  // ... other organizations
+};
+
 export function renderOrganization(org, resources) {
   return(renderReference(org, resources, renderOrganizationResource));
 }
 
 function renderOrganizationResource(org) {
-  return(<div>{org.name}</div>);
-}
+  // Use the SMART Health IT logo as the default if the organization's name is not found in the logoMap
+  const defaultLogoUrl = 'https://docs.smarthealthit.org/smart-health-links/img/logo-smart.svg';
+  const logoUrl = logoMap[org.name] || defaultLogoUrl;
 
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <img src={logoUrl} alt={`${org.name} Logo`} style={{ width: '125px', marginRight: '10px' }} />
+      <div>{org.name}</div>
+    </div>
+  );
+}
 export function renderOrgOrPerson(oop, resources) {
 
   const renderMap = {

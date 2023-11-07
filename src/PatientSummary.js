@@ -30,7 +30,6 @@ export default function PatientSummary({ organized, dcr }) {
   const rmap = organized.byId;
 
   const authors = comp.author.map((a) => futil.renderOrgOrPerson(a, rmap));
-  const logoUrl = "https://images.squarespace-cdn.com/content/v1/5f9c27bd4ee0a44f8d718110/1604069613309-IEK0SQB4KXDVEKDDQLBD/CommonHealth_Logo.png?format=1500w";
 
   return (
      <div className={styles.container}>
@@ -41,7 +40,6 @@ export default function PatientSummary({ organized, dcr }) {
 
        <div className={styles.sectionTitle}>Summary prepared by</div>
        <div className={styles.titleWithLogo}>  {/* Flexbox container */}
-           <img src={logoUrl} alt="Issuer Logo" style={{width: '125px', marginRight: '10px'}} />
            <div>{authors}</div>
        </div>
 
