@@ -47,7 +47,6 @@ export const DOMAIN_OVERRIDES = {
 	
 	"showScan": false,
 	"showSearch": false,
-	"showFile": false,
 	
 	"trustedDirectories": [
 	  'https://raw.githubusercontent.com/the-commons-project/vci-directory/main/logs/vci_snapshot.json'
