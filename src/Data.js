@@ -3,7 +3,7 @@ import { Button, TextField, Select, MenuItem } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
-import { saveDivToFile, saveDivToFHIR, downloadBundleToJSON } from './lib/saveDiv.js';
+import { saveDivToPdfFile, saveDivToFHIR, downloadBundleToJSON } from './lib/saveDiv.js';
 import { getDeferringCodeRenderer } from './lib/codes.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
@@ -128,7 +128,7 @@ export default function Data({ shx }) {
 		  { elt }
 		</div>
         <div>
-          { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
+          { elt && <Button onClick={ () => onSaveClick(true) }>save to PDF</Button> }
           { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
           { elt && <Button onClick={ () => downloadBundleToJSON(bundle.fhir, "fhir-bundle-data") }>Save as FHIR</Button> }
           <Button onClick={ () => setShowSource(!showSource) }>source</Button>
@@ -154,7 +154,7 @@ export default function Data({ shx }) {
 	const div = document.getElementById("bundle-contents");
 	
 	if (toFile) {
-	  saveDivToFile(div, baseName);
+	  saveDivToPdfFile(div, baseName);
 	}
 	else {
 	  saveDivToFHIR(fhir, div, baseName);
