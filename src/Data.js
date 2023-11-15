@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Select, MenuItem } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useOptionalFhir } from './OptionalFhir';
 import { verifySHX, SHX_STATUS_NEED_PASSCODE, SHX_STATUS_OK  } from './lib/SHX.js';
-import { saveDivToFile, saveDivToFHIR } from './lib/saveDiv.js';
+import { saveDivToPdfFile, saveDivToFHIR, downloadBundleToJSON } from './lib/saveDiv.js';
 import { getDeferringCodeRenderer } from './lib/codes.js';
 import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
@@ -40,9 +41,10 @@ export default function Data({ shx }) {
   
   const renderNeedPasscode = () => {
 
-	const msg = (passcode
-				 ? "Given passcode not valid for this SMART Health Link."
-				 : "This SMART Health Link requires a passcode.");
+  const msg = (passcode && Array.isArray(shxResult.reasons) && shxResult.reasons.length > 0)
+            ? shxResult.reasons[0]  // Display the specific error message from PasscodeError
+            : "This SMART Health Link requires a passcode.";
+
 	
 	return(
 	  <>
@@ -75,8 +77,11 @@ export default function Data({ shx }) {
   // +-------------+
 
   const renderError = (reasons) => {
-	return(<div>{Array.isArray(reasons) ? reasons.join('; ') : reasons}</div>);
+    let displayReasons = Array.isArray(reasons) ? reasons : [reasons];
+    displayReasons = displayReasons.map(reason => reason.replaceAll("Error: ", ''));
+    return(<div>{displayReasons.join('; ')}</div>);
   }
+
 
   // +---------------------+
   // | renderBundle        |
@@ -122,15 +127,15 @@ export default function Data({ shx }) {
 		  <WrongPatientWarning organized={organized} />
 		  { elt }
 		</div>
-		<div>
-	      <Button onClick={ () => setShowSource(!showSource) }>source</Button>
-	      { elt && <Button onClick={ () => onSaveClick(true) }>save to file</Button> }
-	      { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
-	      { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
-		</div>
-	  </>
-	);
-	
+        <div>
+          { elt && <Button onClick={ () => onSaveClick(true) }>save to PDF</Button> }
+          { elt && fhir && <Button onClick={ () => onSaveClick(false) }>save to ehr</Button> }
+          { elt && <Button onClick={ () => downloadBundleToJSON(bundle.fhir, "fhir-bundle-data") }>Save as FHIR</Button> }
+          <Button onClick={ () => setShowSource(!showSource) }>source</Button>
+          { showSource && <pre><code>{JSON.stringify(bundle, null, 2)}</code></pre>}
+        </div>
+      </>
+    );
   }
 
   const onSaveClick = (toFile) => {
@@ -149,7 +154,7 @@ export default function Data({ shx }) {
 	const div = document.getElementById("bundle-contents");
 	
 	if (toFile) {
-	  saveDivToFile(div, baseName);
+	  saveDivToPdfFile(div, baseName);
 	}
 	else {
 	  saveDivToFHIR(fhir, div, baseName);
@@ -193,8 +198,16 @@ export default function Data({ shx }) {
   // +-------------+
   
   useEffect(() => {
-	verifySHX(shx, passcode).then(result => setShxResult(result));
-  }, [shx,passcode]);
+
+    verifySHX(shx, passcode)
+        .then(result => {
+            setShxResult(result);
+        })
+        .catch(error => {
+            // Handle the error appropriately
+        });
+  }, [shx, passcode]);
+
 
   useEffect(() => {
 	const checkDcr = async () => { if (await dcr.awaitDeferred()) setDcr(getDeferringCodeRenderer()); }
@@ -210,7 +223,11 @@ export default function Data({ shx }) {
   }
 
   if (!shxResult || shxResult.bundles.length === 0) {
-	return(<></>);
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw' }}>
+        <CircularProgress />
+      </div>
+    );
   }
 
   return(renderBundle());

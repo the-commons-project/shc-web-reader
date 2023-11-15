@@ -1,20 +1,32 @@
-
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
-// +---------------+
-// | saveDivToFile |
-// +---------------+
+// +-------------------+
+// | saveDivToPdfFile  |
+// +-------------------+
 
-export async function saveDivToFile(div, baseName) {
-
+export async function saveDivToPdfFile(div, baseName) {
+  // Use the divToImage helper function to convert the div to image data
   const imageInfo = await divToImage(div);
-  
-  const link = document.createElement("a");
-  link.href = imageInfo.url;
-  link.download = getFilename(baseName, imageInfo.extension);
 
-  link.click();
+  // Calculate the number of pages using the width and height from imageInfo
+  const pdfWidth = imageInfo.width * 0.264583; // Width in mm (1px = 0.264583mm based on 96dpi)
+  const pdfHeight = imageInfo.height * 0.264583; // Height in mm
+
+  // Create a new jsPDF instance
+  const pdf = new jsPDF({
+    orientation: pdfWidth > pdfHeight ? 'l' : 'p',
+    unit: 'mm',
+    format: [pdfWidth, pdfHeight]
+  });
+
+  // Add the image to the PDF using the data URL
+  pdf.addImage(imageInfo.url, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+  // Save the PDF
+  pdf.save(`${baseName}.pdf`);
 }
+
 
 // +---------------+
 // | saveDivToFHIR |
@@ -118,4 +130,18 @@ function todayForFilename() {
   return([now.getFullYear(), month, day].join('-'));
 }
 
+/* Save the Bundle as a JSON file */
+export function downloadBundleToJSON(data, description) {
+    const currentDate = todayForFilename();
+    const filename = `${currentDate} ${description}.json`;
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 

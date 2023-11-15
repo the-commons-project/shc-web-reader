@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG = {
   "showScan": true,
   "showPhoto": true,
   "showSearch": true,
+  "showFile": true,
 
   // these are good defaults for dev and test but should always be
   // updated for a production instance!
