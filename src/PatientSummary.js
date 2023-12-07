@@ -1,6 +1,6 @@
 import * as futil from  './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
-
+import parse from 'html-react-parser';
 import styles from './PatientSummary.module.css';
 
 export default function PatientSummary({ organized, dcr }) {
@@ -31,7 +31,7 @@ export default function PatientSummary({ organized, dcr }) {
   const rmap = organized.byId;
 
   const authors = comp.author.map((a) => futil.renderOrgOrPerson(a, rmap));
-
+  const compositionDivTextContent = comp.text && comp.text.div ? comp.text.div : '';
   return (
      <div className={styles.container}>
        <h2>{comp.title}</h2>
@@ -41,6 +41,9 @@ export default function PatientSummary({ organized, dcr }) {
 
          <div className={styles.sectionTitle}>Summary prepared by</div>
          <div>{authors}</div>
+
+         <div className={styles.sectionTitle}>Composition</div>
+         <div> <ul className={styles.compositionSourceList}/>{parse(compositionDivTextContent)}</div>
 
          {renderSections()}
        </div>
