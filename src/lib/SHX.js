@@ -242,7 +242,7 @@ async function resolveSHX(shx, passcode) {
   }
     // Throw DataMissingError if no data found
   if (resolved.verifiableCredentials.length === 0 && resolved.rawBundles.length === 0) {
-    throw new DataMissingError("No verifiable credentials and/or data bundles found in the SHL content.");
+    throw new DataMissingError("No data found in the SHL content.");
   }
   
   return(resolved);
