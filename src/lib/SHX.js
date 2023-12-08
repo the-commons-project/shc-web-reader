@@ -92,6 +92,16 @@ class ExpiredError extends Error {
   constructor(msg) { super(msg); this.name = "ExpiredError"; }
 }
 
+
+class DataMissingError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "DataMissingError";
+  }
+}
+
+
+
 // +--------------+
 // | looksLikeSH* |
 // +--------------+
@@ -127,7 +137,10 @@ export async function verifySHX(shx, passcode = undefined) {
 	if (err instanceof ExpiredError) {
 	  return(status(SHX_STATUS_EXPIRED, err.message));
 	}
-	
+	// Handle DataMissingError
+    if (err instanceof DataMissingError) {
+      return status(SHX_STATUS_ERROR, err.message);
+    }
 	const reasons = (err ? err.toString() : "unexpected");
 	return(status(SHX_STATUS_ERROR, reasons));
   }
@@ -226,6 +239,10 @@ async function resolveSHX(shx, passcode) {
   else if (!resolveFromJSON(resolved, target)) {
 	// wasn't JSON, so assume it's an SHC... we'll error on verification if not
 	resolved.verifiableCredentials.push(target);
+  }
+    // Throw DataMissingError if no data found
+  if (resolved.verifiableCredentials.length === 0 && resolved.rawBundles.length === 0) {
+    throw new DataMissingError("No verifiable credentials and/or data bundles found in the SHL content.");
   }
   
   return(resolved);
