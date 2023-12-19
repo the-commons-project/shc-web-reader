@@ -53,7 +53,6 @@ export default function PatientSummary({ organized, dcr }) {
          <div className={styles.sectionTitle}>Summary prepared by</div>
          <div>{authors}</div>
 
-
         {/* Conditionally render Composition row */}
         {compositionRow}
 
