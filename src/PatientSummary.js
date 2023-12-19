@@ -43,6 +43,7 @@ export default function PatientSummary({ organized, dcr }) {
       </div>
     </>
   ) : null;
+
   return (
      <div className={styles.container}>
        <h2>{comp.title}</h2>
