@@ -1,7 +1,8 @@
 import * as futil from  './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
-import parse from 'html-react-parser';
 import styles from './PatientSummary.module.css';
+import IFrameSandbox from './IFrameSandbox.js'; // Ensure this is the correct path
+import DOMPurify from 'dompurify';
 
 export default function PatientSummary({ organized, dcr }) {
 
@@ -32,6 +33,16 @@ export default function PatientSummary({ organized, dcr }) {
 
   const authors = comp.author.map((a) => futil.renderOrgOrPerson(a, rmap));
   const compositionDivTextContent = comp.text && comp.text.div ? comp.text.div : '';
+
+  // Conditionally render Composition row
+  const compositionRow = compositionDivTextContent ? (
+    <>
+      <div className={styles.sectionTitle}>Composition</div>
+      <div>
+        <IFrameSandbox html={DOMPurify.sanitize(compositionDivTextContent)} />
+      </div>
+    </>
+  ) : null;
   return (
      <div className={styles.container}>
        <h2>{comp.title}</h2>
@@ -42,8 +53,9 @@ export default function PatientSummary({ organized, dcr }) {
          <div className={styles.sectionTitle}>Summary prepared by</div>
          <div>{authors}</div>
 
-         <div className={styles.sectionTitle}>Composition</div>
-         <div> <ul className={styles.compositionSourceList}/>{parse(compositionDivTextContent)}</div>
+
+        {/* Conditionally render Composition row */}
+        {compositionRow}
 
          {renderSections()}
        </div>
