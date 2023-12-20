@@ -1,7 +1,7 @@
 import * as futil from './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
 import styles from './PatientSummary.module.css';
-import IFrameSandbox from './IFrameSandbox.js'; // Ensure this is the correct path
+import IFrameSandbox from './IFrameSandbox.js';
 import DOMPurify from 'dompurify';
 
 export default function PatientSummary({ organized, dcr }) {
