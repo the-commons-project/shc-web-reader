@@ -1,15 +1,13 @@
-import * as futil from  './lib/fhirUtil.js';
+import * as futil from './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
 import styles from './PatientSummary.module.css';
 import IFrameSandbox from './IFrameSandbox.js'; // Ensure this is the correct path
 import DOMPurify from 'dompurify';
 
 export default function PatientSummary({ organized, dcr }) {
-
   // +----------------+
   // | renderSections |
   // +----------------+
-
   const renderSections = () => {
     return comp.section.flatMap((s) => {
       return [
@@ -18,16 +16,14 @@ export default function PatientSummary({ organized, dcr }) {
         </div>,
         <div key={`${s.title}-content`} className={styles.sectionContent}>
           <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />
-        </div>
+        </div>,
       ];
     });
-  }
-
+  };
 
   // +-------------+
   // | Main Render |
   // +-------------+
-
   const comp = organized.byType.Composition[0];
   const rmap = organized.byId;
 
@@ -45,23 +41,22 @@ export default function PatientSummary({ organized, dcr }) {
   ) : null;
 
   return (
-     <div className={styles.container}>
-       <h2>{comp.title}</h2>
-       <div className={styles.dataTable}>
-         <div className={styles.sectionTitle}>Patient</div>
-         <div className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</div>
+    <div className={styles.container}>
+      <h2>{comp.title}</h2>
+      <div className={styles.dataTable}>
+        <div className={styles.sectionTitle}>Patient</div>
+        <div className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</div>
 
-         <div className={styles.sectionTitle}>Summary prepared by</div>
-         <div>{authors}</div>
+        {renderSections()}
 
-        {/* Conditionally render Composition row */}
         {compositionRow}
-
-         {renderSections()}
-       </div>
-     </div>
+        <div className={styles.sectionTitle}>Summary prepared by</div>
+        <div>{authors}</div>
+      </div>
+    </div>
   );
 }
+
 
 
 
