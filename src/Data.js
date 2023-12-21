@@ -92,13 +92,13 @@ export default function Data({ shx }) {
 
 	const bundle = shxResult.bundles[bundleIndex];
 	const organized = (bundle.contentOK() ? bundle.organized : undefined);
-	
+
 	let elt = undefined;
 
 	if (organized) {
-	  
+
 	  switch (organized.typeInfo.btype) {
-		
+
 	    case res.BTYPE_COVERAGE:
 		  elt = <Coverage organized={ organized } dcr={ dcr } />;
 		  break;
@@ -112,13 +112,13 @@ export default function Data({ shx }) {
 		  break;
 
 		// >>> ADD MORE RENDERERS HERE <<<
-		
+
 	    default:
-		  elt = <pre><code>{JSON.stringify(bundle.fhir, null, 2)}</code></pre>;  
+		  elt = <pre><code>{JSON.stringify(bundle.fhir, null, 2)}</code></pre>;
 		  break;
 	  }
 	}
-	
+
 	return(
 	  <>
 		{ renderBundleChooser() }
@@ -147,12 +147,12 @@ export default function Data({ shx }) {
 					  shxResult.bundles[bundleIndex].organized &&
 					  shxResult.bundles[bundleIndex].organized.typeInfo &&
 					  shxResult.bundles[bundleIndex].organized.typeInfo.label
-					  
+
 					  ? shxResult.bundles[bundleIndex].organized.typeInfo.label
 					  : "Shared Information");
 
 	const div = document.getElementById("bundle-contents");
-	
+
 	if (toFile) {
 	  saveDivToPdfFile(div, baseName);
 	}
@@ -164,7 +164,7 @@ export default function Data({ shx }) {
   const onBundleChange = (evt) => {
 	setBundleIndex(parseInt(evt.target.value));
   }
-  
+
   const renderBundleChooser = () => {
 
 	if (shxResult.bundles.length <= 1) return(undefined);
@@ -185,18 +185,18 @@ export default function Data({ shx }) {
 		value={bundleIndex}
 		sx={{ mb: 2 }}
 		onChange={ onBundleChange } >
-		
+
 		{ elts }
-		
+
 	  </Select>
 	  </>
 	);
   }
-  
+
   // +-------------+
   // | Main Render |
   // +-------------+
-  
+
   useEffect(() => {
 
     verifySHX(shx, passcode)
