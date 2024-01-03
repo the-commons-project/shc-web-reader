@@ -16,7 +16,7 @@ export default function PatientSummary({ organized, dcr }) {
         </div>,
         <div key={`${s.title}-content`} className={styles.sectionContent}>
           <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />
-        </div>,
+        </div>
       ];
     });
   };
