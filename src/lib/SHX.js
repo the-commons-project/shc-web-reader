@@ -169,10 +169,11 @@ async function _verifySHX(shx, passcode) {
   }
   // Check if the 'section' field is missing or empty in each FHIR bundle
   statusObj.bundles.forEach(bundle => {
-    if (!bundle.fhir || !bundle.fhir.entry || !bundle.fhir.entry.some(entry => entry.resource && entry.resource.section)) {
-      throw new DataMissingError("The provided Smart Health Link does not contain any healthcare data.");
+    if (!bundle.fhir || !bundle.fhir.entry) {
+      throw new DataMissingError("The provided Smart Health Link does not contain any data.");
     }
   });
+  
   // build up our organized resources
   const labelCounters = { };
   for (const i in statusObj.bundles) {
