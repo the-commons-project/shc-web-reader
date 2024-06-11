@@ -167,7 +167,7 @@ async function _verifySHX(shx, passcode) {
   for (const i in resolved.rawBundles) {
 	addRawBundle(statusObj, resolved.rawBundles[i]);
   }
-  // Check if the 'section' field is missing or empty in each FHIR bundle
+  // Check if no entry in each FHIR bundle
   statusObj.bundles.forEach(bundle => {
     if (!bundle.fhir || !bundle.fhir.entry) {
       throw new DataMissingError("The provided Smart Health Link does not contain any data.");
