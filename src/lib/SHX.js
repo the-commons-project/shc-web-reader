@@ -167,7 +167,13 @@ async function _verifySHX(shx, passcode) {
   for (const i in resolved.rawBundles) {
 	addRawBundle(statusObj, resolved.rawBundles[i]);
   }
-
+  // Check if no entry in each FHIR bundle
+  statusObj.bundles.forEach(bundle => {
+    if (!bundle.fhir || !bundle.fhir.entry) {
+      throw new DataMissingError("The provided Smart Health Link does not contain any data.");
+    }
+  });
+  
   // build up our organized resources
   const labelCounters = { };
   for (const i in statusObj.bundles) {
@@ -240,11 +246,6 @@ async function resolveSHX(shx, passcode) {
 	// wasn't JSON, so assume it's an SHC... we'll error on verification if not
 	resolved.verifiableCredentials.push(target);
   }
-    // Throw DataMissingError if no data found
-  if (resolved.verifiableCredentials.length === 0 && resolved.rawBundles.length === 0) {
-    throw new DataMissingError("No data found in the SHL content.");
-  }
-  
   return(resolved);
 }
 

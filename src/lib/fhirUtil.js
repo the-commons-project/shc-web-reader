@@ -720,6 +720,7 @@ export function renderReferenceMapThrow(o, resources, refRenderFuncMap) {
 // +------------------+
 
 export function resolveReference(o, resources) {
+  if (!o) { console.trace("!!! resolveReference"); return(undefined); }
   if (o.resourceType) return(o);
   if (o.reference && o.reference in resources) return(resources[o.reference]);
   return(undefined);
