@@ -60,10 +60,15 @@ export function organizeResources(bundle, labelCounters) {
 
   if (bundle.contentOK() && bundle.fhir.entry) {
 	for (const i in bundle.fhir.entry) {
-	  
-	  const e = bundle.fhir.entry[i];
-	  const r = e.resource;
 
+	  const e = bundle.fhir.entry[i];
+
+	  if (!e.resource) {
+		console.error("Malformed bundle entry: " + JSON.stringify(e, null, 2));
+		continue;
+	  }
+	  
+	  const r = e.resource;
 	  organized.all.push(r);
 	  
 	  organized.byId[e.fullUrl] = r;
