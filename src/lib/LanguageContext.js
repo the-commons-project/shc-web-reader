@@ -1,30 +1,29 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { languages } from './languages';
+import { languages, getLanguageWithoutRegion, isValidLanguage } from './languages';
 
 const LanguageContext = createContext();
 
 /**
  * Get the browser's preferred language
- * @returns {string} 'en' or 'fr'
+ * @returns {string} the preferred base language among the valid languages that are supported
  */
 function getBrowserLanguage() {
   // Check navigator.languages array if available
   if (navigator.languages && navigator.languages.length > 0) {
     // Determine whether fr or en is a preferred language
     for (const lang of navigator.languages) {
-      const lowerLang = lang.toLowerCase();
-      if (lowerLang.startsWith('fr')) {
-        return 'fr';
-      }
-      if (lowerLang.startsWith('en')) {
-        return 'en';
+      const baseLanguage = getLanguageWithoutRegion(lang);
+
+      if (isValidLanguage(baseLanguage)) {
+        return baseLanguage;
       }
     }
   }
 
   // Fall back to navigator.language
-  if (navigator.language.toLowerCase().startsWith('fr')) {
-    return 'fr';
+  const baseLanguage = getLanguageWithoutRegion(navigator.language);
+  if (isValidLanguage(baseLanguage)) {
+    return baseLanguage;
   }
 
   return 'en';
@@ -32,12 +31,12 @@ function getBrowserLanguage() {
 
 /**
  * Get the initial language from localStorage or browser preference
- * @returns {string} 'en' or 'fr'
+ * @returns {string} the preferred base language among the valid languages that are supported
  */
 function getInitialLanguage() {
   // First, check if user has a saved preference
   const savedLanguage = localStorage.getItem('preferredLanguage');
-  if (savedLanguage === 'en' || savedLanguage === 'fr') {
+  if (isValidLanguage(savedLanguage)) {
     return savedLanguage;
   }
 
@@ -68,13 +67,13 @@ export function LanguageProvider({ children }) {
   };
 
   const setLanguage = (language) => {
-    if (language === 'en' || language === 'fr') {
+    if (isValidLanguage(language)) {
       setCurrentLanguage(language);
     }
   };
 
   const setBundleLanguage = (language) => {
-    if (language === 'en' || language === 'fr') {
+    if (isValidLanguage(language)) {
       setCurrentBundleLanguage(language);
     }
   }
