@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { languages, getLanguageWithoutRegion, isValidLanguage } from './languages';
+import { languages, getLanguageWithoutRegion, isValidLanguage, getValidLanguages } from './languages';
 
 const LanguageContext = createContext();
 
@@ -63,7 +63,10 @@ export function LanguageProvider({ children }) {
   }, [currentLanguage]);
 
   const toggleLanguage = () => {
-    setCurrentLanguage(currentLanguage === 'en' ? 'fr' : 'en');
+    const validLanguages = getValidLanguages();
+    const currentLanguageIndex = validLanguages.indexOf(currentLanguage);
+    const nextLanguageIndex = (currentLanguageIndex + 1) % validLanguages.length;
+    setCurrentLanguage(validLanguages[nextLanguageIndex]);
   };
 
   const setLanguage = (language) => {
