@@ -40,6 +40,7 @@ export default function ValidationInfo({ bundle }) {
 
 	const reasons = bundle.reasons.map(r => (
 	  <li key={r}>
+		{/* TODO: Use translation function instead? */}
 		{currentLanguage === 'fr'
 		  ? (r === 'bad-signature' ? 'Mauvaise signature' : r === 'failed-validation' ? 'Validation échouée' : r)
 		  : r}
