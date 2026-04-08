@@ -12,6 +12,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useLanguage } from './lib/LanguageContext';
 
 export default function PatientSummary({ organized, dcr }) {
+  
   const { t } = useLanguage();
 
   // +----------------+
@@ -19,27 +20,18 @@ export default function PatientSummary({ organized, dcr }) {
   // +----------------+
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState({});
+  const [collapsedBlocks, setCollapsedBlocks] = useState({});
 
-  // Extract embedded documents from the bundle
-  const documents = extractDocumentsFromBundle(organized, t);
+  // +---------+
+  // | Actions |
+  // +---------+
 
-  // Toggle section collapse state
-  const toggleSection = (sectionKey) => {
-    setCollapsedSections(prev => ({
+  const toggleBlockCollapse = (blockKey) => {
+    setCollapsedBlocks(prev => ({
       ...prev,
-      [sectionKey]: !prev[sectionKey]
+      [blockKey]: !prev[blockKey]
     }));
   };
-
-  // +-------------+
-  // | Main Render |
-  // +-------------+
-  const comp = organized.byType.Composition?.[0] || {};
-  const rmap = organized.byId;
-
-  const authors = (comp.author || []).map((a) => futil.renderGenerator(a, rmap));
-  const compositionDivTextContent = comp.text && comp.text.div ? comp.text.div : '';
 
   const handleNavigate = (direction) => {
     const idx = documents.findIndex(d => d.id === selectedDocument?.id);
@@ -49,36 +41,51 @@ export default function PatientSummary({ organized, dcr }) {
     }
   };
 
-  // +------------------+
-  // | Section Renderer |
-  // +------------------+
-  const renderSection = (sectionKey, title, content, keyPrefix) => {
-    const isCollapsed = collapsedSections[sectionKey];
+  // +------------------------+
+  // | renderCollapsibleBlock |
+  // +------------------------+
+  
+  const renderCollapsibleBlock = (blockKey, title, content, keyPrefix) => {
+	
+    const isCollapsed = collapsedBlocks[blockKey];
 
     return (
       <React.Fragment key={keyPrefix}>
         <div
-          className={isCollapsed ? styles.sectionTitleCollapsed : styles.sectionTitle}
-          onClick={() => toggleSection(sectionKey)}
+          className={isCollapsed ? styles.blockTitleCollapsed : styles.blockTitle}
+          onClick={() => toggleBlockCollapse(blockKey)}
         >
-          <span className={styles.sectionTitleText}>{title}</span>
+          <span className={styles.blockTitleText}>{title}</span>
           <span className={styles.collapseIcon}>
             {isCollapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
           </span>
         </div>
-        <div className={isCollapsed ? styles.collapsedContent : styles.sectionContent}>
+        <div className={isCollapsed ? styles.blockContentCollapsed : styles.blockContent}>
           {!isCollapsed && content}
         </div>
       </React.Fragment>
     );
   };
 
+  // +-------------+
+  // | Main Render |
+  // +-------------+
+  
+  // Extract embedded documents from the bundle
+  const documents = extractDocumentsFromBundle(organized, t);
+
+  const comp = organized.byType.Composition?.[0] || {};
+  const rmap = organized.byId;
+
+  const authors = (comp.author || []).map((a) => futil.renderGenerator(a, rmap));
+  const compositionDivTextContent = comp.text && comp.text.div ? comp.text.div : '';
+
   return (
     <div className={styles.container}>
       <h2>{comp.title}</h2>
       <div className={styles.dataTable}>
-        {/* Patient Section */}
-        {renderSection(
+        {/* Patient Block */}
+        {renderCollapsibleBlock(
           'Patient',
           t('patient'),
           <span className={styles.patCell}>{futil.renderPerson(comp.subject, rmap)}</span>,
@@ -90,7 +97,7 @@ export default function PatientSummary({ organized, dcr }) {
           const codingCode = s.code ? s.code.coding[0].code : "";
           const translationKey = `ipsSection_${codingCode.replaceAll('-', '_')}`;
 
-          return renderSection(
+          return renderCollapsibleBlock(
             s.title,
             t(translationKey, s.title),
             <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />,
@@ -98,8 +105,8 @@ export default function PatientSummary({ organized, dcr }) {
           );
         })}
 
-        {/* Documents Section */}
-        {documents && documents.length > 0 && renderSection(
+        {/* Documents Block */}
+        {documents && documents.length > 0 && renderCollapsibleBlock(
           'Documents',
           `${t('documents', 'Documents')} (${documents.length})`,
           <DocumentList
@@ -112,16 +119,16 @@ export default function PatientSummary({ organized, dcr }) {
           'row-documents'
         )}
 
-        {/* Composition Section */}
-        {compositionDivTextContent && renderSection(
+        {/* Composition Block */}
+        {compositionDivTextContent && renderCollapsibleBlock(
           'Composition',
           t('composition'),
           <IFrameSandbox html={DOMPurify.sanitize(compositionDivTextContent)} />,
           'row-composition'
         )}
 
-        {/* Summary By Section */}
-        {renderSection(
+        {/* Summary By Block */}
+        {renderCollapsibleBlock(
           'SummaryBy',
           t('summaryPreparedBy'),
           authors,
