@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import * as futil from './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
-import DocumentList from './DocumentList.js';
-import DocumentModal from './DocumentModal.js';
+import DocumentsSection from './DocumentsSection.js';
 import { extractDocumentsFromBundle } from './lib/documentUtils.js';
 import styles from './PatientSummary.module.css';
 import IFrameSandbox from './IFrameSandbox.js';
@@ -18,8 +17,6 @@ export default function PatientSummary({ organized, dcr }) {
   // +----------------+
   // | Document State |
   // +----------------+
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const [collapsedBlocks, setCollapsedBlocks] = useState({});
 
   // +---------+
@@ -31,14 +28,6 @@ export default function PatientSummary({ organized, dcr }) {
       ...prev,
       [blockKey]: !prev[blockKey]
     }));
-  };
-
-  const handleNavigate = (direction) => {
-    const idx = documents.findIndex(d => d.id === selectedDocument?.id);
-    const newIdx = direction === 'next' ? idx + 1 : idx - 1;
-    if (newIdx >= 0 && newIdx < documents.length) {
-      setSelectedDocument(documents[newIdx]);
-    }
   };
 
   // +------------------------+
@@ -109,13 +98,7 @@ export default function PatientSummary({ organized, dcr }) {
         {documents && documents.length > 0 && renderCollapsibleBlock(
           'Documents',
           `${t('documents', 'Documents')} (${documents.length})`,
-          <DocumentList
-            documents={documents}
-            onViewDocument={(doc) => {
-              setSelectedDocument(doc);
-              setModalOpen(true);
-            }}
-          />,
+          <DocumentsSection documents={documents} />,
           'row-documents'
         )}
 
@@ -136,13 +119,6 @@ export default function PatientSummary({ organized, dcr }) {
         )}
       </div>
 
-      <DocumentModal
-        document={selectedDocument}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        documents={documents}
-        onNavigate={handleNavigate}
-      />
     </div>
   );
 }

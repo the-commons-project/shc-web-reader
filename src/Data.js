@@ -9,6 +9,7 @@ import * as res from './lib/resources.js';
 import ValidationInfo from './ValidationInfo.js';
 import WrongPatientWarning from './WrongPatientWarning.js';
 import { useLanguage } from './lib/LanguageContext';
+import { extractDocumentsFromBundle } from './lib/documentUtils.js';
 
 import Coverage from './Coverage.js';
 import ImmunizationHistory from './ImmunizationHistory.js'
@@ -97,7 +98,7 @@ export default function Data({ shx }) {
 	const organized = (bundle.contentOK() ? bundle.organized : undefined);
 
 	let elt = undefined;
-	let showAggregateDocumentsSection = true;
+	let showDocumentsSection = true;
 
 	if (organized) {
 
@@ -109,7 +110,7 @@ export default function Data({ shx }) {
 
 	    case res.BTYPE_PS:
 		  elt = <PatientSummary organized={ organized } dcr={ dcr } />;
-		  showAggregateDocumentsSection = false;
+		  showDocumentsSection = false;
 		  break;
 
 	    case res.BTYPE_IMMUNIZATION:
@@ -131,6 +132,8 @@ export default function Data({ shx }) {
 	  }
 	}
 
+	const documents = (showDocumentsSection ? extractDocumentsFromBundle(organized, t) : undefined);
+	
 	return(
 	  <>
 		{ renderBundleChooser() }
@@ -138,7 +141,12 @@ export default function Data({ shx }) {
 		  <ValidationInfo bundle={bundle} />
 		  <WrongPatientWarning organized={organized} />
 		  { elt }
-		  { showAggregateDocumentsSection && organized && <DocumentsSection organized={ organized } /> }
+		  { documents && documents.length && 
+			<div style={{ marginTop: '24px' }}>
+			  <h3 style={{ marginBottom: '16px' }}>{t('documents', 'Documents')} ({documents.length})</h3>
+			  <DocumentsSection documents={documents} />
+			</div>
+		  }
 		</div>
         <div>
           { elt && <Button onClick={ () => onSaveClick(true) }>{t('saveToPDF')}</Button> }
