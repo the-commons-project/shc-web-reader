@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import * as futil from './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
 import DocumentsSection from './DocumentsSection.js';
@@ -14,44 +14,35 @@ export default function PatientSummary({ organized, dcr }) {
   
   const { t } = useLanguage();
 
-  // +----------------+
-  // | Document State |
-  // +----------------+
-  const [collapsedBlocks, setCollapsedBlocks] = useState({});
-
-  // +---------+
-  // | Actions |
-  // +---------+
-
-  const toggleBlockCollapse = (blockKey) => {
-    setCollapsedBlocks(prev => ({
-      ...prev,
-      [blockKey]: !prev[blockKey]
-    }));
-  };
-
   // +------------------------+
   // | renderCollapsibleBlock |
   // +------------------------+
-  
+
   const renderCollapsibleBlock = (blockKey, title, content, keyPrefix) => {
-	
-    const isCollapsed = collapsedBlocks[blockKey];
+
+    const handleToggle = (e) => {
+      const titleEl = e.currentTarget;
+      titleEl.classList.toggle(styles.collapsed);
+      titleEl.nextElementSibling.classList.toggle(styles.collapsed);
+      titleEl.nextElementSibling.nextElementSibling.classList.toggle(styles.collapsed);
+    };
 
     return (
       <React.Fragment key={keyPrefix}>
         <div
-          className={isCollapsed ? styles.blockTitleCollapsed : styles.blockTitle}
-          onClick={() => toggleBlockCollapse(blockKey)}
+          className={styles.blockTitle}
+          onClick={handleToggle}
         >
           <span className={styles.blockTitleText}>{title}</span>
           <span className={styles.collapseIcon}>
-            {isCollapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
+            <span className={styles.iconExpand}><ExpandMoreIcon fontSize="small" /></span>
+            <span className={styles.iconCollapse}><ExpandLessIcon fontSize="small" /></span>
           </span>
         </div>
-        <div className={isCollapsed ? styles.blockContentCollapsed : styles.blockContent}>
-          {!isCollapsed && content}
+        <div className={styles.blockContent}>
+          {content}
         </div>
+        <div className={styles.blockContentEmpty}></div>
       </React.Fragment>
     );
   };
