@@ -10,6 +10,7 @@ import TCPFooter from './TCPFooter.js';
 import { useOptionalFhir } from './OptionalFhir';
 import config from './lib/config.js';
 import { LanguageProvider, useLanguage } from './lib/LanguageContext';
+import { DocumentModalProvider } from './DocumentModalContext';
 
 import styles from './App.module.css';
 
@@ -95,7 +96,9 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <DocumentModalProvider>
+        <AppContent />
+      </DocumentModalProvider>
     </LanguageProvider>
   );
 }

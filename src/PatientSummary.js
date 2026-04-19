@@ -1,8 +1,6 @@
 import React from 'react';
 import * as futil from './lib/fhirUtil.js';
 import PatientSummarySection from './PatientSummarySection.js';
-import DocumentsSection from './DocumentsSection.js';
-import { extractDocumentsFromBundle } from './lib/documentUtils.js';
 import styles from './PatientSummary.module.css';
 import IFrameSandbox from './IFrameSandbox.js';
 import DOMPurify from 'dompurify';
@@ -51,9 +49,6 @@ export default function PatientSummary({ organized, dcr }) {
   // | Main Render |
   // +-------------+
   
-  // Extract embedded documents from the bundle
-  const documents = extractDocumentsFromBundle(organized, t);
-
   const comp = organized.byType.Composition?.[0] || {};
   const rmap = organized.byId;
 
@@ -84,14 +79,6 @@ export default function PatientSummary({ organized, dcr }) {
             `row-section-${index}`
           );
         })}
-
-        {/* Documents Block */}
-        {documents && documents.length > 0 && renderCollapsibleBlock(
-          'Documents',
-          `${t('documents', 'Documents')} (${documents.length})`,
-          <DocumentsSection documents={documents} />,
-          'row-documents'
-        )}
 
         {/* Composition Block */}
         {compositionDivTextContent && renderCollapsibleBlock(

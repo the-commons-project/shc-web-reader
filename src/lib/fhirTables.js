@@ -1,9 +1,18 @@
 
 import * as futil from "./fhirUtil.js";
+import * as fdocs from "./fhirDocs.js";
+import { estimateBase64SizeBytes } from "./b64.js";
 
 //
 // Routines for rendering potentially diverse groups of resources in tabular form.
 //
+// addResource is called for each resource in the section, which organizes into
+// lists by resource type. Then renderJSX renders one table per key in tableState.
+//
+// renderJSX takes a helper object "funcs" with various methods to assist in rendering:
+//     dcr: deferred code renderer
+//     loc: language-aware renderer ("t") elsewhere
+//     doc: modal dialog function (see DocumentModelContext "showDocuments")
 
 // +-------------+
 // | addResource |
@@ -20,10 +29,12 @@ export function addResource(resource, tableState, rmap) {
   
   const rtype = r.resourceType;
 
-  // for DRs, just add individual Observations
-  if (rtype === "DiagnosticReport" && r.result && r.result.length) {
-	for (const i in r.result) addResource(r.result[i], tableState, rmap);
-	return;
+  // for DRs, add individual Observations and then DR only if has a document
+  if (rtype === "DiagnosticReport") {
+	if (r.result && r.result.length) {
+	  for (const i in r.result) addResource(r.result[i], tableState, rmap);
+	}
+	if (!r.presentedForm) return;
   }
 
   // otherwise accumulate the resource in our state
@@ -103,12 +114,19 @@ const renderConfig = {
    "ClinicalImpression": {
      "hdrFn": clinicalImpressionHeader,
      "rowFn": clinicalImpressionRow
+   },
+   "DocumentReference": {
+     "hdrFn": docRefHeader,
+     "rowFn": docRefRow,
+	 "compFn": docRefCompare
+   },
+   "DiagnosticReport": {
+     "hdrFn": diagRptHeader,
+     "rowFn": diagRptRow,
+	 "compFn": diagRptCompare
    }
 }
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
 export function renderJSX(tableState, className, rmap, dcr, t) {
 
   const tables = Object.keys(tableState).reduce((acc, rtype) => {
@@ -127,7 +145,8 @@ export function renderJSX(tableState, className, rmap, dcr, t) {
 	const rows = arr.reduce((rowsAcc, r) => {
 
 	  if (!r.id || !seen[r.id]) {
-		rowsAcc.push(render.rowFn(r, rmap, dcr));
+		const theseRows = render.rowFn(r, rmap, dcr);
+		if (theseRows) rowsAcc.push(theseRows);
 		if (r.id) seen[r.id] = true;
 	  }
 
@@ -723,3 +742,76 @@ function clinicalImpressionRow(r, rmap, dcr) {
         </tr>
     );
 }
+
+// +-------------------+
+// | DocumentReference |
+// +-------------------+
+
+// TODO: LOCALIZE
+
+function docRefHeader(t) {
+  return(<tr>
+		   <th>Date</th>
+		   <th>{t('nameHeader')}</th>
+		   <th>Author</th>
+		   <th>Size</th>
+		   <th>{t('statusHeader')}</th>
+		   <th>Action</th>
+		 </tr>);
+}
+
+function docRefRow(r, rmap, dcr) {
+
+  const attachment = fdocs.getBestAttachment(r);
+  
+  const date = (r.date ? futil.renderDateTime(r.date) : null);
+  const status = r.status || 'current';
+  const title = fdocs.getTitle(r);
+  const authors = (r.author || []).map((a) => futil.renderGenerator(a, rmap));
+
+  const bytes = (attachment.data ? estimateBase64SizeBytes(attachment.data) : 0);
+  const size = fdocs.formatFileSize(bytes);
+
+  return(<tr key={r.id}>
+		   <td><nobr>{date}</nobr></td>
+		   <td>{title}</td>
+		   <td>{authors}</td>
+		   <td>{size}</td>
+		   <td>{status}</td>
+		   <td><a href={`javascript:alert('${r.id}')`}>id</a></td>
+		 </tr>);
+}
+
+function docRefCompare(a, b) {
+  if (!a.date && !b.date) return(0);
+  if (!a.date) return(1);
+  if (!b.date) return(-1);
+  return(futil.parseDateTime(b.date) - futil.parseDateTime(a.date));
+}
+// +------------------+
+// | DiagnosticReport |
+// +------------------+
+
+// TODO: LOCALIZE
+
+function diagRptHeader(t) {
+  return(<tr>
+		   <th>Date</th>
+		   <th>{t('nameHeader')}</th>
+		   <th>Author</th>
+		   <th>Size</th>
+		   <th>{t('statusHeader')}</th>
+		   <th>Action</th>
+		 </tr>);
+}
+
+function diagRptRow(r, rmap, dcr) {
+  // nyi
+  return(undefined);
+}
+
+function diagRptCompare(a, b) {
+  // nyi
+}
+
+
