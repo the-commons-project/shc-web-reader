@@ -25,7 +25,7 @@ export default function PatientSummary({ organized, dcr }) {
       titleEl.nextElementSibling.nextElementSibling.classList.toggle(styles.collapsed);
     };
 
-    return (
+    const ret = 
       <React.Fragment key={keyPrefix}>
         <div
           className={styles.blockTitle}
@@ -41,8 +41,9 @@ export default function PatientSummary({ organized, dcr }) {
           {content}
         </div>
         <div className={styles.blockContentEmpty}></div>
-      </React.Fragment>
-    );
+      </React.Fragment>;
+
+	return(ret);
   };
 
   // +-------------+
@@ -52,7 +53,7 @@ export default function PatientSummary({ organized, dcr }) {
   const comp = organized.byType.Composition?.[0] || {};
   const rmap = organized.byId;
 
-  const authors = (comp.author || []).map((a) => futil.renderGenerator(a, rmap));
+  const authors = futil.joinJSXElements((comp.author || []).map((a) => futil.renderGenerator(a, rmap)), ', ');
   const compositionDivTextContent = comp.text && comp.text.div ? comp.text.div : '';
 
   return (
@@ -75,7 +76,7 @@ export default function PatientSummary({ organized, dcr }) {
           return renderCollapsibleBlock(
             s.title,
             t(translationKey, s.title),
-            <PatientSummarySection s={s} rmap={rmap} dcr={dcr} />,
+            <PatientSummarySection s={s} organized={organized} dcr={dcr} />,
             `row-section-${index}`
           );
         })}

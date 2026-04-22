@@ -110,17 +110,17 @@ export function getTitle(r) {
 	  if (r.type?.coding?.[0]?.display) return(r.type.coding[0].display);
 	  if (r.category?.[0]?.text) return(r.category[0].text);
 	  if (r.category?.[0]?.coding?.[0]?.display) return(r.category[0].coding[0].display);
-	  break;
+	  return('Document');
 
 	case "DiagnosticReport":
-	  // NYI
-	  return("NYI");
+	  if (r.code?.text) return(r.code.text);
+	  if (r.code?.coding?.[0]?.display) return(r.code.coding[0].display);
+	  if (r.category?.[0]?.text) return(r.category[0].text);
+	  return('Report');
 
 	default:
-	  break;
+	  return('Unknown');
   }
-  
-  return('Document');
 }
 
 // +-------+

@@ -5,10 +5,11 @@ import IFrameSandbox from './IFrameSandbox.js';
 import DOMPurify from 'dompurify';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import { useLanguage } from './lib/LanguageContext';
+import { useDocumentModal } from './DocumentModalContext';
 
 import styles from './PatientSummary.module.css';
 
-export default function PatientSummarySection({ s, rmap, dcr }) {
+export default function PatientSummarySection({ s, organized, dcr }) {
 
   const NONLY = "narrative_only";
   const SONLY = "structured_only";
@@ -16,6 +17,7 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
   const STOGGLE = "structured_toggle";
 
   const { t } = useLanguage();
+  const { showDocuments } = useDocumentModal();
   const [ viewState, setViewState ] = useState(undefined);
 
   // +---------------------+
@@ -96,8 +98,8 @@ export default function PatientSummarySection({ s, rmap, dcr }) {
 
   const renderStructured = () => {
 	const tableState = {};
-	for (const i in s.entry) ftabs.addResource(rmap[s.entry[i].reference], tableState, rmap);
-	return(ftabs.renderJSX(tableState, styles.fhirTable, rmap, dcr, t));
+	for (const i in s.entry) ftabs.addResource(organized.byId[s.entry[i].reference], tableState, organized);
+	return(ftabs.renderJSX(tableState, styles.fhirTable, organized, { dcr, loc: t, doc: showDocuments }));
   }
 
   // +-------------+

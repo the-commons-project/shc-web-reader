@@ -73,7 +73,10 @@ export const languages = {
     ipsSection_8716_3: 'Vital Signs',
     ipsSection_30954_2: 'Laboratory Results',
     ipsSection_11369_6: 'Immunizations',
-
+	ipsSection_61146_7: 'Goals',
+	ipsSection_47420_5: 'Documents',
+	ipsSection_47519_4: 'Procedures',
+	
     // ImmunizationHistory.js
     immunizationHistory: 'Immunization History',
     date: 'Date',
@@ -254,6 +257,9 @@ export const languages = {
     ipsSection_8716_3: 'Signes vitaux',
     ipsSection_30954_2: 'Résultats de laboratoire',
     ipsSection_11369_6: 'Vaccins',
+	ipsSection_61146_7: 'Goals', // NEED-TRANSLATION
+	ipsSection_47420_5: 'Documents', // NEED-TRANSLATION
+	ipsSection_47519_4: 'Procedures', // NEED-TRANSLATION
 
     // ImmunizationHistory.js
     immunizationHistory: 'Historique de vaccination',

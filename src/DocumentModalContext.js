@@ -14,6 +14,14 @@
 //     base64Data:  string    // base64-encoded content
 //   }
 //
+// Alternatively, for virtual documents rendered from React JSX, omit
+// contentType and base64Data and provide:
+//
+//   {
+//     title:      string    // displayed in the modal header
+//     jsxContent: ReactElement  // rendered directly; download is unavailable
+//   }
+//
 // initialIndex (optional, default 0) sets which document opens first.
 // Prev/Next navigation is shown only when the array has more than one document.
 
@@ -145,7 +153,11 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
 
     const loadDocument = async () => {
       try {
-        if (docType === 'pdf') {
+        if (document.jsxContent) {
+          setPdfDoc(null);
+          setLoading(false);
+          return;
+        } else if (docType === 'pdf') {
           const pdfData = b64_to_arr(document.base64Data);
           const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
 
@@ -308,6 +320,14 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
       );
     }
 
+    if (document.jsxContent) {
+      return (
+        <div className={styles.htmlContainer}>
+          {document.jsxContent}
+        </div>
+      );
+    }
+
     if (docType === 'pdf') {
       return (
         <div className={styles.pdfContainer}>
@@ -434,9 +454,11 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
                 <NavigateNextIcon />
               </IconButton>
             )}
-            <IconButton onClick={handleDownload} title="Download">
-              <DownloadIcon />
-            </IconButton>
+            {!document.jsxContent && (
+              <IconButton onClick={handleDownload} title="Download">
+                <DownloadIcon />
+              </IconButton>
+            )}
             <IconButton onClick={onClose} title="Close">
               <CloseIcon />
             </IconButton>

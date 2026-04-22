@@ -117,7 +117,10 @@
   height: 100%;
   display: flex;
   justify-content: center;
-  align-items: stretch;
+  align-items: flex-start;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  overflow-y: auto;
 }
 
 .htmlIframe {
