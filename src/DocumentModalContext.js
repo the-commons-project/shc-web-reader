@@ -290,7 +290,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, document, currentPage, totalPages, hasPrev, hasNext, onClose, setCurrentIndex]);
+  }, [open, document, currentPage, totalPages, hasPrev, hasNext, onClose, setCurrentIndex, docType]);
 
   const handleDownload = () => {
     if (document) downloadDocument(document);
