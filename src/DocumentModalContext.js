@@ -47,6 +47,7 @@ import { b64_to_arr, base64ToDataUrl, base64ToBlob } from './lib/b64.js';
 import { getDocTypeFromContentType, getExtensionFromContentType } from './lib/fhirDocs.js';
 import styles from './DocumentModal.module.css';
 import DOMPurify from 'dompurify';
+import { useLanguage } from './lib/LanguageContext';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -126,6 +127,7 @@ export function DocumentModalProvider({ children }) {
 
 function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose }) {
 
+  const { t } = useLanguage();
   const open = !!documents && documents.length > 0;
   const document = open ? documents[currentIndex] : null;
   const docType = document ? getDocTypeFromContentType(document.contentType) : null;
@@ -300,7 +302,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
         <div className={styles.loadingContainer}>
           <CircularProgress />
           <Typography variant="body2" className={styles.loadingText}>
-            Loading document...
+            {t('loadingDocument')}
           </Typography>
         </div>
       );
@@ -314,7 +316,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
             {error}
           </Typography>
           <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleDownload}>
-            Download Instead
+            {t('downloadInstead')}
           </Button>
         </div>
       );
@@ -357,7 +359,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
         console.error('Failed to decode HTML content:', e);
         return (
           <div className={styles.errorContainer}>
-            <Typography variant="body1">Failed to decode HTML content</Typography>
+            <Typography variant="body1">{t('failedToDecodeHtml')}</Typography>
           </div>
         );
       }
@@ -400,7 +402,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
         console.error('Failed to decode text content:', e);
         return (
           <div className={styles.errorContainer}>
-            <Typography variant="body1">Failed to decode text content</Typography>
+            <Typography variant="body1">{t('failedToDecodeText')}</Typography>
           </div>
         );
       }
@@ -415,7 +417,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
     return (
       <div className={styles.errorContainer}>
         <Typography variant="body1">
-          Unsupported document type: {document?.contentType}
+          {t('unsupportedDocType')}: {document?.contentType}
         </Typography>
       </div>
     );
@@ -439,27 +441,27 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
             </Typography>
             {documents.length > 1 && (
               <Typography variant="body2" className={styles.docCount}>
-                {currentIndex + 1} of {documents.length}
+                {currentIndex + 1} {t('ofLabel')} {documents.length}
               </Typography>
             )}
           </div>
           <div className={styles.headerActions}>
             {hasPrev && (
-              <IconButton onClick={() => setCurrentIndex(i => i - 1)} title="Previous document">
+              <IconButton onClick={() => setCurrentIndex(i => i - 1)} title={t('prevDocTooltip')}>
                 <NavigateBeforeIcon />
               </IconButton>
             )}
             {hasNext && (
-              <IconButton onClick={() => setCurrentIndex(i => i + 1)} title="Next document">
+              <IconButton onClick={() => setCurrentIndex(i => i + 1)} title={t('nextDocTooltip')}>
                 <NavigateNextIcon />
               </IconButton>
             )}
             {!document.jsxContent && (
-              <IconButton onClick={handleDownload} title="Download">
+              <IconButton onClick={handleDownload} title={t('downloadTooltip')}>
                 <DownloadIcon />
               </IconButton>
             )}
-            <IconButton onClick={onClose} title="Close">
+            <IconButton onClick={onClose} title={t('closeTooltip')}>
               <CloseIcon />
             </IconButton>
           </div>
@@ -478,7 +480,7 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
                 <NavigateBeforeIcon />
               </IconButton>
               <Typography variant="body2" className={styles.pageInfo}>
-                Page {currentPage} of {totalPages}
+                {t('pageLabel')} {currentPage} {t('ofLabel')} {totalPages}
               </Typography>
               <IconButton onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages} size="small">
                 <NavigateNextIcon />
@@ -486,13 +488,13 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
             </div>
           )}
           <div className={styles.zoomControls}>
-            <IconButton onClick={() => setScale(s => Math.max(s - 0.25, 0.5))} size="small" title="Zoom out">
+            <IconButton onClick={() => setScale(s => Math.max(s - 0.25, 0.5))} size="small" title={t('zoomOutTooltip')}>
               <ZoomOutIcon />
             </IconButton>
             <Typography variant="body2" className={styles.zoomInfo}>
               {Math.round(scale * 100)}%
             </Typography>
-            <IconButton onClick={() => setScale(s => Math.min(s + 0.25, 3.0))} size="small" title="Zoom in">
+            <IconButton onClick={() => setScale(s => Math.min(s + 0.25, 3.0))} size="small" title={t('zoomInTooltip')}>
               <ZoomInIcon />
             </IconButton>
           </div>

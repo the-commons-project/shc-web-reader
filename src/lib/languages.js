@@ -174,13 +174,38 @@ export const languages = {
     // In the context of device use, timing represents how often a device was used: https://build.fhir.org/deviceusage-definitions.html#DeviceUsage.timing_x_
     timingForDeviceUseHeader: 'Timing',
 
-    // documentUtils.js
-    documents: 'Documents',
-    documentFallbackTitle: 'Document',
-    reportFallbackTitle: 'Report',
-    documentCategory: 'Document',
-    diagnosticReportCategory: 'Diagnostic Report',
-    externalDocumentMessage: 'This data could not be displayed because of a technical formatting issue from the EHR, not an issue with your records.',
+    // DocumentModalContext.js
+    loadingDocument: 'Loading document...',
+    downloadInstead: 'Download Instead',
+    failedToDecodeHtml: 'Failed to decode HTML content',
+    failedToDecodeText: 'Failed to decode text content',
+    unsupportedDocType: 'Unsupported document type',
+    ofLabel: 'of',
+    pageLabel: 'Page',
+    prevDocTooltip: 'Previous document',
+    nextDocTooltip: 'Next document',
+    downloadTooltip: 'Download',
+    closeTooltip: 'Close',
+    zoomOutTooltip: 'Zoom out',
+    zoomInTooltip: 'Zoom in',
+
+    // fhirTables.js (Goal)
+    updatedHeader: 'Updated',
+
+    // fhirTables.js (DocumentReference)
+    dateHeader: 'Date',
+    authorHeader: 'Author',
+    sizeHeader: 'Size',
+
+    // fhirTables.js (DiagnosticReport)
+    performerHeader: 'Performer',
+    resultsHeader: 'Results',
+    resultsLink: 'results',
+    reportLink: 'report',
+    noResultsAvailable: 'No Results Available',
+    observationsTitle: 'Observations',
+    presentedReportTitle: 'Presented Report',
+
   },
   fr: {
     // App.js
@@ -257,9 +282,9 @@ export const languages = {
     ipsSection_8716_3: 'Signes vitaux',
     ipsSection_30954_2: 'Résultats de laboratoire',
     ipsSection_11369_6: 'Vaccins',
-	ipsSection_61146_7: 'Goals', // NEED-TRANSLATION
-	ipsSection_47420_5: 'Documents', // NEED-TRANSLATION
-	ipsSection_47519_4: 'Procedures', // NEED-TRANSLATION
+	ipsSection_61146_7: 'Goals', // NEED_LOCALIZATION
+	ipsSection_47420_5: 'Documents', // NEED_LOCALIZATION
+	ipsSection_47519_4: 'Procedures', // NEED_LOCALIZATION
 
     // ImmunizationHistory.js
     immunizationHistory: 'Historique de vaccination',
@@ -359,12 +384,37 @@ export const languages = {
     // In the context of device use, timing represents how often a device was used: https://build.fhir.org/deviceusage-definitions.html#DeviceUsage.timing_x_
     timingForDeviceUseHeader: 'Fréquence',
 
-    // documentUtils.js
-    documents: 'Documents NEED TRANSLATION',
-    documentFallbackTitle: 'Document NEED TRANSLATION',
-    reportFallbackTitle: 'Report NEED TRANSLATION',
-    documentCategory: 'Document NEED TRANSLATION',
-    diagnosticReportCategory: 'Diagnostic Report NEED TRANSLATION',
-    externalDocumentMessage: 'This data could not be displayed because of a technical formatting issue from the EHR, not an issue with your records. NEED TRANSLATION',
+    // DocumentModalContext.js
+    loadingDocument: 'Loading document...', // NEED_LOCALIZATION
+    downloadInstead: 'Download Instead', // NEED_LOCALIZATION
+    failedToDecodeHtml: 'Failed to decode HTML content', // NEED_LOCALIZATION
+    failedToDecodeText: 'Failed to decode text content', // NEED_LOCALIZATION
+    unsupportedDocType: 'Unsupported document type', // NEED_LOCALIZATION
+    ofLabel: 'de',
+    pageLabel: 'Page',
+    prevDocTooltip: 'Previous document', // NEED_LOCALIZATION
+    nextDocTooltip: 'Next document', // NEED_LOCALIZATION
+    downloadTooltip: 'Télécharger',
+    closeTooltip: 'Fermer',
+    zoomOutTooltip: 'Zoom out', // NEED_LOCALIZATION
+    zoomInTooltip: 'Zoom in', // NEED_LOCALIZATION
+
+    // fhirTables.js (Goal)
+    updatedHeader: 'Updated', // NEED_LOCALIZATION
+
+    // fhirTables.js (DocumentReference)
+    dateHeader: 'Date', // NEED_LOCALIZATION
+    authorHeader: 'Author', // NEED_LOCALIZATION
+    sizeHeader: 'Size', // NEED_LOCALIZATION
+
+    // fhirTables.js (DiagnosticReport)
+    performerHeader: 'Performer', // NEED_LOCALIZATION
+    resultsHeader: 'Results', // NEED_LOCALIZATION
+    resultsLink: 'results', // NEED_LOCALIZATION
+    reportLink: 'report', // NEED_LOCALIZATION
+    noResultsAvailable: 'No Results Available', // NEED_LOCALIZATION
+    observationsTitle: 'Observations', // NEED_LOCALIZATION
+    presentedReportTitle: 'Presented Report', // NEED_LOCALIZATION
+
   }
 };

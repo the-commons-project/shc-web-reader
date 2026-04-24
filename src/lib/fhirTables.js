@@ -117,6 +117,11 @@ const renderConfig = {
      "hdrFn": clinicalImpressionHeader,
      "rowFn": clinicalImpressionRow
    },
+  "Goal": {
+	"hdrFn": goalHeader,
+	"rowFn": goalRow,
+	"compFn": goalCompare
+  },
    "DocumentReference": {
      "hdrFn": docRefHeader,
      "rowFn": docRefRow,
@@ -290,6 +295,10 @@ function medStmtRow(r, ctx, funcs) {
 }
 
 function medStmtCompare(a, b) {
+
+  if (a.status === "active" && b.status !== "active") return(-1);
+  if (a.status !== "active" && b.status === "active") return(1);
+
   const effectiveA = futil.parseCrazyDateTimeBestGuess(a, "effective");
   const effectiveB = futil.parseCrazyDateTimeBestGuess(b, "effective");
   return(effectiveB - effectiveA);
@@ -363,6 +372,8 @@ function medReqRow(r, ctx, funcs) {
 }
 
 function medReqCompare(a, b) {
+  if (a.status === "active" && b.status !== "active") return(-1);
+  if (a.status !== "active" && b.status === "active") return(1);
   const authoredA = (a.authoredOn ? futil.parseDateTime(a.authoredOn) : new Date());
   const authoredB = (b.authoredOn ? futil.parseDateTime(b.authoredOn) : new Date());
   return(authoredB - authoredA);
@@ -767,18 +778,56 @@ function clinicalImpressionRow(r, ctx, funcs) {
     );
 }
 
+// +------+
+// | Goal |
+// +------+
+
+function goalHeader(funcs, ctx) {
+  return(<tr>
+		   <th>{funcs.loc('updatedHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		 </tr>);
+}
+
+function goalRow(r, ctx, funcs) {
+
+  const updated = r.statusDate ? futil.renderDate(r.statusDate)
+		: (r.startDate ? futil.renderDate(r.startDate) : null);
+	
+  const status = r.lifecycleStatus + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, funcs.dcr) : "");
+
+  const description = futil.renderCodeableJSX(r.description, funcs.dcr);
+
+  return(<tr key={r.id}>
+		   <td>{updated}</td>
+		   <td>{status}</td>
+		   <td>{description}</td>
+		 </tr>);
+}
+
+function goalCompare(a, b) {
+  
+  const dateA = a.statusDate ?? a.startDate;
+  const dateB = b.statusDate ?? b.startDate;
+
+  if (!dateA && !dateB) return(0);
+  if (!dateA) return(1);
+  if (!dateB) return(-1);
+
+  return(dateB - dateA);
+}
+
 // +-------------------+
 // | DocumentReference |
 // +-------------------+
 
-// TODO: LOCALIZE
-
 function docRefHeader(funcs, ctx) {
   return(<tr>
-		   <th>Date</th>
+		   <th>{funcs.loc('dateHeader')}</th>
 		   <th>{funcs.loc('nameHeader')}</th>
-		   <th>Author</th>
-		   <th>Size</th>
+		   <th>{funcs.loc('authorHeader')}</th>
+		   <th>{funcs.loc('sizeHeader')}</th>
 		   <th>{funcs.loc('statusHeader')}</th>
 		 </tr>);
 }
@@ -850,8 +899,6 @@ function computeModalDocs(ctx) {
 // | DiagnosticReport |
 // +------------------+
 
-// TODO: LOCALIZE
-
 function diagRptHasResults(r) { return(r.result && r.result.length); }
 function diagRptHasReport(r) { return(r.presentedForm && r.presentedForm.length); }
 
@@ -873,13 +920,13 @@ function viewDiagRptFiles(r, ctx, funcs, index) {
 		  : undefined;
 								 
 	let tableJSX = renderJSX(tableState, ctx.className, ctx.organized, funcs);
-	if (tableJSX.length === 0) tableJSX = <div style={textBlockStyle}>No Results Available</div>;
+	if (tableJSX.length === 0) tableJSX = <div style={textBlockStyle}>{funcs.loc('noResultsAvailable')}</div>;
 
 	const allJSX = <>{conclusionTextJSX}{conclusionCodeJSX}{tableJSX}</>;
 	console.log(allJSX);
-		  
+
 	modals.push({
-	  title: 'Observations',
+	  title: funcs.loc('observationsTitle'),
 	  jsxContent: allJSX
 	});
   }
@@ -889,7 +936,7 @@ function viewDiagRptFiles(r, ctx, funcs, index) {
 	const attachment = fdocs.getBestAttachment(r);
 
 	modals.push({
-	  title: 'Presented Report',
+	  title: funcs.loc('presentedReportTitle'),
 	  contentType: attachment.contentType,
 	  base64Data: attachment.data,
 	  attachment: attachment
@@ -903,9 +950,9 @@ function diagRptHeader(funcs, ctx) {
   return(<tr>
 		   <th>{funcs.loc('effectiveHeader')}</th>
 		   <th>{funcs.loc('nameHeader')}</th>
-		   <th>Performer</th>
+		   <th>{funcs.loc('performerHeader')}</th>
 		   <th>{funcs.loc('statusHeader')}</th>
-		   <th>Results</th>
+		   <th>{funcs.loc('resultsHeader')}</th>
 		 </tr>);
 }
 
@@ -942,12 +989,12 @@ function diagRptRow(r, ctx, funcs) {
 			 { hasResults &&
 				 <Link component="button" variant="body2"
 					   sx={{ fontSize: '0.75rem', textAlign: 'left' }}
-					   onClick={() => viewDiagRptFiles(r, ctx, funcs, 0)}>results</Link> }
+					   onClick={() => viewDiagRptFiles(r, ctx, funcs, 0)}>{funcs.loc('resultsLink')}</Link> }
 			 { hasResults && hasReport && <span>&nbsp;&nbsp;</span> }
 			 { hasReport &&
 				 <Link component="button" variant="body2"
 					   sx={{ fontSize: '0.75rem', textAlign: 'left' }}
-					   onClick={() => viewDiagRptFiles(r, ctx, funcs, hasResults ? 1 : 0)}>report</Link> }
+					   onClick={() => viewDiagRptFiles(r, ctx, funcs, hasResults ? 1 : 0)}>{funcs.loc('reportLink')}</Link> }
 		   </nobr></td>
 		 </tr>);
 }
