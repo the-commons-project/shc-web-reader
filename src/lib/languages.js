@@ -282,9 +282,9 @@ export const languages = {
     ipsSection_8716_3: 'Signes vitaux',
     ipsSection_30954_2: 'Résultats de laboratoire',
     ipsSection_11369_6: 'Vaccins',
-	ipsSection_61146_7: 'Goals', // NEED_LOCALIZATION
-	ipsSection_47420_5: 'Documents', // NEED_LOCALIZATION
-	ipsSection_47519_4: 'Procedures', // NEED_LOCALIZATION
+	ipsSection_61146_7: 'Objectifs', // NEED_REVIEW
+	ipsSection_47420_5: 'Documents', // NEED_REVIEW
+	ipsSection_47519_4: 'Procédures', // NEED_REVIEW
 
     // ImmunizationHistory.js
     immunizationHistory: 'Historique de vaccination',
@@ -385,36 +385,36 @@ export const languages = {
     timingForDeviceUseHeader: 'Fréquence',
 
     // DocumentModalContext.js
-    loadingDocument: 'Loading document...', // NEED_LOCALIZATION
-    downloadInstead: 'Download Instead', // NEED_LOCALIZATION
-    failedToDecodeHtml: 'Failed to decode HTML content', // NEED_LOCALIZATION
-    failedToDecodeText: 'Failed to decode text content', // NEED_LOCALIZATION
-    unsupportedDocType: 'Unsupported document type', // NEED_LOCALIZATION
-    ofLabel: 'de',
-    pageLabel: 'Page',
-    prevDocTooltip: 'Previous document', // NEED_LOCALIZATION
-    nextDocTooltip: 'Next document', // NEED_LOCALIZATION
-    downloadTooltip: 'Télécharger',
-    closeTooltip: 'Fermer',
-    zoomOutTooltip: 'Zoom out', // NEED_LOCALIZATION
-    zoomInTooltip: 'Zoom in', // NEED_LOCALIZATION
+    loadingDocument: 'Chargement du document...', // NEED_REVIEW
+    downloadInstead: 'Télécharger à la place', // NEED_REVIEW
+    failedToDecodeHtml: 'Échec du décodage du contenu HTML', // NEED_REVIEW
+    failedToDecodeText: 'Échec du décodage du contenu texte', // NEED_REVIEW
+    unsupportedDocType: 'Type de document non pris en charge', // NEED_REVIEW
+    ofLabel: 'de', // NEED_REVIEW
+    pageLabel: 'Page', // NEED_REVIEW
+    prevDocTooltip: 'Document précédent', // NEED_REVIEW
+    nextDocTooltip: 'Document suivant', // NEED_REVIEW
+    downloadTooltip: 'Télécharger', // NEED_REVIEW
+    closeTooltip: 'Fermer', // NEED_REVIEW
+    zoomOutTooltip: 'Réduire', // NEED_REVIEW
+    zoomInTooltip: 'Agrandir', // NEED_REVIEW
 
     // fhirTables.js (Goal)
-    updatedHeader: 'Updated', // NEED_LOCALIZATION
+    updatedHeader: 'Mis à jour', // NEED_REVIEW
 
     // fhirTables.js (DocumentReference)
-    dateHeader: 'Date', // NEED_LOCALIZATION
-    authorHeader: 'Author', // NEED_LOCALIZATION
-    sizeHeader: 'Size', // NEED_LOCALIZATION
+    dateHeader: 'Date', // NEED_REVIEW
+    authorHeader: 'Auteur', // NEED_REVIEW
+    sizeHeader: 'Taille', // NEED_REVIEW
 
     // fhirTables.js (DiagnosticReport)
-    performerHeader: 'Performer', // NEED_LOCALIZATION
-    resultsHeader: 'Results', // NEED_LOCALIZATION
-    resultsLink: 'results', // NEED_LOCALIZATION
-    reportLink: 'report', // NEED_LOCALIZATION
-    noResultsAvailable: 'No Results Available', // NEED_LOCALIZATION
-    observationsTitle: 'Observations', // NEED_LOCALIZATION
-    presentedReportTitle: 'Presented Report', // NEED_LOCALIZATION
+    performerHeader: 'Intervenant', // NEED_REVIEW
+    resultsHeader: 'Résultats', // NEED_REVIEW
+    resultsLink: 'résultats', // NEED_REVIEW
+    reportLink: 'rapport', // NEED_REVIEW
+    noResultsAvailable: 'Aucun résultat disponible', // NEED_REVIEW
+    observationsTitle: 'Observations', // NEED_REVIEW
+    presentedReportTitle: 'Rapport présenté', // NEED_REVIEW
 
   }
 };
