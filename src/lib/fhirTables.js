@@ -923,7 +923,6 @@ function viewDiagRptFiles(r, ctx, funcs, index) {
 	if (tableJSX.length === 0) tableJSX = <div style={textBlockStyle}>{funcs.loc('noResultsAvailable')}</div>;
 
 	const allJSX = <>{conclusionTextJSX}{conclusionCodeJSX}{tableJSX}</>;
-	console.log(allJSX);
 
 	modals.push({
 	  title: funcs.loc('observationsTitle'),
