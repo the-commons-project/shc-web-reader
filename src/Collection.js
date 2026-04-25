@@ -1,6 +1,5 @@
 
 import React from 'react';
-import * as futil from './lib/fhirUtil.js';
 import * as ftabs from './lib/fhirTables.js';
 import styles from './PatientSummary.module.css';
 import { useLanguage } from './lib/LanguageContext';
