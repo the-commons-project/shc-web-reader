@@ -25,7 +25,7 @@
 // initialIndex (optional, default 0) sets which document opens first.
 // Prev/Next navigation is shown only when the array has more than one document.
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -108,8 +108,10 @@ export function DocumentModalProvider({ children }) {
 
   const handleClose = () => setDocs(null);
 
+  const contextValue = useMemo(() => ({ showDocuments }), [showDocuments]);
+
   return (
-    <DocumentModalContext.Provider value={{ showDocuments }}>
+    <DocumentModalContext.Provider value={contextValue}>
       {children}
       <DocumentModalDialog
         documents={docs}
@@ -251,8 +253,10 @@ function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose
   }, [pdfDoc, currentPage, scale]);
 
   useEffect(() => {
-    renderPage();
-  }, [renderPage]);
+    if (pdfDoc && !loading && docType === 'pdf') {
+      renderPage();
+    }
+  }, [pdfDoc, loading, docType, renderPage]);
 
   // Cleanup on close
   useEffect(() => {

@@ -13,6 +13,7 @@ import { useLanguage } from './lib/LanguageContext';
 import Coverage from './Coverage.js';
 import ImmunizationHistory from './ImmunizationHistory.js'
 import PatientSummary from './PatientSummary.js';
+import Collection from './Collection.js';
 
 export default function Data({ shx }) {
   const { t, setBundleLanguage } = useLanguage();
@@ -111,6 +112,10 @@ export default function Data({ shx }) {
 
 	    case res.BTYPE_IMMUNIZATION:
 		  elt = <ImmunizationHistory organized={ organized } dcr={ dcr } />;
+		  break;
+
+		case res.BTYPE_BUNDLE:
+		  elt = <Collection organized={ organized } dcr={ dcr } />;
 		  break;
 
 		// >>> ADD MORE RENDERERS HERE <<<

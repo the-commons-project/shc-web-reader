@@ -85,6 +85,19 @@
     width: 100%;
 }
 
+.fhirTable caption {
+    background-color: #777;
+    font-weight: 600;
+    font-size: 13px;
+    color: white;
+    padding: 4px 8px;
+    text-align: left;
+}
+
+.fhirTable + .fhirTable {
+    margin-top: 32px;
+}
+
 .fhirTable td, .fhirTable th {
     text-align: left;
     vertical-align: middle;

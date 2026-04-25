@@ -58,6 +58,18 @@ export function addResource(resource, tableState, organized) {
 
 const renderConfig = {
 
+  "Patient": {
+	"hdrFn": personHeader,
+	"rowFn": personRow
+  },
+  "Practitioner": {
+	"hdrFn": personHeader,
+	"rowFn": personRow
+  },
+  "RelatedPerson": {
+	"hdrFn": personHeader,
+	"rowFn": personRow
+  },
   "Condition": {
 	"hdrFn": conditionsHeader,
 	"rowFn": conditionsRow
@@ -136,18 +148,32 @@ const renderConfig = {
 
 export function renderJSX(tableState, className, organized, funcs) {
 
-  const tables = Object.keys(tableState).reduce((acc, rtype) => {
+  // first figure out which tables we'll actually render ... need
+  // to know this so that we know to display table captions or not
+  
+  const displayTableState = {};
 
-	const render = renderConfig[rtype];
+  Object.keys(tableState).forEach((rtype) => {
 
-	if (!render) {
+	if (!renderConfig[rtype]) {
 	  console.warn("fhirTables can't render: " + rtype);
-	  return(acc);
+	  return;
 	}
 
 	const arr = uniquifyResources(rtype, tableState, organized.byId);
-	if (arr.length === 0) return(acc);
+	if (arr.length > 0) displayTableState[rtype] = arr;
 	
+  });
+
+  // now do the actual renders
+  
+  const displayTypes = Object.keys(displayTableState);
+  
+  const tables = displayTypes.map((rtype) => {
+
+	const render = renderConfig[rtype];
+
+	const arr = displayTableState[rtype];
 	if (render.compFn) arr.sort(render.compFn);
 
 	const ctx = {
@@ -166,17 +192,16 @@ export function renderJSX(tableState, className, organized, funcs) {
 
 	}, []);
 
-	acc.push(
+	return(
 	  <table key={rtype} className={className}>
+		{ displayTypes.length > 1 && <caption>{rtype.toUpperCase()}</caption> }
 		<tbody>
 		  { render.hdrFn(funcs, ctx) }
 		  {rows}
 		</tbody>
 	  </table>
 	);
-
-	return(acc);
-  }, []);
+  });
 
   return(tables);
 }
@@ -233,6 +258,35 @@ function uniquifyResources(rtype, tableState, byId) {
   return(result);
 }
 
+
+// +--------------------------------------------+
+// | Person (Patient/Practitioner/RelatedPerson |
+// +--------------------------------------------+
+
+function personHeader(funcs, ctx) {
+  return(<tr>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('birthDateHeader')}</th>
+		   <th>{funcs.loc('contactHeader')}</th>
+		 </tr>);
+}
+
+function personRow(r, ctx, funcs) {
+
+  const name = (r.name && r.name.length
+				? r.name.map((n,i) => <span key={i}>{futil.getPersonDisplayName(n)}<br/></span>)
+				: "");
+  
+  const birthDate = (r.birthDate ? futil.renderDate(r.birthDate) : "");
+  
+  const contact = futil.renderTelecomJSX(r.telecom, true);
+
+  return(<tr key={r.id}>
+		   <td>{name}</td>
+		   <td>{birthDate}</td>
+		   <td>{contact}</td>
+		 </tr>);
+}
 
 // +-----------+
 // | Condition |

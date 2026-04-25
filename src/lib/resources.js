@@ -70,6 +70,9 @@ export function organizeResources(bundle, labelCounters) {
 	  
 	  const r = e.resource;
 	  organized.all.push(r);
+
+	  // we really want resource ids
+	  if (!r.id) r.id = e.fullUrl;
 	  
 	  organized.byId[e.fullUrl] = r;
 	  organized.byId[r.resourceType + "/" + r.id] = r;

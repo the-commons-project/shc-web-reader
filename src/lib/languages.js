@@ -77,6 +77,10 @@ export const languages = {
 	ipsSection_47420_5: 'Documents',
 	ipsSection_47519_4: 'Procedures',
 	
+	// Collection.js
+	birthDateHeader: 'DOB',
+	contactHeader: 'Contact',
+
     // ImmunizationHistory.js
     immunizationHistory: 'Immunization History',
     date: 'Date',
@@ -285,6 +289,10 @@ export const languages = {
 	ipsSection_61146_7: 'Objectifs', // NEED_REVIEW
 	ipsSection_47420_5: 'Documents', // NEED_REVIEW
 	ipsSection_47519_4: 'Procédures', // NEED_REVIEW
+
+	// Collection.js
+	birthDateHeader: 'Date de naissance', // NEED_REVIEW
+	contactHeader: 'Coordonnées', // NEED_REVIEW
 
     // ImmunizationHistory.js
     immunizationHistory: 'Historique de vaccination',
