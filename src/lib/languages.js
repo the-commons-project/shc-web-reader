@@ -2,7 +2,7 @@ export const languages = {
   en: {
     // App.js
     aboutTab: 'About',
-    scanTab: 'Paste Link',
+    scanTab: 'Scan Card',
     fileTab: 'Open file',
     photoTab: 'Use your camera',
     searchTab: 'Search Record',
@@ -12,6 +12,7 @@ export const languages = {
     aboutTitle: 'SMART Health Card Viewer',
     aboutSubtitle: 'View SMART Health Cards',
     getStarted: 'Get Started',
+    scanDescriptionShort: 'Use a 2D barcode scanner',
     photoDescriptionShort: 'Start scanning using your camera',
     fileDescriptionShort: 'Upload a file containing a SMART Health Card',
 
@@ -105,15 +106,15 @@ export const languages = {
     // Scan.js
     scanError: 'Error scanning QR code. Please try again.',
     scanSuccess: 'QR code scanned successfully',
-    readCode: 'Open Link',
-    scanTitle: 'Paste a SMART Health Link',
+    readCode: 'Read Code',
+    scanTitle: 'Scan a Smart Health Card QR Code',
     // Buttons
     saveToPDF: 'Save to PDF',
     saveToFHIR: 'Save to FHIR',
     source: 'Source',
     takePhotoText: 'Scan',
     openFileText: 'Open file',
-    typeOrPaste: 'Paste Link',
+    typeOrPaste: 'Type or paste a code',
     findCode: 'Find a code in patient record',
 
     // TCPFooter.js
@@ -213,7 +214,7 @@ export const languages = {
   fr: {
     // App.js
     aboutTab: 'À propos',
-    scanTab: 'Coller le lien',
+    scanTab: 'Numériser une carte',
     fileTab: 'Ouvrir un fichier',
     photoTab: 'Utiliser votre caméra',
     searchTab: 'Rechercher un dossier',
@@ -223,6 +224,7 @@ export const languages = {
     aboutTitle: 'Lecteur de carte de santé SMART',
     aboutSubtitle: 'Lit et vérifie les cartes de santé SMART',
     getStarted: 'Débuter',
+    scanDescriptionShort: 'Utiliser un lecteur de codes-barres 2D',
     photoDescriptionShort: 'Commencer à numériser en utilisant votre caméra',
     fileDescriptionShort:  "Le lecteur peut généralement lire les fichiers portant l'extension .smart-health-card ou .fhir.",
 
@@ -317,8 +319,8 @@ export const languages = {
     // Scan.js
     scanError: 'Erreur lors du scan du code QR. Veuillez réessayer.',
     scanSuccess: 'Code QR scanné avec succès',
-    readCode: 'Ouvrir le lien',
-    scanTitle: 'Coller un lien SMART Health',
+    readCode: 'Lire le code',
+    scanTitle: 'Numériser un code QR de santé Smart',
 
     // Buttons
     saveToPDF: 'Sauvegarder au Format PDF',
@@ -327,7 +329,7 @@ export const languages = {
     startScanningText: 'Commencer à numériser',
     takePhotoText: 'Numériser',
     openFileText: 'Ouvrir un fichier',
-    typeOrPaste: 'Coller le lien',
+    typeOrPaste: 'Saisir ou coller un code',
     findCode: 'Rechercher un code dans le dossier patient',
 
     // TCPFooter.js
