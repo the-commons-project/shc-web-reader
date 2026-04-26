@@ -45,7 +45,6 @@ export const DOMAIN_OVERRIDES = {
   // TCP production
   "commonhealth.org": {
 	
-	"showScan": false,
 	"showSearch": false,
 	
 	"trustedDirectories": [
