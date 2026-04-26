@@ -1,4 +1,31 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+// DocumentModalContext
+//
+// Provides app-wide document modal functionality via React context.
+// Use the useDocumentModal() hook to get showDocuments(), then call:
+//
+//   showDocuments(documents, initialIndex)
+//
+// where each document in the array has the shape:
+//
+//   {
+//     title:       string    // displayed in the modal header
+//     contentType: string    // MIME type, e.g. "application/pdf", "image/png",
+//                            //   "text/html", "text/rtf", "text/plain"
+//     base64Data:  string    // base64-encoded content
+//   }
+//
+// Alternatively, for virtual documents rendered from React JSX, omit
+// contentType and base64Data and provide:
+//
+//   {
+//     title:      string    // displayed in the modal header
+//     jsxContent: ReactElement  // rendered directly; download is unavailable
+//   }
+//
+// initialIndex (optional, default 0) sets which document opens first.
+// Prev/Next navigation is shown only when the array has more than one document.
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,29 +43,99 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import * as pdfjs from 'pdfjs-dist';
-import {
-  isPdfType,
-  isImageType,
-  isHtmlType,
-  isRtfType,
-  isTextType,
-  base64ToDataUrl
-} from './lib/documentUtils.js';
-import { b64_to_arr } from './lib/b64.js';
-import { downloadDocument } from './lib/saveDiv.js';
+import { b64_to_arr, base64ToDataUrl, base64ToBlob } from './lib/b64.js';
+import { getDocTypeFromContentType, getExtensionFromContentType } from './lib/fhirDocs.js';
 import styles from './DocumentModal.module.css';
 import DOMPurify from 'dompurify';
+import { useLanguage } from './lib/LanguageContext';
 
-// Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-export default function DocumentModal({
-  document,
-  open,
-  onClose,
-  documents,
-  onNavigate
-}) {
+// +------------------+
+// | downloadDocument |
+// +------------------+
+
+function todayForFilename() {
+  const now = new Date();
+  let month = '' + (now.getMonth() + 1);
+  if (month.length < 2) month = '0' + month;
+  let day = '' + now.getDate();
+  if (day.length < 2) day = '0' + day;
+  return([now.getFullYear(), month, day].join('-'));
+}
+
+function downloadDocument(doc) {
+  if (!doc || !doc.base64Data || !doc.contentType) {
+    console.error('Invalid document for download');
+    return;
+  }
+  const blob = base64ToBlob(doc.base64Data, doc.contentType);
+  const url = window.URL.createObjectURL(blob);
+  const link = window.document.createElement('a');
+  const ext = getExtensionFromContentType(doc.contentType);
+  const sanitizedTitle = (doc.title || 'document').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+  link.href = url;
+  link.download = `${todayForFilename()}_${sanitizedTitle}.${ext}`;
+  window.document.body.appendChild(link);
+  link.click();
+  window.document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+// +-------------------------+
+// | DocumentModalContext    |
+// +-------------------------+
+
+const DocumentModalContext = React.createContext(null);
+
+export function useDocumentModal() {
+  return React.useContext(DocumentModalContext);
+}
+
+// +-------------------------+
+// | DocumentModalProvider   |
+// +-------------------------+
+
+export function DocumentModalProvider({ children }) {
+
+  const [docs, setDocs] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const showDocuments = useCallback((documents, initialIndex = 0) => {
+    setDocs(documents);
+    setCurrentIndex(initialIndex);
+  }, []);
+
+  const handleClose = () => setDocs(null);
+
+  const contextValue = useMemo(() => ({ showDocuments }), [showDocuments]);
+
+  return (
+    <DocumentModalContext.Provider value={contextValue}>
+      {children}
+      <DocumentModalDialog
+        documents={docs}
+        currentIndex={currentIndex}
+        setCurrentIndex={setCurrentIndex}
+        onClose={handleClose}
+      />
+    </DocumentModalContext.Provider>
+  );
+}
+
+// +------------------------+
+// | DocumentModalDialog    |
+// +------------------------+
+
+function DocumentModalDialog({ documents, currentIndex, setCurrentIndex, onClose }) {
+
+  const { t } = useLanguage();
+  const open = !!documents && documents.length > 0;
+  const document = open ? documents[currentIndex] : null;
+  const docType = document ? getDocTypeFromContentType(document.contentType) : null;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < (documents?.length ?? 0) - 1;
+
   const [pdfDoc, setPdfDoc] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -49,12 +146,7 @@ export default function DocumentModal({
   const canvasRef = useRef(null);
   const renderTaskRef = useRef(null);
 
-  // Get current document index for navigation
-  const currentIndex = documents?.findIndex(d => d.id === document?.id) ?? -1;
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex < (documents?.length ?? 0) - 1;
-
-  // Load PDF document
+  // Load document
   useEffect(() => {
     if (!document || !open) return;
 
@@ -65,7 +157,11 @@ export default function DocumentModal({
 
     const loadDocument = async () => {
       try {
-        if (isPdfType(document.contentType)) {
+        if (document.jsxContent) {
+          setPdfDoc(null);
+          setLoading(false);
+          return;
+        } else if (docType === 'pdf') {
           const pdfData = b64_to_arr(document.base64Data);
           const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
 
@@ -76,7 +172,7 @@ export default function DocumentModal({
             setScale(1.0);
             setLoading(false);
           }
-        } else if (isRtfType(document.contentType)) {
+        } else if (docType === 'rtf') {
           const rtfString = atob(document.base64Data);
           const buffer = new ArrayBuffer(rtfString.length);
           const view = new Uint8Array(buffer);
@@ -84,8 +180,6 @@ export default function DocumentModal({
             view[i] = rtfString.charCodeAt(i);
           }
 
-          // Dynamically import rtf.js (~965KB) to keep it out of the main bundle.
-          // Most SHL payloads don't contain RTF, so we only load it when needed.
           const { RTFJS } = await import('rtf.js');
           RTFJS.loggingEnabled(false);
           const rtfDoc = new RTFJS.Document(buffer);
@@ -94,7 +188,6 @@ export default function DocumentModal({
           const container = window.document.createElement('div');
           elements.forEach(el => container.appendChild(el));
 
-          // Strip all links from RTF - they are EHR-internal and inaccessible to the viewer
           container.querySelectorAll('a[href]').forEach(a => {
             a.removeAttribute('href');
           });
@@ -128,9 +221,7 @@ export default function DocumentModal({
 
     return () => {
       cancelled = true;
-      if (pdfDoc) {
-        pdfDoc.destroy();
-      }
+      if (pdfDoc) pdfDoc.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document, open]);
@@ -139,7 +230,6 @@ export default function DocumentModal({
   const renderPage = useCallback(async () => {
     if (!pdfDoc || !canvasRef.current) return;
 
-    // Cancel any ongoing render
     if (renderTaskRef.current) {
       renderTaskRef.current.cancel();
     }
@@ -153,12 +243,7 @@ export default function DocumentModal({
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport
-      };
-
-      renderTaskRef.current = page.render(renderContext);
+      renderTaskRef.current = page.render({ canvasContext: context, viewport });
       await renderTaskRef.current.promise;
     } catch (err) {
       if (err.name !== 'RenderingCancelledException') {
@@ -168,8 +253,10 @@ export default function DocumentModal({
   }, [pdfDoc, currentPage, scale]);
 
   useEffect(() => {
-    renderPage();
-  }, [renderPage]);
+    if (pdfDoc && !loading && docType === 'pdf') {
+      renderPage();
+    }
+  }, [pdfDoc, loading, docType, renderPage]);
 
   // Cleanup on close
   useEffect(() => {
@@ -187,16 +274,16 @@ export default function DocumentModal({
       if (e.key === 'Escape') {
         onClose();
       } else if (e.key === 'ArrowLeft') {
-        if (isPdfType(document?.contentType) && currentPage > 1) {
+        if (docType === 'pdf' && currentPage > 1) {
           setCurrentPage(p => p - 1);
         } else if (hasPrev) {
-          onNavigate('prev');
+          setCurrentIndex(i => i - 1);
         }
       } else if (e.key === 'ArrowRight') {
-        if (isPdfType(document?.contentType) && currentPage < totalPages) {
+        if (docType === 'pdf' && currentPage < totalPages) {
           setCurrentPage(p => p + 1);
         } else if (hasNext) {
-          onNavigate('next');
+          setCurrentIndex(i => i + 1);
         }
       } else if (e.key === '+' || e.key === '=') {
         setScale(s => Math.min(s + 0.25, 3.0));
@@ -207,32 +294,10 @@ export default function DocumentModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, document, currentPage, totalPages, hasPrev, hasNext, onClose, onNavigate]);
+  }, [open, document, currentPage, totalPages, hasPrev, hasNext, onClose, setCurrentIndex, docType]);
 
   const handleDownload = () => {
-    if (document) {
-      downloadDocument(document);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(p => p - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(p => p + 1);
-    }
-  };
-
-  const handleZoomIn = () => {
-    setScale(s => Math.min(s + 0.25, 3.0));
-  };
-
-  const handleZoomOut = () => {
-    setScale(s => Math.max(s - 0.25, 0.5));
+    if (document) downloadDocument(document);
   };
 
   const renderContent = () => {
@@ -241,7 +306,7 @@ export default function DocumentModal({
         <div className={styles.loadingContainer}>
           <CircularProgress />
           <Typography variant="body2" className={styles.loadingText}>
-            Loading document...
+            {t('loadingDocument')}
           </Typography>
         </div>
       );
@@ -254,18 +319,22 @@ export default function DocumentModal({
           <Typography variant="body1" className={styles.errorText}>
             {error}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownload}
-          >
-            Download Instead
+          <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleDownload}>
+            {t('downloadInstead')}
           </Button>
         </div>
       );
     }
 
-    if (isPdfType(document?.contentType)) {
+    if (document.jsxContent) {
+      return (
+        <div className={styles.htmlContainer}>
+          {document.jsxContent}
+        </div>
+      );
+    }
+
+    if (docType === 'pdf') {
       return (
         <div className={styles.pdfContainer}>
           <canvas ref={canvasRef} className={styles.pdfCanvas} />
@@ -273,7 +342,7 @@ export default function DocumentModal({
       );
     }
 
-    if (isImageType(document?.contentType)) {
+    if (docType === 'image') {
       return (
         <div className={styles.imageContainer}>
           <img
@@ -286,8 +355,7 @@ export default function DocumentModal({
       );
     }
 
-    if (isHtmlType(document?.contentType)) {
-      // Decode base64 HTML content
+    if (docType === 'html') {
       let htmlContent;
       try {
         htmlContent = atob(document.base64Data);
@@ -295,14 +363,11 @@ export default function DocumentModal({
         console.error('Failed to decode HTML content:', e);
         return (
           <div className={styles.errorContainer}>
-            <Typography variant="body1">
-              Failed to decode HTML content
-            </Typography>
+            <Typography variant="body1">{t('failedToDecodeHtml')}</Typography>
           </div>
         );
       }
 
-      // Sanitize HTML content and add base target for links
       const sanitizedHtml = '<base target="_blank">' + DOMPurify.sanitize(htmlContent, {
         ADD_TAGS: ['style'],
         ADD_ATTR: ['style', 'class']
@@ -320,12 +385,11 @@ export default function DocumentModal({
       );
     }
 
-    if (isRtfType(document?.contentType) && rtfHtml) {
-      const rtfSrcDoc = '<base target="_blank">' + rtfHtml;
+    if (docType === 'rtf' && rtfHtml) {
       return (
         <div className={styles.htmlContainer}>
           <iframe
-            srcDoc={rtfSrcDoc}
+            srcDoc={'<base target="_blank">' + rtfHtml}
             title={document.title}
             className={styles.htmlIframe}
             sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
@@ -334,8 +398,7 @@ export default function DocumentModal({
       );
     }
 
-    if (isTextType(document?.contentType)) {
-      // Decode plain text content
+    if (docType === 'text') {
       let textContent;
       try {
         textContent = atob(document.base64Data);
@@ -343,9 +406,7 @@ export default function DocumentModal({
         console.error('Failed to decode text content:', e);
         return (
           <div className={styles.errorContainer}>
-            <Typography variant="body1">
-              Failed to decode text content
-            </Typography>
+            <Typography variant="body1">{t('failedToDecodeText')}</Typography>
           </div>
         );
       }
@@ -360,7 +421,7 @@ export default function DocumentModal({
     return (
       <div className={styles.errorContainer}>
         <Typography variant="body1">
-          Unsupported document type: {document?.contentType}
+          {t('unsupportedDocType')}: {document?.contentType}
         </Typography>
       </div>
     );
@@ -374,9 +435,7 @@ export default function DocumentModal({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        className: styles.dialogPaper
-      }}
+      PaperProps={{ className: styles.dialogPaper }}
     >
       <DialogTitle className={styles.header}>
         <div className={styles.headerContent}>
@@ -384,33 +443,29 @@ export default function DocumentModal({
             <Typography variant="h6" className={styles.title}>
               {document.title}
             </Typography>
-            {documents && documents.length > 1 && (
+            {documents.length > 1 && (
               <Typography variant="body2" className={styles.docCount}>
-                {currentIndex + 1} of {documents.length}
+                {currentIndex + 1} {t('ofLabel')} {documents.length}
               </Typography>
             )}
           </div>
           <div className={styles.headerActions}>
             {hasPrev && (
-              <IconButton
-                onClick={() => onNavigate('prev')}
-                title="Previous document"
-              >
+              <IconButton onClick={() => setCurrentIndex(i => i - 1)} title={t('prevDocTooltip')}>
                 <NavigateBeforeIcon />
               </IconButton>
             )}
             {hasNext && (
-              <IconButton
-                onClick={() => onNavigate('next')}
-                title="Next document"
-              >
+              <IconButton onClick={() => setCurrentIndex(i => i + 1)} title={t('nextDocTooltip')}>
                 <NavigateNextIcon />
               </IconButton>
             )}
-            <IconButton onClick={handleDownload} title="Download">
-              <DownloadIcon />
-            </IconButton>
-            <IconButton onClick={onClose} title="Close">
+            {!document.jsxContent && (
+              <IconButton onClick={handleDownload} title={t('downloadTooltip')}>
+                <DownloadIcon />
+              </IconButton>
+            )}
+            <IconButton onClick={onClose} title={t('closeTooltip')}>
               <CloseIcon />
             </IconButton>
           </div>
@@ -421,37 +476,29 @@ export default function DocumentModal({
         {renderContent()}
       </DialogContent>
 
-      {!loading && !error && (isPdfType(document.contentType) || isImageType(document.contentType)) && (
+      {!loading && !error && (docType === 'pdf' || docType === 'image') && (
         <div className={styles.controls}>
-          {isPdfType(document.contentType) && totalPages > 1 && (
+          {docType === 'pdf' && totalPages > 1 && (
             <div className={styles.pageControls}>
-              <IconButton
-                onClick={handlePrevPage}
-                disabled={currentPage <= 1}
-                size="small"
-              >
+              <IconButton onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage <= 1} size="small">
                 <NavigateBeforeIcon />
               </IconButton>
               <Typography variant="body2" className={styles.pageInfo}>
-                Page {currentPage} of {totalPages}
+                {t('pageLabel')} {currentPage} {t('ofLabel')} {totalPages}
               </Typography>
-              <IconButton
-                onClick={handleNextPage}
-                disabled={currentPage >= totalPages}
-                size="small"
-              >
+              <IconButton onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages} size="small">
                 <NavigateNextIcon />
               </IconButton>
             </div>
           )}
           <div className={styles.zoomControls}>
-            <IconButton onClick={handleZoomOut} size="small" title="Zoom out">
+            <IconButton onClick={() => setScale(s => Math.max(s - 0.25, 0.5))} size="small" title={t('zoomOutTooltip')}>
               <ZoomOutIcon />
             </IconButton>
             <Typography variant="body2" className={styles.zoomInfo}>
               {Math.round(scale * 100)}%
             </Typography>
-            <IconButton onClick={handleZoomIn} size="small" title="Zoom in">
+            <IconButton onClick={() => setScale(s => Math.min(s + 0.25, 3.0))} size="small" title={t('zoomInTooltip')}>
               <ZoomInIcon />
             </IconButton>
           </div>

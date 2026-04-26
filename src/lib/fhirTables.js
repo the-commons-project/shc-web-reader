@@ -1,40 +1,53 @@
 
 import * as futil from "./fhirUtil.js";
+import * as fdocs from "./fhirDocs.js";
+import { estimateBase64SizeBytes } from "./b64.js";
+import { Link } from '@mui/material';
 
 //
 // Routines for rendering potentially diverse groups of resources in tabular form.
+//
+// addResource is called for each resource in the section, which organizes into
+// lists by resource type. Then renderJSX renders one table per key in tableState.
+//
+// renderJSX takes two helper objects:
+//    "ctx" contains context
+//        organized: the organized object (see resources.js)
+//        arr: the array of resources being rendered
+//        state: an object that can be used as needed to track state from row-to-row
+//    "funcs" contains various methods to assist in rendering
+//         dcr: deferred code renderer
+//         loc: language-aware renderer ("t") elsewhere
+//         doc: modal dialog function (see DocumentModelContext "showDocuments")
 //
 
 // +-------------+
 // | addResource |
 // +-------------+
 
-export function addResource(resource, tableState, rmap) {
+export function addResource(resource, tableState, organized) {
 
-  const r = futil.resolveReference(resource, rmap);
-  
+  const r = futil.resolveReference(resource, organized.byId);
+
   if (r === undefined) {
 	console.log("Unable to resolve reference for: " + JSON.stringify(resource));
 	return;
   }
-  
+
   const rtype = r.resourceType;
 
-  // for DRs, just add individual Observations
-  if (rtype === "DiagnosticReport" && r.result && r.result.length) {
-	for (const i in r.result) addResource(r.result[i], tableState, rmap);
-	return;
-  }
+  // "Medication" appears in CH export but isn't a valid standalone entity
+  if (rtype === "Medication") return;
 
-  // otherwise accumulate the resource in our state
+  // accumulate the resource in our state
   if (!tableState[rtype]) tableState[rtype] = [];
   tableState[rtype].push(r);
 
-  // Observation can included a list of referenced Observations
+  // Observation can include a list of referenced Observations; flatten
   if (rtype === "Observation" && r.hasMember && r.hasMember.length > 0) {
 
 	for (const i in r.hasMember) {
-	  addResource(r.hasMember[i], tableState, rmap);
+	  addResource(r.hasMember[i], tableState, organized);
 	}
   }
 }
@@ -44,7 +57,19 @@ export function addResource(resource, tableState, rmap) {
 // +-----------+
 
 const renderConfig = {
-  
+
+  "Patient": {
+	"hdrFn": personHeader,
+	"rowFn": personRow
+  },
+  "Practitioner": {
+	"hdrFn": personHeader,
+	"rowFn": personRow
+  },
+  "RelatedPerson": {
+	"hdrFn": personHeader,
+	"rowFn": personRow
+  },
   "Condition": {
 	"hdrFn": conditionsHeader,
 	"rowFn": conditionsRow
@@ -103,75 +128,185 @@ const renderConfig = {
    "ClinicalImpression": {
      "hdrFn": clinicalImpressionHeader,
      "rowFn": clinicalImpressionRow
+   },
+  "Goal": {
+	"hdrFn": goalHeader,
+	"rowFn": goalRow,
+	"compFn": goalCompare
+  },
+   "DocumentReference": {
+     "hdrFn": docRefHeader,
+     "rowFn": docRefRow,
+	 "compFn": docRefCompare
+   },
+   "DiagnosticReport": {
+     "hdrFn": diagRptHeader,
+     "rowFn": diagRptRow,
+	 "compFn": diagRptCompare
    }
 }
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-export function renderJSX(tableState, className, rmap, dcr, t) {
+export function renderJSX(tableState, className, organized, funcs) {
 
-  const tables = Object.keys(tableState).reduce((acc, rtype) => {
+  // first figure out which tables we'll actually render ... need
+  // to know this so that we know to display table captions or not
+  
+  const displayTableState = {};
 
-	const render = renderConfig[rtype];
-	
-	if (!render) {
+  Object.keys(tableState).forEach((rtype) => {
+
+	if (!renderConfig[rtype]) {
 	  console.warn("fhirTables can't render: " + rtype);
-	  return(acc);
+	  return;
 	}
 
-	const arr = tableState[rtype];
+	const arr = uniquifyResources(rtype, tableState, organized.byId);
+	if (arr.length > 0) displayTableState[rtype] = arr;
+	
+  });
+
+  // now do the actual renders
+  
+  const displayTypes = Object.keys(displayTableState);
+  
+  const tables = displayTypes.map((rtype) => {
+
+	const render = renderConfig[rtype];
+
+	const arr = displayTableState[rtype];
 	if (render.compFn) arr.sort(render.compFn);
 
-	const seen = {};
+	const ctx = {
+	  organized: organized,
+	  arr: arr,
+	  state: {},
+	  className: className
+	};
+	
 	const rows = arr.reduce((rowsAcc, r) => {
 
-	  if (!r.id || !seen[r.id]) {
-		rowsAcc.push(render.rowFn(r, rmap, dcr));
-		if (r.id) seen[r.id] = true;
-	  }
+	  const theseRows = render.rowFn(r, ctx, funcs);
+	  if (theseRows) rowsAcc.push(theseRows);
 
 	  return(rowsAcc);
-	  
+
 	}, []);
-		  
-	acc.push(
+
+	return(
 	  <table key={rtype} className={className}>
+		{ displayTypes.length > 1 && <caption>{rtype.toUpperCase()}</caption> }
 		<tbody>
-		  { render.hdrFn(t) }
+		  { render.hdrFn(funcs, ctx) }
 		  {rows}
 		</tbody>
 	  </table>
 	);
-	
-	return(acc);
-  }, []);
+  });
 
   return(tables);
+}
+
+// +---------+
+// | Helpers |
+// +---------+
+
+// Note this uniques BOTH by resource.id and resource.identifier.
+// Epic has been show to return multiple copies of the same document
+// with the same identifiers but different resource ids in different
+// contexts. This may be OK by spec, but it's never what we want, so
+// we uniquify.
+//
+// We also uniquify away Observations that are already present in
+// a Diagnositc Report in the same section. This is a bit ugly but
+// at least the CH export is duping them up and it makes for a
+// super-messy display.
+
+function uniquifyResources(rtype, tableState, byId) {
+
+  // first unique by identifiers
+  
+  const seenResources = {};
+  const seenIds = {};
+
+  let result = tableState[rtype].reduce((uniques, r) => {
+
+	const newResource = (!r.id || !seenResources[r.id]);
+	if (newResource) {
+
+	  const jsonId = (r.identifier ? JSON.stringify(r.identifier) : null);
+	  const newId = (!jsonId || !seenIds[jsonId]);
+
+	  if (newId) {
+		uniques.push(r);
+		if (r.id) seenResources[r.id] = true;
+		if (jsonId) seenIds[jsonId] = true;
+	  }
+	}
+
+	return(uniques);
+
+  }, []);
+
+  // next remove Observations already in DRs
+  
+  if (rtype === "Observation") {
+	const drs = tableState["DiagnosticReport"];
+	const omap = getObservationsMapForDiagnosticReports(drs, byId);
+	result = result.filter((r) => !omap[r.id]);
+  }
+
+  return(result);
+}
+
+
+// +--------------------------------------------+
+// | Person (Patient/Practitioner/RelatedPerson |
+// +--------------------------------------------+
+
+function personHeader(funcs, ctx) {
+  return(<tr>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('birthDateHeader')}</th>
+		   <th>{funcs.loc('contactHeader')}</th>
+		 </tr>);
+}
+
+function personRow(r, ctx, funcs) {
+
+  const name = (r.name && r.name.length
+				? r.name.map((n,i) => <span key={i}>{futil.getPersonDisplayName(n)}<br/></span>)
+				: "");
+  
+  const birthDate = (r.birthDate ? futil.renderDate(r.birthDate) : "");
+  
+  const contact = futil.renderTelecomJSX(r.telecom, true);
+
+  return(<tr key={r.id}>
+		   <td>{name}</td>
+		   <td>{birthDate}</td>
+		   <td>{contact}</td>
+		 </tr>);
 }
 
 // +-----------+
 // | Condition |
 // +-----------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function conditionsHeader(t) {
+function conditionsHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('severityHeader')}</th>
-		   <th>{t('onsetHeader')}</th>
-		   <th>{t('abatementHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('severityHeader')}</th>
+		   <th>{funcs.loc('onsetHeader')}</th>
+		   <th>{funcs.loc('abatementHeader')}</th>
 		 </tr>);
 }
 
-function conditionsRow(r, rmap, dcr) {
+function conditionsRow(r, ctx, funcs) {
 
-  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus, dcr) : "");
-  const name = (r.code ? futil.renderCodeableJSX(r.code, dcr) : "");
-  const sev = (r.severity ? futil.renderCodeableJSX(r.severity, dcr) : "");
+  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus, funcs.dcr) : "");
+  const name = (r.code ? futil.renderCodeableJSX(r.code, funcs.dcr) : "");
+  const sev = (r.severity ? futil.renderCodeableJSX(r.severity, funcs.dcr) : "");
 
   return(<tr key={r.id}>
 		   <td>{status}</td>
@@ -186,19 +321,16 @@ function conditionsRow(r, rmap, dcr) {
 // | MedicationStatement |
 // +---------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function medStmtHeader(t) {
+function medStmtHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('effectiveHeader')}</th>
-		   <th>{t('dosageHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('effectiveHeader')}</th>
+		   <th>{funcs.loc('dosageHeader')}</th>
 		 </tr>);
 }
 
-function medStmtRow(r, rmap, dcr) {
+function medStmtRow(r, ctx, funcs) {
 
   let effective = undefined;
   if (r.effectiveDateTime) {
@@ -210,13 +342,17 @@ function medStmtRow(r, rmap, dcr) {
 
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
-		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
+		   <td>{renderMedXNameJSX(r, ctx.organized.byId, funcs)}</td>
 		   <td>{effective}</td>
-		   <td>{futil.renderDosage(r.dosage, dcr)}</td>
+		   <td>{futil.renderDosage(r.dosage, funcs.dcr)}</td>
 		 </tr>);
 }
 
 function medStmtCompare(a, b) {
+
+  if (a.status === "active" && b.status !== "active") return(-1);
+  if (a.status !== "active" && b.status === "active") return(1);
+
   const effectiveA = futil.parseCrazyDateTimeBestGuess(a, "effective");
   const effectiveB = futil.parseCrazyDateTimeBestGuess(b, "effective");
   return(effectiveB - effectiveA);
@@ -226,35 +362,32 @@ function medStmtCompare(a, b) {
 // | MedicationDispense |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function medDispHeader(t) {
+function medDispHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('quantityHeader')}</th>
-		   <th>{t('daysSupplyHeader')}</th>
-		   <th>{t('deliveredHeader')}</th>
-		   <th>{t('substitutionHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('quantityHeader')}</th>
+		   <th>{funcs.loc('daysSupplyHeader')}</th>
+		   <th>{funcs.loc('deliveredHeader')}</th>
+		   <th>{funcs.loc('substitutionHeader')}</th>
 		 </tr>);
 }
 
-function medDispRow(r, rmap, dcr) {
+function medDispRow(r, ctx, funcs) {
 
   const rsub = r.substitution;
   let sub = "";
   if (rsub && rsub.wasSubstituted) {
-	if (rsub.type) sub += futil.renderCodeableJSX(rsub.type, dcr);
+	if (rsub.type) sub += futil.renderCodeableJSX(rsub.type, funcs.dcr);
 	if (rsub.reason) {
 	  if (sub.length) sub += "; ";
-	  sub += futil.renderCodeableJSX(futil.firstOrObject(rsub.reason), dcr);
+	  sub += futil.renderCodeableJSX(futil.firstOrObject(rsub.reason), funcs.dcr);
 	}
   }
 
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
-		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
+		   <td>{renderMedXNameJSX(r, ctx.organized.byId, funcs)}</td>
 		   <td>{r.quantity ? futil.renderQuantity(r.quantity) : undefined}</td>
 		   <td>{r.daysSupply ? futil.renderQuantity(r.daysSupply) : undefined}</td>
 		   <td>{(r.whenHandedOver ? futil.renderDateTime(r.whenHandedOver) : "")}</td>
@@ -272,81 +405,77 @@ function medDispCompare(a, b) {
 // | MedicationRequest  |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function medReqHeader(t) {
+function medReqHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('authoredOnHeader')}</th>
-		   <th>{t('dosageHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('authoredOnHeader')}</th>
+		   <th>{funcs.loc('dosageHeader')}</th>
 		 </tr>);
 }
 
-function medReqRow(r, rmap, dcr) {
+function medReqRow(r, ctx, funcs) {
 
   // nyi
   return(<tr key={r.id}>
 		   <td>{r.status}</td>
-		   <td>{renderMedXNameJSX(r, rmap, dcr)}</td>
+		   <td>{renderMedXNameJSX(r, ctx.organized.byId, funcs)}</td>
 		   <td>{(r.authoredOn ? futil.renderDateTime(r.authoredOn) : "")}</td>
-		   <td>{futil.renderDosage(r.dosageInstruction, dcr)}</td>
+		   <td>{futil.renderDosage(r.dosageInstruction, funcs.dcr)}</td>
 		 </tr>);
 }
 
 function medReqCompare(a, b) {
+  if (a.status === "active" && b.status !== "active") return(-1);
+  if (a.status !== "active" && b.status === "active") return(1);
   const authoredA = (a.authoredOn ? futil.parseDateTime(a.authoredOn) : new Date());
   const authoredB = (b.authoredOn ? futil.parseDateTime(b.authoredOn) : new Date());
   return(authoredB - authoredA);
 }
 
-function renderMedXNameJSX(r, rmap, dcr) {
-  
-  let nameJSX = "Unknown";
-  
+function renderMedXNameJSX(r, byId, funcs) {
+
+  let nameJSX = undefined;
+
   if (r.medicationReference) {
 	const ref = r.medicationReference;
-	const m = rmap[ref.reference];
+	const m = byId[ref.reference];
 	if (m) {
-	  nameJSX = futil.renderCodeableJSX(m.code, dcr);
+	  nameJSX = futil.renderCodeableJSX(m.code, funcs.dcr);
 	}
-	else {
-	  if (ref.display) nameJSX = ref.display;
-	  console.error(`medicationReference.reference not found: ${ref.reference}`);
+	else if (ref.display) {
+	  nameJSX = ref.display;
 	}
   }
-  else if (r.medicationCodeableConcept) {
-	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept, dcr);
+  
+  if (!nameJSX && r.medicationCodeableConcept) {
+	nameJSX = futil.renderCodeableJSX(r.medicationCodeableConcept, funcs.dcr);
   }
 
-  return(nameJSX);
+  return(nameJSX ?? "Unknown");
 }
 
 // +--------------------+
 // | AllergyIntolerance |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function allergyHeader(t) {
+function allergyHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('categoryHeader')}</th>
-		   <th>{t('criticalityHeader')}</th>
-		   <th>{t('onsetHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('categoryHeader')}</th>
+		   <th>{funcs.loc('criticalityHeader')}</th>
+		   <th>{funcs.loc('onsetHeader')}</th>
 		 </tr>);
 }
 
-function allergyRow(r, rmap, dcr) {
+function allergyRow(r, ctx, funcs) {
 
-  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus, dcr) : "");
-  const name = (r.code ? futil.renderCodeableJSX(r.code, dcr) : "");
+  const status = (r.clinicalStatus ? futil.renderCodeableJSX(r.clinicalStatus, funcs.dcr) : "");
+  const name = (r.code ? futil.renderCodeableJSX(r.code, funcs.dcr) : "");
   const category = (r.category ? r.category.join("; ") : "");
   const crit = (r.criticality ? r.criticality : "");
-  
+
   return(<tr key={r.id}>
 		   <td>{status}</td>
 		   <td>{name}</td>
@@ -360,30 +489,27 @@ function allergyRow(r, rmap, dcr) {
 // | Immunization |
 // +--------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function immunizationHeader(t) {
+function immunizationHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('administeredHeader')}</th>
-		   <th>{t('reactionHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('administeredHeader')}</th>
+		   <th>{funcs.loc('reactionHeader')}</th>
 		 </tr>);
 }
 
-function immunizationRow(r, rmap, dcr) {
+function immunizationRow(r, ctx, funcs) {
 
-  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, dcr) : "");
-  const name = futil.renderCodeableJSX(r.vaccineCode, dcr);
+  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, funcs.dcr) : "");
+  const name = futil.renderCodeableJSX(r.vaccineCode, funcs.dcr);
   const administered = futil.renderCrazyDateTime(r, "occurrence");
 
   let reaction = undefined;
   if (r.reaction) {
-	if (!Array.isArray(r.reaction)) reaction = renderOneReaction(r.reaction, rmap, dcr);
-	else r.reaction.map((reaction) => renderOneReaction(reaction, rmap, dcr)).join("\n");
+	if (!Array.isArray(r.reaction)) reaction = renderOneReaction(r.reaction, ctx.organized.byId, funcs);
+	else r.reaction.map((reaction) => renderOneReaction(reaction, ctx.organized.byId, funcs)).join("\n");
   }
-  
+
   return(<tr key={r.id}>
 		   <td>{status}</td>
 		   <td>{name}</td>
@@ -398,22 +524,22 @@ function immunizationCompare(a, b) {
   return(dateB - dateA);
 }
 
-function renderOneReaction(reaction, rmap, dcr) {
-  
+function renderOneReaction(reaction, byId, funcs) {
+
   let disp = undefined;
-  
+
   disp = futil.delimiterAppend(disp, futil.renderDateTime(reaction.date), "; ");
-  
+
   if (reaction.manifestation) {
 	if (reaction.manifestation.concept) {
-	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(reaction.manifestation.concept, dcr), "; ");
+	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(reaction.manifestation.concept, funcs.dcr), "; ");
 	}
 	else {
-	  const obs = rmap[reaction.manifestation.reference];
-	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(obs.code, dcr), "; ");
+	  const obs = byId[reaction.manifestation.reference];
+	  disp = futil.delimiterAppend(disp, futil.renderCodeableJSX(obs.code, funcs.dcr), "; ");
 	}
   }
-  
+
   if (reaction.reported) futil.delimiterAppend(disp, "patient-reported", "; ");
 
   return(disp);
@@ -423,19 +549,16 @@ function renderOneReaction(reaction, rmap, dcr) {
 // | Observation |
 // +-------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function obsHeader(t) {
+function obsHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('performedHeader')}</th>
-		   <th>{t('testHeader')}</th>
-		   <th>{t('resultHeader')}</th>
-		   <th>{t('flagHeader')}</th>
+		   <th>{funcs.loc('performedHeader')}</th>
+		   <th>{funcs.loc('testHeader')}</th>
+		   <th>{funcs.loc('resultHeader')}</th>
+		   <th>{funcs.loc('flagHeader')}</th>
 		 </tr>);
 }
 
-function obsRow(r, rmap, dcr) {
+function obsRow(r, ctx, funcs) {
 
   // observations may have compound results, which we treat as
   // multiple distinct observations ... not ideal but it works ok.
@@ -444,22 +567,22 @@ function obsRow(r, rmap, dcr) {
 
   const rows = [];
 
-  const outerName = (r.code ? futil.renderCodeableJSX(r.code, dcr) : "");
-  const outerValue = futil.renderCrazyValue(r, "value", dcr);
+  const outerName = (r.code ? futil.renderCodeableJSX(r.code, funcs.dcr) : "");
+  const outerValue = futil.renderCrazyValue(r, "value", funcs.dcr);
 
   if (outerValue || r.dataAbsentReason) {
-	pushObsRow(effective, outerName, outerValue, r, rows, dcr);
+	pushObsRow(effective, outerName, outerValue, r, r.id, rows, funcs);
   }
 
   if (r.component && r.component.length) {
 	for (const i in r.component) {
 	  const c = r.component[i];
-	  const compName = (c.code ? futil.renderCodeableJSX(c.code, dcr) : "");
+	  const compName = (c.code ? futil.renderCodeableJSX(c.code, funcs.dcr) : "");
 	  if (compName !== outerName) {
 
-		const compValue = futil.renderCrazyValue(c, "value", dcr);
+		const compValue = futil.renderCrazyValue(c, "value", funcs.dcr);
 		if (compValue || c.dataAbsentReason) {
-		  pushObsRow(effective, compName, compValue, c, rows, dcr);
+		  pushObsRow(effective, compName, compValue, c, `${r.id}-${i}`, rows, funcs);
 		}
 	  }
 
@@ -469,18 +592,18 @@ function obsRow(r, rmap, dcr) {
   return(rows);
 }
 
-function pushObsRow(effective, name, value, obj, rows, dcr) {
+function pushObsRow(effective, name, value, obj, key, rows, funcs) {
 
   const realValue = (value ? value
-					 : futil.renderCodeableJSX(obj.dataAbsentReason, dcr));
+					 : futil.renderCodeableJSX(obj.dataAbsentReason, funcs.dcr));
 
   let flag = undefined;
   if (obj.interpretation && obj.interpretation.length) {
-	flag = obj.interpretation.map((i) => futil.renderCodeableJSX(i, dcr)).join("\n");
+	flag = obj.interpretation.map((i) => futil.renderCodeableJSX(i, funcs.dcr)).join("\n");
   }
 
   rows.push(
-	<tr key={obj.id}>
+	<tr key={key}>
 	  <td>{effective}</td>
 	  <td>{name}</td>
 	  <td>{realValue}</td>
@@ -499,24 +622,21 @@ function obsCompare(a, b) {
 // | Procedure |
 // +-----------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function procHeader(t) {
+function procHeader(funcs, ctx) {
   return(<tr>
-		   <th>{t('statusHeader')}</th>
-		   <th>{t('nameHeader')}</th>
-		   <th>{t('performedHeader')}</th>
-		   <th>{t('outcomeHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('performedHeader')}</th>
+		   <th>{funcs.loc('outcomeHeader')}</th>
 		 </tr>);
 }
 
-function procRow(r, rmap, dcr) {
+function procRow(r, ctx, funcs) {
 
-  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, dcr) : "");
-  const name = r.code ? futil.renderCodeableJSX(r.code, dcr) : "Unknown";
+  const status = r.status + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, funcs.dcr) : "");
+  const name = r.code ? futil.renderCodeableJSX(r.code, funcs.dcr) : "Unknown";
   const performed = futil.renderCrazyDateTime(r, "performed");
-  const outcome = r.outcome ? futil.renderCodeableJSX(r.outcome, dcr) : undefined;
+  const outcome = r.outcome ? futil.renderCodeableJSX(r.outcome, funcs.dcr) : undefined;
 
   return(<tr key={r.id}>
 		   <td>{status}</td>
@@ -536,31 +656,28 @@ function procCompare(a, b) {
 // |    Plan of Care    |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function carePlanHeader(t) {
+function carePlanHeader(funcs, ctx) {
   return (
     <tr>
-      <th>{t('statusHeader')}</th>
-      <th>{t('intentHeader')}</th>
-      <th>{t('activitiesHeader')}</th>
-      <th>{t('categoryHeader')}</th>
-      <th>{t('periodStartHeader')}</th>
-      <th>{t('noteHeader')}</th>
+      <th>{funcs.loc('statusHeader')}</th>
+      <th>{funcs.loc('intentHeader')}</th>
+      <th>{funcs.loc('activitiesHeader')}</th>
+      <th>{funcs.loc('categoryHeader')}</th>
+      <th>{funcs.loc('periodStartHeader')}</th>
+      <th>{funcs.loc('noteHeader')}</th>
       {/* Add headers for other relevant CarePlan properties */}
     </tr>
   );
 }
 
-function carePlanRow(r, rmap, dcr) {
+function carePlanRow(r, ctx, funcs) {
   const status = r.status;
   const intent = r.intent;
 
   const activities = futil.joinJSXElements(
     (r.activity || []).map(activity =>
       activity.detail && activity.detail.code
-      ? futil.renderCodeableJSX(activity.detail.code, dcr)
+      ? futil.renderCodeableJSX(activity.detail.code, funcs.dcr)
       : null
     ).filter(activity => activity !== null),
     ', '
@@ -568,7 +685,7 @@ function carePlanRow(r, rmap, dcr) {
 
    const category = futil.joinJSXElements(
        (r.category || []).map(c =>
-          futil.renderCodeableJSX(c, dcr)
+          futil.renderCodeableJSX(c, funcs.dcr)
        ).filter(c => c !== null),
        ', '
    );
@@ -593,40 +710,37 @@ function carePlanRow(r, rmap, dcr) {
 // |      Consent       |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function consentHeader(t) {
+function consentHeader(funcs, ctx) {
   return (
     <tr>
-      <th>{t('statusHeader')}</th>
-      <th>{t('scopeHeader')}</th>
-      <th>{t('categoryHeader')}</th>
-      <th>{t('dateTimeHeader')}</th>
-      <th>{t('policyRuleHeader')}</th>
-      <th>{t('provisionPeriodForConsentHeader')}</th>
-      <th>{t('organizationHeader')}</th>
+      <th>{funcs.loc('statusHeader')}</th>
+      <th>{funcs.loc('scopeHeader')}</th>
+      <th>{funcs.loc('categoryHeader')}</th>
+      <th>{funcs.loc('dateTimeHeader')}</th>
+      <th>{funcs.loc('policyRuleHeader')}</th>
+      <th>{funcs.loc('provisionPeriodForConsentHeader')}</th>
+      <th>{funcs.loc('organizationHeader')}</th>
     </tr>
   );
 }
 
-function consentRow(r, rmap, dcr) {
+function consentRow(r, ctx, funcs) {
   const status = r.status || "N/A";
-  const scopeDisplay = futil.renderCodeableJSX(r.scope, dcr);
+  const scopeDisplay = futil.renderCodeableJSX(r.scope, funcs.dcr);
   const categoryDisplay = futil.joinJSXElements(
-      (r.category || []).map(c => futil.renderCodeableJSX(c, dcr)),
+      (r.category || []).map(c => futil.renderCodeableJSX(c, funcs.dcr)),
       ', '
   );
   const dateTime = r.dateTime
     ? futil.renderDateTime(r.dateTime)
     : "";
-  const policyRule = futil.renderCodeableJSX(r.policyRule, dcr);
+  const policyRule = futil.renderCodeableJSX(r.policyRule, funcs.dcr);
 
   const provisionPeriod = r.provision && r.provision.period
     ? futil.renderPeriod(r.provision.period)
     : "";
   const organization = futil.joinJSXElements(
-      (r.organization || []).map(org => futil.renderOrganization(org, dcr)),
+      (r.organization || []).map(org => futil.renderOrganization(org, funcs.dcr)),
       ', '
   );
 
@@ -647,28 +761,25 @@ function consentRow(r, rmap, dcr) {
 // | DeviceUseStatement |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function deviceUseStatementHeader(t) {
+function deviceUseStatementHeader(funcs, ctx) {
     return (
         <tr>
-            <th>{t('subjectHeader')}</th>
-            <th>{t('timingForDeviceUseHeader')}</th>
-            <th>{t('sourceHeader')}</th>
-            <th>{t('deviceHeader')}</th>
-            <th>{t('bodySiteHeader')}</th>
+            <th>{funcs.loc('subjectHeader')}</th>
+            <th>{funcs.loc('timingForDeviceUseHeader')}</th>
+            <th>{funcs.loc('sourceHeader')}</th>
+            <th>{funcs.loc('deviceHeader')}</th>
+            <th>{funcs.loc('bodySiteHeader')}</th>
             {/* Add other relevant headers if needed */}
         </tr>
     );
 }
 
-function deviceUseStatementRow(r, rmap, dcr) {
-    const subject = futil.renderReference(r.subject, dcr);
+function deviceUseStatementRow(r, ctx, funcs) {
+    const subject = futil.renderReference(r.subject, funcs.dcr);
     const timing = futil.renderCrazyDateTime(r, "timing");
-    const source = r.source ? futil.renderReference(r.source, dcr) : "";
-    const device = futil.renderReference(r.device, dcr);
-    const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, dcr) : "";
+    const source = r.source ? futil.renderReference(r.source, funcs.dcr) : "";
+    const device = futil.renderReference(r.device, funcs.dcr);
+    const bodySite = r.bodySite ? futil.renderCodeable(r.bodySite, funcs.dcr) : "";
 
     return (
         <tr key={r.id}>
@@ -685,30 +796,27 @@ function deviceUseStatementRow(r, rmap, dcr) {
 // | ClinicalImpression |
 // +--------------------+
 
-/**
- * @param {function} t Translation function obtained from useLanguage(), propagated down from a React component.
- */
-function clinicalImpressionHeader(t) {
+function clinicalImpressionHeader(funcs, ctx) {
     return (
         <tr>
-            <th>{t('statusHeader')}</th>
-            <th>{t('descriptionHeader')}</th>
-            <th>{t('effectivePeriodDateTimeHeader')}</th>
-            <th>{t('summaryHeader')}</th>
-            <th>{t('subjectHeader')}</th>
-            <th>{t('accessorHeader')}</th>
+            <th>{funcs.loc('statusHeader')}</th>
+            <th>{funcs.loc('descriptionHeader')}</th>
+            <th>{funcs.loc('effectivePeriodDateTimeHeader')}</th>
+            <th>{funcs.loc('summaryHeader')}</th>
+            <th>{funcs.loc('subjectHeader')}</th>
+            <th>{funcs.loc('accessorHeader')}</th>
             {/* Add other relevant headers if needed */}
         </tr>
     );
 }
 
-function clinicalImpressionRow(r, rmap, dcr) {
+function clinicalImpressionRow(r, ctx, funcs) {
     const status = r.status;
     const description = r.description || "";
     const effective = futil.renderCrazyDateTime(r, "effective");
     const summary = r.summary || "";
-    const subject = futil.renderReference(r.subject, dcr) || "";
-    const assessor = futil.renderReference(r.assessor, dcr) || "";
+    const subject = futil.renderReference(r.subject, funcs.dcr) || "";
+    const assessor = futil.renderReference(r.assessor, funcs.dcr) || "";
 
 
     return (
@@ -723,3 +831,294 @@ function clinicalImpressionRow(r, rmap, dcr) {
         </tr>
     );
 }
+
+// +------+
+// | Goal |
+// +------+
+
+function goalHeader(funcs, ctx) {
+  return(<tr>
+		   <th>{funcs.loc('updatedHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		 </tr>);
+}
+
+function goalRow(r, ctx, funcs) {
+
+  const updated = r.statusDate ? futil.renderDate(r.statusDate)
+		: (r.startDate ? futil.renderDate(r.startDate) : null);
+	
+  const status = r.lifecycleStatus + (r.statusReason ? "; " + futil.renderCodeableJSX(r.statusReason, funcs.dcr) : "");
+
+  const description = futil.renderCodeableJSX(r.description, funcs.dcr);
+
+  return(<tr key={r.id}>
+		   <td>{updated}</td>
+		   <td>{status}</td>
+		   <td>{description}</td>
+		 </tr>);
+}
+
+function goalCompare(a, b) {
+  
+  const dateA = a.statusDate ?? a.startDate;
+  const dateB = b.statusDate ?? b.startDate;
+
+  if (!dateA && !dateB) return(0);
+  if (!dateA) return(1);
+  if (!dateB) return(-1);
+
+  return(dateB - dateA);
+}
+
+// +-------------------+
+// | DocumentReference |
+// +-------------------+
+
+function docRefHeader(funcs, ctx) {
+  return(<tr>
+		   <th>{funcs.loc('dateHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('authorHeader')}</th>
+		   <th>{funcs.loc('sizeHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		 </tr>);
+}
+
+function docRefRow(r, ctx, funcs) {
+
+  if (!ctx.state.modalDocs) ctx.state.modalDocs = computeModalDocs(ctx);
+  if (!ctx.state.rowIndex) ctx.state.rowIndex = 0;
+
+  const rowIndex = ctx.state.rowIndex++;
+  const modalDoc = ctx.state.modalDocs[rowIndex];
+
+  const date = (r.date ? futil.renderDateTime(r.date) : null);
+  const status = r.status || 'current';
+  const authors = futil.joinJSXElements((r.author || []).map((a) => futil.renderGenerator(a, ctx.organized.byId)), ', ');
+
+  const bytes = (modalDoc.attachment.data ? estimateBase64SizeBytes(modalDoc.attachment.data) : 0);
+  const size = fdocs.formatFileSize(bytes);
+  
+  return(<tr key={r.id}>
+		   <td><nobr>{date}</nobr></td>
+		   <td><Link component="button" variant="body2"
+					 sx={{ fontSize: '0.75rem', textAlign: 'left' }}
+					 onClick={() => funcs.doc(ctx.state.modalDocs, rowIndex)}>{modalDoc.title}</Link></td>
+		   <td>{authors}</td>
+		   <td>{size}</td>
+		   <td>{status}</td>
+		 </tr>);
+}
+
+function docRefCompare(a, b) {
+  
+  if (!a.date && !b.date) return(0);
+  if (!a.date) return(1);
+  if (!b.date) return(-1);
+  
+  let cmp = futil.parseDateTime(b.date) - futil.parseDateTime(a.date);
+  if (cmp === 0) cmp = scoreStatus(a.status) - scoreStatus(b.status);
+  
+  return(cmp);
+}
+
+function scoreStatus(status) {
+  switch (status) {
+	case "current": case "final": return(0);
+	case "corrected": case "amended": case "appended": return(1);
+	case "partial": case "preliminary": case "registered": return(2);
+	case "superseded": case "entered-in-error": case "cancelled": return(3);
+	default: return(4);
+  }
+}
+
+function computeModalDocs(ctx) {
+
+  return(ctx.arr.map((r) => {
+
+	const attachment = fdocs.getBestAttachment(r);
+	
+	return({
+	  title: fdocs.getTitle(r),
+	  contentType: attachment.contentType,
+	  base64Data: attachment.data,
+	  attachment: attachment
+	});
+  }));
+}
+
+// +------------------+
+// | DiagnosticReport |
+// +------------------+
+
+function diagRptHasResults(r) { return(r.result && r.result.length); }
+function diagRptHasReport(r) { return(r.presentedForm && r.presentedForm.length); }
+
+function viewDiagRptFiles(r, ctx, funcs, index) {
+
+  const modals = [];
+
+  if (diagRptHasResults(r)) {
+
+	const observations = getObservationsForDiagnosticReport(r, ctx.organized.byId);
+	const tableState = { "Observation": observations };
+	
+	const textBlockStyle = { width: '100%', textAlign: 'left', padding: '4px 12px' };
+
+	const conclusionTextJSX = r.conclusion ? <div style={textBlockStyle}>{r.conclusion}</div> : undefined;
+
+	const conclusionCodeJSX = r.conclusionCode
+		  ? r.conclusionCode.map((c,i) => <div key={i} style={textBlockStyle}>{futil.renderCodeableJSX(c, funcs.dcr)}</div>)
+		  : undefined;
+								 
+	let tableJSX = renderJSX(tableState, ctx.className, ctx.organized, funcs);
+	if (tableJSX.length === 0) tableJSX = <div style={textBlockStyle}>{funcs.loc('noResultsAvailable')}</div>;
+
+	const allJSX = <>{conclusionTextJSX}{conclusionCodeJSX}{tableJSX}</>;
+
+	modals.push({
+	  title: funcs.loc('observationsTitle'),
+	  jsxContent: allJSX
+	});
+  }
+
+  if (diagRptHasReport(r)) {
+
+	const attachment = fdocs.getBestAttachment(r);
+
+	modals.push({
+	  title: funcs.loc('presentedReportTitle'),
+	  contentType: attachment.contentType,
+	  base64Data: attachment.data,
+	  attachment: attachment
+	});
+  }
+
+  funcs.doc(modals, index);
+}
+
+function diagRptHeader(funcs, ctx) {
+  return(<tr>
+		   <th>{funcs.loc('effectiveHeader')}</th>
+		   <th>{funcs.loc('nameHeader')}</th>
+		   <th>{funcs.loc('performerHeader')}</th>
+		   <th>{funcs.loc('statusHeader')}</th>
+		   <th>{funcs.loc('resultsHeader')}</th>
+		 </tr>);
+}
+
+function diagRptRow(r, ctx, funcs) {
+
+  // effectiveDateTime/Period (0..1)
+  // code (1)
+  // status (1)
+  // result -> structured Observations (0..*)
+  // conclusion (0..1) /conclusionCode (0..*)
+  // presentedForm (0..*)
+
+  let effective = undefined;
+  if (r.effectiveDateTime) {
+	effective = futil.renderDateTime(r.effectiveDateTime);
+  }
+  else if (r.effectivePeriod) {
+	effective = futil.renderPeriod(r.effectivePeriod);
+  }
+
+  const status = r.status || 'unknown';
+  const code = futil.renderCodeableJSX(r.code, funcs.dcr);
+  const performers = (r.performer || []).map((a) => futil.renderGenerator(a, ctx.organized.byId));
+
+  const hasResults = diagRptHasResults(r);
+  const hasReport = diagRptHasReport(r);
+		
+  return(<tr key={r.id}>
+		   <td><nobr>{effective}</nobr></td>
+		   <td>{code}</td>
+		   <td>{performers}</td>
+		   <td>{status}</td>
+		   <td><nobr>
+			 { hasResults &&
+				 <Link component="button" variant="body2"
+					   sx={{ fontSize: '0.75rem', textAlign: 'left' }}
+					   onClick={() => viewDiagRptFiles(r, ctx, funcs, 0)}>{funcs.loc('resultsLink')}</Link> }
+			 { hasResults && hasReport && <span>&nbsp;&nbsp;</span> }
+			 { hasReport &&
+				 <Link component="button" variant="body2"
+					   sx={{ fontSize: '0.75rem', textAlign: 'left' }}
+					   onClick={() => viewDiagRptFiles(r, ctx, funcs, hasResults ? 1 : 0)}>{funcs.loc('reportLink')}</Link> }
+		   </nobr></td>
+		 </tr>);
+}
+
+function diagRptCompare(a, b) {
+  
+  let dateA = undefined;
+  if (a.effectiveDateTime) dateA = futil.parseDateTime(a.effectiveDateTime);
+  else if (a.effectivePeriod && a.effectivePeriod.start) dateA = futil.parseDateTime(a.effectivePeriod.start);
+  else if (a.effectivePeriod && a.effectivePeriod.end) dateA = futil.parseDateTime(a.effectivePeriod.end);
+
+  let dateB = undefined;
+  if (b.effectiveDateTime) dateB = futil.parseDateTime(b.effectiveDateTime);
+  else if (b.effectivePeriod && b.effectivePeriod.start) dateB = futil.parseDateTime(b.effectivePeriod.start);
+  else if (b.effectivePeriod && b.effectivePeriod.end) dateB = futil.parseDateTime(b.effectivePeriod.end);
+
+  if (!dateA && !dateB) return(0);
+  if (!dateA) return(1);
+  if (!dateB) return(-1);
+
+  return(dateB - dateA);
+}
+
+// +--------------------------------------------+
+// | getObservations(Map)ForDiagnosticReport(s) |
+// +--------------------------------------------+
+
+// These aren't super-efficient, but they allow us to stay within the mostly-generic
+// rendering model of futil. I am beginning to think this wants a braoder refactor but
+// that time hasn't come yet.
+
+function getObservationsMapForDiagnosticReports(drs, byId) {
+
+  const omap = {};
+
+  if (drs && drs.length) {
+	for (const i in drs) {
+	  const observations = getObservationsForDiagnosticReport(drs[i], byId);
+	  for (const j in observations) omap[observations[j].id] = observations[j];
+	}
+  }
+
+  return(omap);
+}
+
+function getObservationsForDiagnosticReport(dr, byId) {
+
+  const observations = [];
+
+  if (dr.result && dr.result.length) {
+	for (const i in dr.result) {
+	  addObsRecursive(observations, dr.result[i], byId);
+	}
+  }
+
+  return(observations);
+}
+
+function addObsRecursive(observations, ref, byId) {
+
+  const o = futil.resolveReference(ref, byId);
+
+  if (!o || o.resourceType !== "Observation") return;
+
+  observations.push(o);
+
+  if (o.hasMember && o.hashMember.length) {
+	for (const i in o.hasMember) {
+	  addObsRecursive(observations, o.hasMember[i], byId);
+	}
+  }
+}
+
+

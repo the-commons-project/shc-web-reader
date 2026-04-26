@@ -18,16 +18,14 @@
 }
  
 /* Base styles for all grid cells */
-.sectionTitle,
-.sectionTitleCollapsed,
-.sectionContent,
-.collapsedContent {
+.blockTitle,
+.blockContent {
     padding: 8px;
     font-size: smaller;
     border: 2px solid #ccc;
 }
 
-.sectionTitle {
+.blockTitle {
     background-color: #f5f5f5;
     font-weight: bold;
     font-size: 14px;
@@ -39,11 +37,11 @@
     user-select: none;
 }
 
-.sectionTitle:hover {
+.blockTitle:hover {
     background-color: #e8e8e8;
 }
 
-.sectionTitleText {
+.blockTitleText {
     flex: 1;
 }
 
@@ -53,30 +51,31 @@
     color: #666;
 }
 
-.sectionTitleCollapsed {
-    background-color: #f5f5f5;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    align-self: start;
-    user-select: none;
+/* Icons: default expanded state */
+.iconExpand { display: none; }
+.iconCollapse { display: flex; }
+
+/* Collapsed state */
+.blockTitle.collapsed .iconExpand { display: flex; }
+.blockTitle.collapsed .iconCollapse { display: none; }
+
+
+.blockContent.collapsed {
+    display: none;
 }
 
-.sectionTitleCollapsed:hover {
-    background-color: #e8e8e8;
-}
-
-.collapsedContent {
-    /* Empty cell placeholder when section is collapsed */
+.blockContentEmpty {
     background-color: #f5f5f5;
-    align-self: stretch;
+    border: 2px solid #ccc;
     min-height: 20px;
+    display: none;
 }
 
-.sectionContent {
+.blockContentEmpty.collapsed {
+    display: block;
+}
+
+.blockContent {
     /* Content cell styling */
     align-self: start;
 }
@@ -84,6 +83,19 @@
 .fhirTable {
     border-collapse: collapse;
     width: 100%;
+}
+
+.fhirTable caption {
+    background-color: #777;
+    font-weight: 600;
+    font-size: 13px;
+    color: white;
+    padding: 4px 8px;
+    text-align: left;
+}
+
+.fhirTable + .fhirTable {
+    margin-top: 32px;
 }
 
 .fhirTable td, .fhirTable th {

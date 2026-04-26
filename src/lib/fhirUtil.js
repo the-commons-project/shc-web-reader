@@ -11,7 +11,7 @@ export function renderOrganization(org, resources) {
 }
 
 function renderOrganizationResource(org) {
-  return(<div>{org.name}</div>);
+  return(<div key={org.id}>{org.name}</div>);
 }
 
 export function renderGenerator(oop, resources) {
@@ -744,7 +744,7 @@ function renderDeviceResource(device) {
     displayName = device.type.text;
   }
 
-  return(<div>{displayName}</div>);
+  return(<div key={device.id}>{displayName}</div>);
 }
 
 // +------------------+

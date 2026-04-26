@@ -13,7 +13,7 @@ import { useLanguage } from './lib/LanguageContext';
 import Coverage from './Coverage.js';
 import ImmunizationHistory from './ImmunizationHistory.js'
 import PatientSummary from './PatientSummary.js';
-import DocumentsSection from './DocumentsSection.js';
+import Collection from './Collection.js';
 
 export default function Data({ shx }) {
   const { t, setBundleLanguage } = useLanguage();
@@ -97,7 +97,6 @@ export default function Data({ shx }) {
 	const organized = (bundle.contentOK() ? bundle.organized : undefined);
 
 	let elt = undefined;
-	let showAggregateDocumentsSection = true;
 
 	if (organized) {
 
@@ -109,11 +108,14 @@ export default function Data({ shx }) {
 
 	    case res.BTYPE_PS:
 		  elt = <PatientSummary organized={ organized } dcr={ dcr } />;
-		  showAggregateDocumentsSection = false;
 		  break;
 
 	    case res.BTYPE_IMMUNIZATION:
 		  elt = <ImmunizationHistory organized={ organized } dcr={ dcr } />;
+		  break;
+
+		case res.BTYPE_BUNDLE:
+		  elt = <Collection organized={ organized } dcr={ dcr } />;
 		  break;
 
 		// >>> ADD MORE RENDERERS HERE <<<
@@ -138,7 +140,6 @@ export default function Data({ shx }) {
 		  <ValidationInfo bundle={bundle} />
 		  <WrongPatientWarning organized={organized} />
 		  { elt }
-		  { showAggregateDocumentsSection && organized && <DocumentsSection organized={ organized } /> }
 		</div>
         <div>
           { elt && <Button onClick={ () => onSaveClick(true) }>{t('saveToPDF')}</Button> }

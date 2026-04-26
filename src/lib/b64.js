@@ -52,4 +52,18 @@ export function b64u_to_b64(input) {
   return(b64);
 }
 
+export function estimateBase64SizeBytes(base64Data) {
+  if (!base64Data) return(0);
+  // Base64 encoding adds ~33% overhead, so actual size is ~75% of base64 length
+  return(Math.floor(base64Data.length * 0.75));
+}
+
+export function base64ToDataUrl(base64Data, contentType) {
+  return(`data:${contentType};base64,${base64Data}`);
+}
+
+export function base64ToBlob(base64Data, contentType) {
+  return(new Blob([b64_to_arr(base64Data)], { type: contentType }));
+}
+
 

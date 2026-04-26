@@ -73,6 +73,13 @@ export const languages = {
     ipsSection_8716_3: 'Vital Signs',
     ipsSection_30954_2: 'Laboratory Results',
     ipsSection_11369_6: 'Immunizations',
+	ipsSection_61146_7: 'Goals',
+	ipsSection_47420_5: 'Documents',
+	ipsSection_47519_4: 'Procedures',
+	
+	// Collection.js
+	birthDateHeader: 'DOB',
+	contactHeader: 'Contact',
 
     // ImmunizationHistory.js
     immunizationHistory: 'Immunization History',
@@ -171,13 +178,38 @@ export const languages = {
     // In the context of device use, timing represents how often a device was used: https://build.fhir.org/deviceusage-definitions.html#DeviceUsage.timing_x_
     timingForDeviceUseHeader: 'Timing',
 
-    // documentUtils.js
-    documents: 'Documents',
-    documentFallbackTitle: 'Document',
-    reportFallbackTitle: 'Report',
-    documentCategory: 'Document',
-    diagnosticReportCategory: 'Diagnostic Report',
-    externalDocumentMessage: 'This data could not be displayed because of a technical formatting issue from the EHR, not an issue with your records.',
+    // DocumentModalContext.js
+    loadingDocument: 'Loading document...',
+    downloadInstead: 'Download Instead',
+    failedToDecodeHtml: 'Failed to decode HTML content',
+    failedToDecodeText: 'Failed to decode text content',
+    unsupportedDocType: 'Unsupported document type',
+    ofLabel: 'of',
+    pageLabel: 'Page',
+    prevDocTooltip: 'Previous document',
+    nextDocTooltip: 'Next document',
+    downloadTooltip: 'Download',
+    closeTooltip: 'Close',
+    zoomOutTooltip: 'Zoom out',
+    zoomInTooltip: 'Zoom in',
+
+    // fhirTables.js (Goal)
+    updatedHeader: 'Updated',
+
+    // fhirTables.js (DocumentReference)
+    dateHeader: 'Date',
+    authorHeader: 'Author',
+    sizeHeader: 'Size',
+
+    // fhirTables.js (DiagnosticReport)
+    performerHeader: 'Performer',
+    resultsHeader: 'Results',
+    resultsLink: 'results',
+    reportLink: 'report',
+    noResultsAvailable: 'No Results Available',
+    observationsTitle: 'Observations',
+    presentedReportTitle: 'Presented Report',
+
   },
   fr: {
     // App.js
@@ -254,6 +286,13 @@ export const languages = {
     ipsSection_8716_3: 'Signes vitaux',
     ipsSection_30954_2: 'Résultats de laboratoire',
     ipsSection_11369_6: 'Vaccins',
+	ipsSection_61146_7: 'Objectifs', // NEED_REVIEW
+	ipsSection_47420_5: 'Documents', // NEED_REVIEW
+	ipsSection_47519_4: 'Procédures', // NEED_REVIEW
+
+	// Collection.js
+	birthDateHeader: 'Date de naissance', // NEED_REVIEW
+	contactHeader: 'Coordonnées', // NEED_REVIEW
 
     // ImmunizationHistory.js
     immunizationHistory: 'Historique de vaccination',
@@ -353,12 +392,37 @@ export const languages = {
     // In the context of device use, timing represents how often a device was used: https://build.fhir.org/deviceusage-definitions.html#DeviceUsage.timing_x_
     timingForDeviceUseHeader: 'Fréquence',
 
-    // documentUtils.js
-    documents: 'Documents NEED TRANSLATION',
-    documentFallbackTitle: 'Document NEED TRANSLATION',
-    reportFallbackTitle: 'Report NEED TRANSLATION',
-    documentCategory: 'Document NEED TRANSLATION',
-    diagnosticReportCategory: 'Diagnostic Report NEED TRANSLATION',
-    externalDocumentMessage: 'This data could not be displayed because of a technical formatting issue from the EHR, not an issue with your records. NEED TRANSLATION',
+    // DocumentModalContext.js
+    loadingDocument: 'Chargement du document...', // NEED_REVIEW
+    downloadInstead: 'Télécharger à la place', // NEED_REVIEW
+    failedToDecodeHtml: 'Échec du décodage du contenu HTML', // NEED_REVIEW
+    failedToDecodeText: 'Échec du décodage du contenu texte', // NEED_REVIEW
+    unsupportedDocType: 'Type de document non pris en charge', // NEED_REVIEW
+    ofLabel: 'de', // NEED_REVIEW
+    pageLabel: 'Page', // NEED_REVIEW
+    prevDocTooltip: 'Document précédent', // NEED_REVIEW
+    nextDocTooltip: 'Document suivant', // NEED_REVIEW
+    downloadTooltip: 'Télécharger', // NEED_REVIEW
+    closeTooltip: 'Fermer', // NEED_REVIEW
+    zoomOutTooltip: 'Réduire', // NEED_REVIEW
+    zoomInTooltip: 'Agrandir', // NEED_REVIEW
+
+    // fhirTables.js (Goal)
+    updatedHeader: 'Mis à jour', // NEED_REVIEW
+
+    // fhirTables.js (DocumentReference)
+    dateHeader: 'Date', // NEED_REVIEW
+    authorHeader: 'Auteur', // NEED_REVIEW
+    sizeHeader: 'Taille', // NEED_REVIEW
+
+    // fhirTables.js (DiagnosticReport)
+    performerHeader: 'Intervenant', // NEED_REVIEW
+    resultsHeader: 'Résultats', // NEED_REVIEW
+    resultsLink: 'résultats', // NEED_REVIEW
+    reportLink: 'rapport', // NEED_REVIEW
+    noResultsAvailable: 'Aucun résultat disponible', // NEED_REVIEW
+    observationsTitle: 'Observations', // NEED_REVIEW
+    presentedReportTitle: 'Rapport présenté', // NEED_REVIEW
+
   }
 };

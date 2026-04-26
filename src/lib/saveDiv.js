@@ -1,6 +1,5 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { base64ToBlob, getExtensionFromMimeType } from './documentUtils.js';
 
 // +-------------------+
 // | saveDivToPdfFile  |
@@ -146,35 +145,4 @@ export function downloadBundleToJSON(data, description) {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 }
-
-// +------------------+
-// | downloadDocument |
-// +------------------+
-
-/**
- * Download an embedded document (PDF, image, etc.)
- * @param {Object} doc - ExtractedDocument object from documentUtils.js
- */
-export function downloadDocument(doc) {
-  if (!doc || !doc.base64Data || !doc.contentType) {
-    console.error('Invalid document for download');
-    return;
-  }
-
-  const blob = base64ToBlob(doc.base64Data, doc.contentType);
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-
-  const ext = getExtensionFromMimeType(doc.contentType);
-  const sanitizedTitle = (doc.title || 'document').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
-  const filename = `${todayForFilename()}_${sanitizedTitle}.${ext}`;
-
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-}
-
 
