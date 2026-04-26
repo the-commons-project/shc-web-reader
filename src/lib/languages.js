@@ -105,8 +105,8 @@ export const languages = {
     // Scan.js
     scanError: 'Error scanning QR code. Please try again.',
     scanSuccess: 'QR code scanned successfully',
-    readCode: 'Read Code',
-    scanTitle: 'Scan a Smart Health Card QR Code',
+    readCode: 'Open Link',
+    scanTitle: 'Paste a SMART Health Link',
     // Buttons
     saveToPDF: 'Save to PDF',
     saveToFHIR: 'Save to FHIR',
@@ -317,8 +317,8 @@ export const languages = {
     // Scan.js
     scanError: 'Erreur lors du scan du code QR. Veuillez réessayer.',
     scanSuccess: 'Code QR scanné avec succès',
-    readCode: 'Lire le code',
-    scanTitle: 'Numériser un code QR de santé Smart',
+    readCode: 'Ouvrir le lien',
+    scanTitle: 'Coller un lien SMART Health',
 
     // Buttons
     saveToPDF: 'Sauvegarder au Format PDF',
