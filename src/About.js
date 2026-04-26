@@ -43,7 +43,6 @@ export default function About({ setTab, tabValues }) {
 	  <div className={styles.content} >
 		<h1>{t('aboutSubtitle')}</h1>
 
-		{ config("showScan") && renderTabButton(tabValues.Scan, t('scanDescriptionShort')) }
 		{ config("showPhoto") && renderTabButton(tabValues.Photo, t('photoDescriptionShort')) }
 		{ config("showFile") && renderTabButton(tabValues.File, t('openFileText')) }
 		{ config("showScan") && renderTabButton(tabValues.Scan, t('typeOrPaste')) }
