@@ -2,7 +2,7 @@ export const languages = {
   en: {
     // App.js
     aboutTab: 'About',
-    scanTab: 'Scan Card',
+    scanTab: 'Paste Link',
     fileTab: 'Open file',
     photoTab: 'Use your camera',
     searchTab: 'Search Record',
@@ -12,7 +12,6 @@ export const languages = {
     aboutTitle: 'SMART Health Card Viewer',
     aboutSubtitle: 'View SMART Health Cards',
     getStarted: 'Get Started',
-    scanDescriptionShort: 'Use a 2D barcode scanner',
     photoDescriptionShort: 'Start scanning using your camera',
     fileDescriptionShort: 'Upload a file containing a SMART Health Card',
 
@@ -114,7 +113,7 @@ export const languages = {
     source: 'Source',
     takePhotoText: 'Scan',
     openFileText: 'Open file',
-    typeOrPaste: 'Type or paste a code',
+    typeOrPaste: 'Paste Link',
     findCode: 'Find a code in patient record',
 
     // TCPFooter.js
@@ -214,7 +213,7 @@ export const languages = {
   fr: {
     // App.js
     aboutTab: 'À propos',
-    scanTab: 'Numériser une carte',
+    scanTab: 'Coller le lien',
     fileTab: 'Ouvrir un fichier',
     photoTab: 'Utiliser votre caméra',
     searchTab: 'Rechercher un dossier',
@@ -224,7 +223,6 @@ export const languages = {
     aboutTitle: 'Lecteur de carte de santé SMART',
     aboutSubtitle: 'Lit et vérifie les cartes de santé SMART',
     getStarted: 'Débuter',
-    scanDescriptionShort: 'Utiliser un lecteur de codes-barres 2D',
     photoDescriptionShort: 'Commencer à numériser en utilisant votre caméra',
     fileDescriptionShort:  "Le lecteur peut généralement lire les fichiers portant l'extension .smart-health-card ou .fhir.",
 
@@ -329,7 +327,7 @@ export const languages = {
     startScanningText: 'Commencer à numériser',
     takePhotoText: 'Numériser',
     openFileText: 'Ouvrir un fichier',
-    typeOrPaste: 'Saisir ou coller un code',
+    typeOrPaste: 'Coller le lien',
     findCode: 'Rechercher un code dans le dossier patient',
 
     // TCPFooter.js
