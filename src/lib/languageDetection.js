@@ -3,7 +3,7 @@
 /**
  * Extract language from SMART Health Card data
  * @param {Object} shxResult - The processed SHC result
- * @returns {string} Language code ('en' or 'fr') or null if not detected
+ * @returns {string} Language code or null if not detected
  */
 export const detectLanguageFromSHC = (shxResult) => {
   if (!shxResult || !shxResult.bundles || shxResult.bundles.length === 0) {
@@ -122,6 +122,7 @@ const extractLanguageFromResource = (resource) => {
  * @param {string} languageCode - Raw language code
  * @returns {string} Normalized language code or null
  */
+// TODO: Use new language util functions instead?
 const normalizeLanguageCode = (languageCode) => {
   if (!languageCode) return null;
 

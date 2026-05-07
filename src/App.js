@@ -73,6 +73,7 @@ function AppContent() {
 		  onClick={toggleLanguage}
 		  className={styles.languageButton}
 		>
+		  {/* TODO: Use new language util functions instead? */}
 		  {currentLanguage === 'en' ? 'FR' : 'EN'}
 		</Button>
 
