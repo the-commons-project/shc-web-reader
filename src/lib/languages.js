@@ -424,3 +424,21 @@ export const languages = {
 
   }
 };
+
+export function getValidLanguages() {
+  return Object.keys(languages);
+}
+
+export function getLanguageWithoutRegion(language) {
+  let baseLanguage = language.toLowerCase();
+
+  return (baseLanguage.indexOf('-') !== -1) ? baseLanguage.split('-')[0] : baseLanguage;
+}
+
+export function isValidLanguage(language) {
+  if (!language) {
+    return false;
+  }
+  
+  return getValidLanguages().includes(getLanguageWithoutRegion(language));
+}
